@@ -4,16 +4,17 @@ import (
 	"database/sql"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/vulcanize/mcd_transformers/test_config"
+	"github.com/vulcanize/mcd_transformers/transformers/shared/constants"
+	"github.com/vulcanize/mcd_transformers/transformers/storage_diffs/maker/pit"
+	"github.com/vulcanize/mcd_transformers/transformers/storage_diffs/maker/vat"
+	"github.com/vulcanize/mcd_transformers/transformers/test_data"
+	"github.com/vulcanize/vulcanizedb/libraries/shared/storage/utils"
 	"github.com/vulcanize/vulcanizedb/pkg/core"
 	"github.com/vulcanize/vulcanizedb/pkg/datastore"
 	"github.com/vulcanize/vulcanizedb/pkg/datastore/postgres"
 	"github.com/vulcanize/vulcanizedb/pkg/datastore/postgres/repositories"
 	"github.com/vulcanize/vulcanizedb/pkg/fakes"
-	"github.com/vulcanize/vulcanizedb/pkg/transformers/storage_diffs/maker/pit"
-	"github.com/vulcanize/vulcanizedb/pkg/transformers/storage_diffs/maker/vat"
-	"github.com/vulcanize/vulcanizedb/pkg/transformers/storage_diffs/shared"
-	"github.com/vulcanize/vulcanizedb/pkg/transformers/test_data"
-	"github.com/vulcanize/vulcanizedb/test_config"
 	"math/rand"
 	"strconv"
 	"time"
@@ -318,22 +319,22 @@ type SetupData struct {
 
 func getMetadata(ilk, urn string) Metadata {
 	return Metadata{
-		UrnInk: shared.GetStorageValueMetadata(vat.UrnInk,
-			map[shared.Key]string{shared.Ilk: ilk, shared.Guy: urn}, shared.Uint256),
-		UrnArt: shared.GetStorageValueMetadata(vat.UrnArt,
-			map[shared.Key]string{shared.Ilk: ilk, shared.Guy: urn}, shared.Uint256),
-		IlkSpot: shared.GetStorageValueMetadata(pit.IlkSpot,
-			map[shared.Key]string{shared.Ilk: ilk}, shared.Uint256),
-		IlkRate: shared.GetStorageValueMetadata(vat.IlkRate,
-			map[shared.Key]string{shared.Ilk: ilk}, shared.Uint256),
+		UrnInk: utils.GetStorageValueMetadata(vat.UrnInk,
+			map[utils.Key]string{constants.Ilk: ilk, constants.Guy: urn}, utils.Uint256),
+		UrnArt: utils.GetStorageValueMetadata(vat.UrnArt,
+			map[utils.Key]string{constants.Ilk: ilk, constants.Guy: urn}, utils.Uint256),
+		IlkSpot: utils.GetStorageValueMetadata(pit.IlkSpot,
+			map[utils.Key]string{constants.Ilk: ilk}, utils.Uint256),
+		IlkRate: utils.GetStorageValueMetadata(vat.IlkRate,
+			map[utils.Key]string{constants.Ilk: ilk}, utils.Uint256),
 	}
 }
 
 type Metadata struct {
-	UrnInk  shared.StorageValueMetadata
-	UrnArt  shared.StorageValueMetadata
-	IlkSpot shared.StorageValueMetadata
-	IlkRate shared.StorageValueMetadata
+	UrnInk  utils.StorageValueMetadata
+	UrnArt  utils.StorageValueMetadata
+	IlkSpot utils.StorageValueMetadata
+	IlkRate utils.StorageValueMetadata
 }
 
 type UrnState struct {
