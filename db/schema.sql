@@ -43,6 +43,7 @@ COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';
 
 --
 <<<<<<< HEAD
+<<<<<<< HEAD
 -- Name: ilk_state; Type: TYPE; Schema: maker; Owner: -
 --
 
@@ -63,10 +64,20 @@ CREATE TYPE maker.ilk_state AS (
 	tax numeric,
 	created numeric,
 	updated numeric
+=======
+-- Name: urn_change; Type: TYPE; Schema: maker; Owner: -
+--
+
+CREATE TYPE maker.urn_change AS (
+	ink numeric,
+	art numeric,
+	"timestamp" numeric
+>>>>>>> Add urn history query and test
 );
 
 
 --
+<<<<<<< HEAD
 -- Name: relevant_block; Type: TYPE; Schema: maker; Owner: -
 --
 
@@ -80,6 +91,8 @@ CREATE TYPE maker.relevant_block AS (
 --
 =======
 >>>>>>> Fix after repo swap
+=======
+>>>>>>> Add urn history query and test
 -- Name: urn_state; Type: TYPE; Schema: maker; Owner: -
 --
 
@@ -638,6 +651,41 @@ BEGIN
   RETURN NEW;
 END;
 $$;
+
+
+--
+-- Name: urn_history(text, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.urn_history(ilk text, urn text) RETURNS SETOF maker.urn_change
+    LANGUAGE sql
+    AS $_$
+WITH
+  ilk AS ( SELECT DISTINCT id FROM maker.ilks WHERE ilk = $1),
+
+  inks AS (
+    SELECT vat_urn_ink.id, ink, block_timestamp
+    FROM maker.vat_urn_ink
+           LEFT JOIN headers ON headers.block_number = vat_urn_ink.block_number
+    WHERE ilk = (SELECT ilk.id FROM ilk) AND urn = $2
+    ORDER BY headers.block_number DESC
+  ),
+
+  arts AS (
+    SELECT vat_urn_art.id, art::numeric, block_timestamp
+    FROM maker.vat_urn_art -- Fix type of art
+           LEFT JOIN headers ON headers.block_number = vat_urn_art.block_number
+    WHERE ilk = (SELECT ilk.id FROM ilk) AND urn = $2
+    ORDER BY headers.block_number DESC
+  )
+
+SELECT ink, art, block_timestamp FROM (
+  SELECT ink, null AS art, block_timestamp FROM inks
+  UNION ALL
+  SELECT null AS ink, art, block_timestamp FROM arts
+) AS updates ORDER BY block_timestamp DESC
+
+$_$;
 
 
 SET default_tablespace = '';
