@@ -11,7 +11,6 @@ import (
 	"github.com/vulcanize/mcd_transformers/transformers/test_data"
 	"github.com/vulcanize/vulcanizedb/libraries/shared/storage/utils"
 	"github.com/vulcanize/vulcanizedb/pkg/core"
-	"github.com/vulcanize/vulcanizedb/pkg/datastore"
 	"github.com/vulcanize/vulcanizedb/pkg/datastore/postgres"
 	"github.com/vulcanize/vulcanizedb/pkg/datastore/postgres/repositories"
 	"github.com/vulcanize/vulcanizedb/pkg/fakes"
@@ -20,20 +19,17 @@ import (
 	"time"
 )
 
-var (
-	vatRepo    vat.VatStorageRepository
-	pitRepo    pit.PitStorageRepository
-	headerRepo datastore.HeaderRepository
-)
-
 var _ = Describe("Urn view", func() {
 	var (
-		db     *postgres.DB
-		urnOne string
-		urnTwo string
-		ilkOne string
-		ilkTwo string
-		err    error
+		db         *postgres.DB
+		vatRepo    vat.VatStorageRepository
+		pitRepo    pit.PitStorageRepository
+		headerRepo repositories.HeaderRepository
+		urnOne     string
+		urnTwo     string
+		ilkOne     string
+		ilkTwo     string
+		err        error
 	)
 
 	BeforeEach(func() {
@@ -58,7 +54,7 @@ var _ = Describe("Urn view", func() {
 
 		setupData := getSetupData(fakeBlockNo, fakeTimestamp)
 		metadata := getMetadata(ilkOne, urnOne)
-		createUrn(setupData, metadata)
+		createUrn(setupData, metadata, vatRepo, pitRepo, headerRepo)
 
 		var result UrnState
 		err = db.Get(&result, `SELECT urnId, ilkId, ink, art, ratio, safe, created, updated
@@ -94,11 +90,11 @@ var _ = Describe("Urn view", func() {
 
 		urnOneMetadata := getMetadata(ilkOne, urnOne)
 		urnOneSetupData := getSetupData(blockOne, timestampOne)
-		createUrn(urnOneSetupData, urnOneMetadata)
+		createUrn(urnOneSetupData, urnOneMetadata, vatRepo, pitRepo, headerRepo)
 
 		urnTwoMetadata := getMetadata(ilkTwo, urnTwo)
 		urnTwoSetupData := getSetupData(blockTwo, timestampTwo)
-		createUrn(urnTwoSetupData, urnTwoMetadata)
+		createUrn(urnTwoSetupData, urnTwoMetadata, vatRepo, pitRepo, headerRepo)
 
 		var result []UrnState
 		err = db.Select(&result, `SELECT urnId, ilkId, ink, art, ratio, safe, created, updated
@@ -147,7 +143,7 @@ var _ = Describe("Urn view", func() {
 		metadata := getMetadata(ilkOne, urnOne)
 		setupData := getSetupData(block, timestamp)
 
-		createUrn(setupData, metadata)
+		createUrn(setupData, metadata, vatRepo, pitRepo, headerRepo)
 		_, err = db.Exec(`DELETE FROM headers`)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -174,7 +170,7 @@ var _ = Describe("Urn view", func() {
 			timestampOne = rand.Int()
 			setupDataOne = getSetupData(blockOne, timestampOne)
 			metadata = getMetadata(ilkOne, urnOne)
-			createUrn(setupDataOne, metadata)
+			createUrn(setupDataOne, metadata, vatRepo, pitRepo, headerRepo)
 		})
 
 		It("gets urn state as of block one", func() {
@@ -250,7 +246,7 @@ var _ = Describe("Urn view", func() {
 		setupData := getSetupData(block, 1)
 		setupData.Art = 0
 		metadata := getMetadata(ilkOne, urnOne)
-		createUrn(setupData, metadata)
+		createUrn(setupData, metadata, vatRepo, pitRepo, headerRepo)
 
 		fakeHeader := fakes.GetFakeHeader(int64(block))
 		_, err = headerRepo.CreateOrUpdateHeader(fakeHeader)
@@ -273,7 +269,9 @@ func getExpectedRatio(ink, spot, art, rate int) float64 {
 }
 
 // Creates urn by creating necessary state diffs and the corresponding header
-func createUrn(setupData SetupData, metadata Metadata) {
+func createUrn(setupData SetupData, metadata Metadata, vatRepo vat.VatStorageRepository,
+	pitRepo pit.PitStorageRepository, headerRepo repositories.HeaderRepository) {
+
 	blockNo := int(setupData.Header.BlockNumber)
 	hash := setupData.Header.Hash
 
