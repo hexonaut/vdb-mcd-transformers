@@ -14,7 +14,6 @@ func TestQueries(t *testing.T) {
 	RunSpecs(t, "Queries Suite")
 }
 
-
 var _ = BeforeSuite(func() {
 	logrus.SetOutput(ioutil.Discard)
 })
