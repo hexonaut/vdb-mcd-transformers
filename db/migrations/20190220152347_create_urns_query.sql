@@ -17,7 +17,7 @@ CREATE TYPE maker.urn_state AS (
   updated     NUMERIC
   );
 
--- Function returning state for a single urn
+-- Function returning state for all urns as of given block
 CREATE OR REPLACE FUNCTION get_urn_states_at_block(block_height numeric)
   RETURNS SETOF maker.urn_state
 AS
@@ -34,8 +34,8 @@ WITH
   ),
 
   arts AS ( -- Latest art for each urn
-    SELECT DISTINCT ON (ilk, urn) ilk, urn, art::numeric, block_number
-    FROM maker.vat_urn_art -- Fix type of art
+    SELECT DISTINCT ON (ilk, urn) ilk, urn, art, block_number
+    FROM maker.vat_urn_art
     WHERE block_number <= block_height
     ORDER BY ilk, urn, block_number DESC
   ),
@@ -54,22 +54,20 @@ WITH
     ORDER BY ilk, block_number DESC
   ),
 
+  ratio_data AS (
+    SELECT inks.ilk, inks.urn, ink, spot, art, rate
+    FROM inks
+      JOIN arts ON arts.ilk = inks.ilk AND arts.urn = inks.urn
+      JOIN spots ON spots.ilk = arts.ilk
+      JOIN rates ON rates.ilk = arts.ilk
+  ),
+
   ratios AS (
-    SELECT ilk, urn, ((1.0 * ink * spot) / (NULLIF(art, 0) * rate)) AS ratio FROM -- 0 Art => Null ratio
-      (
-        SELECT inks.ilk, inks.urn, ink, spot, art, rate
-        FROM inks
-               JOIN arts ON arts.ilk = inks.ilk AND arts.urn = inks.urn
-               JOIN spots ON spots.ilk = arts.ilk
-               JOIN rates ON rates.ilk = arts.ilk
-      ) AS ratio_data
+    SELECT ilk, urn, ((1.0 * ink * spot) / NULLIF(art * rate, 0)) AS ratio FROM ratio_data
   ),
 
   safe AS (
-    SELECT ilk, urn, (COALESCE(ratio >= 1, TRUE)) AS safe FROM -- Null ratio => 0 Art => safe urn.
-      (
-        SELECT ilk, urn, ratio FROM ratios
-      ) ratios
+    SELECT ilk, urn, (ratio >= 1) AS safe FROM ratios
   ),
 
   created AS (
@@ -98,7 +96,8 @@ WITH
     ORDER BY ilk, urn, headers.block_timestamp DESC
   )
 
-SELECT inks.urn, ilks.ilk, $1, inks.ink, arts.art, ratios.ratio, safe.safe, created.created, updated.updated
+SELECT inks.urn, ilks.ilk, $1, inks.ink, arts.art, ratios.ratio,
+       COALESCE(safe.safe, arts.art = 0), created.created, updated.updated
 FROM inks
   LEFT JOIN arts     ON arts.ilk = inks.ilk    AND arts.urn = inks.urn
   LEFT JOIN ilks     ON ilks.id = arts.ilk
