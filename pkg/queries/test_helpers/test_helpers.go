@@ -257,13 +257,14 @@ type UrnMetadata struct {
 }
 
 type UrnState struct {
-	UrnId   string
-	IlkId   string
-	Ink     string
-	Art     string
-	Ratio   sql.NullString
-	Safe    bool
-	Created sql.NullString
-	Updated sql.NullString
+	UrnId       string
+	IlkId       string
+	BlockHeight int
+	Ink         string
+	Art         string
+	Ratio       sql.NullString
+	Safe        bool
+	Created     sql.NullString
+	Updated     sql.NullString
 	// Frobs and bites collections, and ilk object, are missing
 }

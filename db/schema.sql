@@ -2,13 +2,8 @@
 -- PostgreSQL database dump
 --
 
-<<<<<<< HEAD
--- Dumped from database version 10.6
--- Dumped by pg_dump version 10.6
-=======
 -- Dumped from database version 10.5
 -- Dumped by pg_dump version 10.5
->>>>>>> Fix after repo swap
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -42,8 +37,6 @@ COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';
 
 
 --
-<<<<<<< HEAD
-<<<<<<< HEAD
 -- Name: ilk_state; Type: TYPE; Schema: maker; Owner: -
 --
 
@@ -64,20 +57,10 @@ CREATE TYPE maker.ilk_state AS (
 	tax numeric,
 	created numeric,
 	updated numeric
-=======
--- Name: urn_change; Type: TYPE; Schema: maker; Owner: -
---
-
-CREATE TYPE maker.urn_change AS (
-	ink numeric,
-	art numeric,
-	"timestamp" numeric
->>>>>>> Add urn history query and test
 );
 
 
 --
-<<<<<<< HEAD
 -- Name: relevant_block; Type: TYPE; Schema: maker; Owner: -
 --
 
@@ -89,10 +72,17 @@ CREATE TYPE maker.relevant_block AS (
 
 
 --
-=======
->>>>>>> Fix after repo swap
-=======
->>>>>>> Add urn history query and test
+-- Name: urn_change; Type: TYPE; Schema: maker; Owner: -
+--
+
+CREATE TYPE maker.urn_change AS (
+	ink numeric,
+	art numeric,
+	"timestamp" numeric
+);
+
+
+--
 -- Name: urn_state; Type: TYPE; Schema: maker; Owner: -
 --
 
@@ -110,7 +100,99 @@ CREATE TYPE maker.urn_state AS (
 
 
 --
-<<<<<<< HEAD
+-- Name: get_all_urn_states_at_block(numeric); Type: FUNCTION; Schema: maker; Owner: -
+--
+
+CREATE FUNCTION maker.get_all_urn_states_at_block(block_height numeric) RETURNS SETOF maker.urn_state
+    LANGUAGE sql
+    AS $_$
+WITH
+  ilks AS ( SELECT id, ilk FROM maker.ilks ),
+
+  inks AS ( -- Latest ink for each urn
+    SELECT DISTINCT ON (ilk, urn) ilk, urn, ink, block_number
+    FROM maker.vat_urn_ink
+    WHERE block_number <= block_height
+    ORDER BY ilk, urn, block_number DESC
+  ),
+
+  arts AS ( -- Latest art for each urn
+    SELECT DISTINCT ON (ilk, urn) ilk, urn, art, block_number
+    FROM maker.vat_urn_art
+    WHERE block_number <= block_height
+    ORDER BY ilk, urn, block_number DESC
+  ),
+
+  rates AS ( -- Latest rate for each ilk
+    SELECT DISTINCT ON (ilk) ilk, rate, block_number
+    FROM maker.vat_ilk_rate
+    WHERE block_number <= block_height
+    ORDER BY ilk, block_number DESC
+  ),
+
+  spots AS ( -- Get latest price update for ilk. Problematic from update frequency, slow query?
+    SELECT DISTINCT ON (ilk) ilk, spot, block_number
+    FROM maker.pit_ilk_spot
+    WHERE block_number <= block_height
+    ORDER BY ilk, block_number DESC
+  ),
+
+  ratio_data AS (
+    SELECT inks.ilk, inks.urn, ink, spot, art, rate
+    FROM inks
+      JOIN arts ON arts.ilk = inks.ilk AND arts.urn = inks.urn
+      JOIN spots ON spots.ilk = arts.ilk
+      JOIN rates ON rates.ilk = arts.ilk
+  ),
+
+  ratios AS (
+    SELECT ilk, urn, ((1.0 * ink * spot) / NULLIF(art * rate, 0)) AS ratio FROM ratio_data
+  ),
+
+  safe AS (
+    SELECT ilk, urn, (ratio >= 1) AS safe FROM ratios
+  ),
+
+  created AS (
+    SELECT ilk, urn, block_timestamp AS created
+    FROM
+      (
+        SELECT DISTINCT ON (ilk, urn) ilk, urn, block_hash FROM maker.vat_urn_ink
+        ORDER BY ilk, urn, block_number ASC
+      ) earliest_blocks
+        LEFT JOIN public.headers ON hash = block_hash
+  ),
+
+  updated AS (
+    SELECT DISTINCT ON (ilk, urn) ilk, urn, headers.block_timestamp AS updated
+    FROM
+      (
+        (SELECT DISTINCT ON (ilk, urn) ilk, urn, block_hash FROM maker.vat_urn_ink
+         WHERE block_number <= block_height
+         ORDER BY ilk, urn, block_number DESC)
+        UNION
+        (SELECT DISTINCT ON (ilk, urn) ilk, urn, block_hash FROM maker.vat_urn_art
+         WHERE block_number <= block_height
+         ORDER BY ilk, urn, block_number DESC)
+      ) last_blocks
+        LEFT JOIN public.headers ON headers.hash = last_blocks.block_hash
+    ORDER BY ilk, urn, headers.block_timestamp DESC
+  )
+
+SELECT inks.urn, ilks.ilk, $1, inks.ink, arts.art, ratios.ratio,
+       COALESCE(safe.safe, arts.art = 0), created.created, updated.updated
+FROM inks
+  LEFT JOIN arts     ON arts.ilk = inks.ilk    AND arts.urn = inks.urn
+  LEFT JOIN ilks     ON ilks.id = arts.ilk
+  LEFT JOIN ratios   ON ratios.ilk = arts.ilk  AND ratios.urn = arts.urn
+  LEFT JOIN safe     ON safe.ilk = arts.ilk    AND safe.urn = arts.urn
+  LEFT JOIN created  ON created.ilk = arts.ilk AND created.urn = arts.urn
+  LEFT JOIN updated  ON updated.ilk = arts.ilk AND updated.urn = arts.urn
+  -- Add collections of frob and bite events?
+$_$;
+
+
+--
 -- Name: get_ilk_at_block_number(numeric, integer); Type: FUNCTION; Schema: maker; Owner: -
 --
 
@@ -415,138 +497,42 @@ $_$;
 
 
 --
--- Name: get_all_urn_states_at_block(numeric); Type: FUNCTION; Schema: public; Owner: -
+-- Name: get_urn_history_before_block(text, text, numeric); Type: FUNCTION; Schema: maker; Owner: -
 --
 
-CREATE FUNCTION public.get_all_urn_states_at_block(block_height numeric) RETURNS SETOF maker.urn_state
-=======
--- Name: get_urn_states_at_block(numeric); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.get_urn_states_at_block(block_height numeric) RETURNS SETOF maker.urn_state
->>>>>>> Fix after repo swap
-    LANGUAGE sql
+CREATE FUNCTION maker.get_urn_history_before_block(ilk text, urn text, block_height numeric) RETURNS SETOF maker.urn_state
+    LANGUAGE plpgsql
     AS $_$
-WITH
-  ilks AS ( SELECT id, ilk FROM maker.ilks ),
+DECLARE
+  i NUMERIC;
+  ilkId NUMERIC;
+BEGIN
+  SELECT id FROM maker.ilks where ilks.ilk = $1 INTO ilkId;
 
-  inks AS ( -- Latest ink for each urn
-    SELECT DISTINCT ON (ilk, urn) ilk, urn, ink, block_number
-    FROM maker.vat_urn_ink
-    WHERE block_number <= block_height
-    ORDER BY ilk, urn, block_number DESC
-  ),
+  CREATE TEMP TABLE updated ON COMMIT DROP AS
+  SELECT block_number FROM (
+    SELECT block_number FROM maker.vat_urn_ink
+    WHERE vat_urn_ink.ilk = ilkId AND vat_urn_ink.urn = $2 AND block_number <= $3
+    UNION
+    SELECT block_number FROM maker.vat_urn_art
+    WHERE vat_urn_art.ilk = ilkId AND vat_urn_art.urn = $2 AND block_number <= $3
+  ) inks_and_arts
+  ORDER BY block_number DESC;
 
-  arts AS ( -- Latest art for each urn
-<<<<<<< HEAD
-    SELECT DISTINCT ON (ilk, urn) ilk, urn, art, block_number
-    FROM maker.vat_urn_art
-=======
-    SELECT DISTINCT ON (ilk, urn) ilk, urn, art::numeric, block_number
-    FROM maker.vat_urn_art -- Fix type of art
->>>>>>> Fix after repo swap
-    WHERE block_number <= block_height
-    ORDER BY ilk, urn, block_number DESC
-  ),
-
-  rates AS ( -- Latest rate for each ilk
-    SELECT DISTINCT ON (ilk) ilk, rate, block_number
-    FROM maker.vat_ilk_rate
-    WHERE block_number <= block_height
-    ORDER BY ilk, block_number DESC
-  ),
-
-  spots AS ( -- Get latest price update for ilk. Problematic from update frequency, slow query?
-    SELECT DISTINCT ON (ilk) ilk, spot, block_number
-    FROM maker.pit_ilk_spot
-    WHERE block_number <= block_height
-    ORDER BY ilk, block_number DESC
-  ),
-
-<<<<<<< HEAD
-  ratio_data AS (
-    SELECT inks.ilk, inks.urn, ink, spot, art, rate
-    FROM inks
-      JOIN arts ON arts.ilk = inks.ilk AND arts.urn = inks.urn
-      JOIN spots ON spots.ilk = arts.ilk
-      JOIN rates ON rates.ilk = arts.ilk
-  ),
-
-  ratios AS (
-    SELECT ilk, urn, ((1.0 * ink * spot) / NULLIF(art * rate, 0)) AS ratio FROM ratio_data
-  ),
-
-  safe AS (
-    SELECT ilk, urn, (ratio >= 1) AS safe FROM ratios
-=======
-  ratios AS (
-    SELECT ilk, urn, ((1.0 * ink * spot) / (NULLIF(art, 0) * rate)) AS ratio FROM -- 0 Art => Null ratio
-      (
-        SELECT inks.ilk, inks.urn, ink, spot, art, rate
-        FROM inks
-               JOIN arts ON arts.ilk = inks.ilk AND arts.urn = inks.urn
-               JOIN spots ON spots.ilk = arts.ilk
-               JOIN rates ON rates.ilk = arts.ilk
-      ) AS ratio_data
-  ),
-
-  safe AS (
-    SELECT ilk, urn, (COALESCE(ratio >= 1, TRUE)) AS safe FROM -- Null ratio => 0 Art => safe urn.
-      (
-        SELECT ilk, urn, ratio FROM ratios
-      ) ratios
->>>>>>> Fix after repo swap
-  ),
-
-  created AS (
-    SELECT ilk, urn, block_timestamp AS created
-    FROM
-      (
-        SELECT DISTINCT ON (ilk, urn) ilk, urn, block_hash FROM maker.vat_urn_ink
-        ORDER BY ilk, urn, block_number ASC
-      ) earliest_blocks
-        LEFT JOIN public.headers ON hash = block_hash
-  ),
-
-  updated AS (
-    SELECT DISTINCT ON (ilk, urn) ilk, urn, headers.block_timestamp AS updated
-    FROM
-      (
-        (SELECT DISTINCT ON (ilk, urn) ilk, urn, block_hash FROM maker.vat_urn_ink
-         WHERE block_number <= block_height
-         ORDER BY ilk, urn, block_number DESC)
-        UNION
-        (SELECT DISTINCT ON (ilk, urn) ilk, urn, block_hash FROM maker.vat_urn_art
-         WHERE block_number <= block_height
-         ORDER BY ilk, urn, block_number DESC)
-      ) last_blocks
-        LEFT JOIN public.headers ON headers.hash = last_blocks.block_hash
-    ORDER BY ilk, urn, headers.block_timestamp DESC
-  )
-
-<<<<<<< HEAD
-SELECT inks.urn, ilks.ilk, $1, inks.ink, arts.art, ratios.ratio,
-       COALESCE(safe.safe, arts.art = 0), created.created, updated.updated
-=======
-SELECT inks.urn, ilks.ilk, $1, inks.ink, arts.art, ratios.ratio, safe.safe, created.created, updated.updated
->>>>>>> Fix after repo swap
-FROM inks
-  LEFT JOIN arts     ON arts.ilk = inks.ilk    AND arts.urn = inks.urn
-  LEFT JOIN ilks     ON ilks.id = arts.ilk
-  LEFT JOIN ratios   ON ratios.ilk = arts.ilk  AND ratios.urn = arts.urn
-  LEFT JOIN safe     ON safe.ilk = arts.ilk    AND safe.urn = arts.urn
-  LEFT JOIN created  ON created.ilk = arts.ilk AND created.urn = arts.urn
-  LEFT JOIN updated  ON updated.ilk = arts.ilk AND updated.urn = arts.urn
-  -- Add collections of frob and bite events?
+  FOR i IN SELECT block_number FROM updated
+    LOOP
+      RETURN QUERY
+        SELECT * FROM maker.get_urn_state_at_block(ilk, urn, i);
+    END LOOP;
+END;
 $_$;
 
 
 --
-<<<<<<< HEAD
--- Name: get_urn_state_at_block(text, text, numeric); Type: FUNCTION; Schema: public; Owner: -
+-- Name: get_urn_state_at_block(text, text, numeric); Type: FUNCTION; Schema: maker; Owner: -
 --
 
-CREATE FUNCTION public.get_urn_state_at_block(ilk text, urn text, block_height numeric) RETURNS maker.urn_state
+CREATE FUNCTION maker.get_urn_state_at_block(ilk text, urn text, block_height numeric) RETURNS maker.urn_state
     LANGUAGE sql
     AS $_$
 WITH
@@ -635,8 +621,6 @@ $_$;
 
 
 --
-=======
->>>>>>> Fix after repo swap
 -- Name: notify_pricefeed(); Type: FUNCTION; Schema: public; Owner: -
 --
 

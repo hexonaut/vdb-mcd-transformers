@@ -56,7 +56,7 @@ var _ = Describe("Urn view", func() {
 
 		var result UrnState
 		err = db.Get(&result, `SELECT urnId, ilkId, ink, art, ratio, safe, created, updated
-			FROM get_all_urn_states_at_block($1)`, fakeBlockNo)
+			FROM maker.get_all_urn_states_at_block($1)`, fakeBlockNo)
 		Expect(err).NotTo(HaveOccurred())
 
 		expectedRatio := GetExpectedRatio(setupData.Ink, setupData.Spot, setupData.Art, setupData.Rate)
@@ -96,7 +96,7 @@ var _ = Describe("Urn view", func() {
 
 		var result []UrnState
 		err = db.Select(&result, `SELECT urnId, ilkId, ink, art, ratio, safe, created, updated
-			FROM get_all_urn_states_at_block($1)`, blockTwo)
+			FROM maker.get_all_urn_states_at_block($1)`, blockTwo)
 		Expect(err).NotTo(HaveOccurred())
 
 		expectedRatioOne := GetExpectedRatio(urnOneSetupData.Ink, urnOneSetupData.Spot, urnOneSetupData.Art, urnOneSetupData.Rate)
@@ -147,7 +147,7 @@ var _ = Describe("Urn view", func() {
 
 		var result UrnState
 		err = db.Get(&result, `SELECT urnId, ilkId, ink, art, ratio, safe, created, updated
-			FROM get_all_urn_states_at_block($1)`, block)
+			FROM maker.get_all_urn_states_at_block($1)`, block)
 
 		Expect(err).NotTo(HaveOccurred())
 		Expect(result.Created.String).To(BeEmpty())
@@ -173,7 +173,7 @@ var _ = Describe("Urn view", func() {
 
 		It("gets urn state as of block one", func() {
 			err = db.Get(&result, `SELECT urnId, ilkId, ink, art, ratio, safe, created, updated
-				FROM get_all_urn_states_at_block($1)`, blockOne)
+				FROM maker.get_all_urn_states_at_block($1)`, blockOne)
 			Expect(err).NotTo(HaveOccurred())
 
 			expectedRatio := GetExpectedRatio(setupDataOne.Ink, setupDataOne.Spot, setupDataOne.Art, setupDataOne.Rate)
@@ -214,7 +214,7 @@ var _ = Describe("Urn view", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			err = db.Get(&result, `SELECT urnId, ilkId, ink, art, ratio, safe, created, updated
-				FROM get_all_urn_states_at_block($1)`, blockTwo)
+				FROM maker.get_all_urn_states_at_block($1)`, blockTwo)
 			Expect(err).NotTo(HaveOccurred())
 
 			expectedRatio := GetExpectedRatio(updatedInk, setupDataOne.Spot, setupDataOne.Art, setupDataOne.Rate)
@@ -252,7 +252,7 @@ var _ = Describe("Urn view", func() {
 
 		var result UrnState
 		err = db.Get(&result, `SELECT urnId, ilkId, ink, art, ratio, safe, created, updated
-			FROM get_all_urn_states_at_block($1)`, block)
+			FROM maker.get_all_urn_states_at_block($1)`, block)
 		Expect(err).NotTo(HaveOccurred())
 
 		Expect(result.Ratio.String).To(BeEmpty())

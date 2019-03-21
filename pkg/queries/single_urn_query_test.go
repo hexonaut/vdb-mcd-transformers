@@ -62,7 +62,7 @@ var _ = Describe("Single urn view", func() {
 
 		var result UrnState
 		err = db.Get(&result, `SELECT urnId, ilkId, ink, art, ratio, safe, created, updated
-			FROM get_urn_state_at_block($1, $2, $3)`, ilkOne, urnOne, blockTwo)
+			FROM maker.get_urn_state_at_block($1, $2, $3)`, ilkOne, urnOne, blockTwo)
 		Expect(err).NotTo(HaveOccurred())
 
 		expectedRatio := GetExpectedRatio(urnOneSetupData.Ink, urnOneSetupData.Spot, urnOneSetupData.Art, urnOneSetupData.Rate)
@@ -98,7 +98,7 @@ var _ = Describe("Single urn view", func() {
 
 		var result UrnState
 		err = db.Get(&result, `SELECT urnId, ilkId, ink, art, ratio, safe, created, updated
-			FROM get_urn_state_at_block($1, $2, $3)`, ilkOne, urnOne, block)
+			FROM maker.get_urn_state_at_block($1, $2, $3)`, ilkOne, urnOne, block)
 
 		Expect(err).NotTo(HaveOccurred())
 		Expect(result.Created.String).To(BeEmpty())
@@ -131,7 +131,7 @@ var _ = Describe("Single urn view", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			err = db.Get(&result, `SELECT urnId, ilkId, ink, art, ratio, safe, created, updated
-				FROM get_urn_state_at_block($1, $2, $3)`, ilkOne, urnOne, blockOne)
+				FROM maker.get_urn_state_at_block($1, $2, $3)`, ilkOne, urnOne, blockOne)
 			Expect(err).NotTo(HaveOccurred())
 
 			expectedRatio := GetExpectedRatio(setupDataOne.Ink, setupDataOne.Spot, setupDataOne.Art, setupDataOne.Rate)
@@ -172,7 +172,7 @@ var _ = Describe("Single urn view", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			err = db.Get(&result, `SELECT urnId, ilkId, ink, art, ratio, safe, created, updated
-				FROM get_urn_state_at_block($1, $2, $3)`, ilkOne, urnOne, blockTwo)
+				FROM maker.get_urn_state_at_block($1, $2, $3)`, ilkOne, urnOne, blockTwo)
 			Expect(err).NotTo(HaveOccurred())
 
 			expectedRatio := GetExpectedRatio(updatedInk, setupDataOne.Spot, setupDataOne.Art, setupDataOne.Rate)
@@ -210,7 +210,7 @@ var _ = Describe("Single urn view", func() {
 
 		var result UrnState
 		err = db.Get(&result, `SELECT urnId, ilkId, ink, art, ratio, safe, created, updated
-			FROM get_urn_state_at_block($1, $2, $3)`, ilkOne, urnOne, block)
+			FROM maker.get_urn_state_at_block($1, $2, $3)`, ilkOne, urnOne, block)
 		Expect(err).NotTo(HaveOccurred())
 
 		Expect(result.Ratio.String).To(BeEmpty())
