@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	. "github.com/vulcanize/mcd_transformers/pkg/queries/test_helpers"
+	helper "github.com/vulcanize/mcd_transformers/pkg/queries/test_helpers"
 	"github.com/vulcanize/mcd_transformers/test_config"
 	"github.com/vulcanize/mcd_transformers/transformers/shared/constants"
 	"github.com/vulcanize/mcd_transformers/transformers/storage/pit"
@@ -43,11 +43,26 @@ var _ = Describe("Urn history query", func() {
 	It("returns a reverse chronological history for the given ilk and urn", func() {
 		blockOne := rand.Int()
 		timestampOne := rand.Int()
-		urnSetupData := GetUrnSetupData(blockOne, timestampOne)
-		urnMetadata := GetUrnMetadata(fakeIlk, fakeUrn)
-		CreateUrn(urnSetupData, urnMetadata, vatRepo, pitRepo, headerRepo)
+		urnSetupData := helper.GetUrnSetupData(blockOne, timestampOne)
+		urnMetadata := helper.GetUrnMetadata(fakeIlk, fakeUrn)
+		helper.CreateUrn(urnSetupData, urnMetadata, vatRepo, pitRepo, headerRepo)
 
-		expectedRatioOne := GetExpectedRatio(urnSetupData.Ink, urnSetupData.Spot, urnSetupData.Art, urnSetupData.Rate)
+		inkBlockOne := urnSetupData.Ink
+		artBlockOne := urnSetupData.Art
+
+		expectedRatioBlockOne := helper.GetExpectedRatio(inkBlockOne, urnSetupData.Spot, artBlockOne, urnSetupData.Rate)
+
+		expectedUrnBlockOne := helper.UrnState{
+			UrnId:       fakeUrn,
+			IlkId:       fakeIlk,
+			BlockHeight: blockOne,
+			Ink:         strconv.Itoa(inkBlockOne),
+			Art:         strconv.Itoa(artBlockOne),
+			Ratio:       sql.NullString{String: strconv.FormatFloat(expectedRatioBlockOne, 'f', 8, 64), Valid: true},
+			Safe:        expectedRatioBlockOne >= 1,
+			Created:     sql.NullString{String: strconv.Itoa(timestampOne), Valid: true},
+			Updated:     sql.NullString{String: strconv.Itoa(timestampOne), Valid: true},
+		}
 
 		// New block
 		blockTwo := blockOne + 1
@@ -55,19 +70,31 @@ var _ = Describe("Urn history query", func() {
 		createFakeHeader(blockTwo, timestampTwo, headerRepo)
 
 		// Relevant ink diff in block two
-		inkTwo := rand.Int()
-		err := vatRepo.Create(blockTwo, fakes.FakeHash.String(), urnMetadata.UrnInk, strconv.Itoa(inkTwo))
+		inkBlockTwo := rand.Int()
+		err := vatRepo.Create(blockTwo, fakes.FakeHash.String(), urnMetadata.UrnInk, strconv.Itoa(inkBlockTwo))
 		Expect(err).NotTo(HaveOccurred())
 
-		expectedRatioTwo := GetExpectedRatio(inkTwo, urnSetupData.Spot, urnSetupData.Art, urnSetupData.Rate)
-
-		// Irrelevant ink diff in block two
+		// Irrelevant art diff in block two
 		wrongUrn := test_data.RandomString(5)
-		wrongInk := strconv.Itoa(rand.Int())
-		wrongMetadata := utils.GetStorageValueMetadata(vat.UrnInk,
+		wrongArt := strconv.Itoa(rand.Int())
+		wrongMetadata := utils.GetStorageValueMetadata(vat.UrnArt,
 			map[utils.Key]string{constants.Ilk: fakeIlk, constants.Guy: wrongUrn}, utils.Uint256)
-		err = vatRepo.Create(blockOne, fakes.FakeHash.String(), wrongMetadata, wrongInk)
+		err = vatRepo.Create(blockOne, fakes.FakeHash.String(), wrongMetadata, wrongArt)
 		Expect(err).NotTo(HaveOccurred())
+
+		expectedRatioBlockTwo := helper.GetExpectedRatio(inkBlockTwo, urnSetupData.Spot, artBlockOne, urnSetupData.Rate)
+
+		expectedUrnBlockTwo := helper.UrnState{
+			UrnId:       fakeUrn,
+			IlkId:       fakeIlk,
+			BlockHeight: blockTwo,
+			Ink:         strconv.Itoa(inkBlockTwo),
+			Art:         strconv.Itoa(artBlockOne),
+			Ratio:       sql.NullString{String: strconv.FormatFloat(expectedRatioBlockTwo, 'f', 8, 64), Valid: true},
+			Safe:        expectedRatioBlockTwo >= 1,
+			Created:     sql.NullString{String: strconv.Itoa(timestampOne), Valid: true},
+			Updated:     sql.NullString{String: strconv.Itoa(timestampTwo), Valid: true},
+		}
 
 		// New block
 		blockThree := blockTwo + 1
@@ -75,71 +102,32 @@ var _ = Describe("Urn history query", func() {
 		createFakeHeader(blockThree, timestampThree, headerRepo)
 
 		// Relevant art diff in block three
-		artTwo := 0
-		err = vatRepo.Create(blockThree, fakes.FakeHash.String(), urnMetadata.UrnArt, strconv.Itoa(artTwo))
+		artBlockThree := 0
+		err = vatRepo.Create(blockThree, fakes.FakeHash.String(), urnMetadata.UrnArt, strconv.Itoa(artBlockThree))
 		Expect(err).NotTo(HaveOccurred())
 
-		// Relevant ink diff in block three
-		inkThree := rand.Int()
-		err = vatRepo.Create(blockThree, fakes.FakeHash.String(), urnMetadata.UrnInk, strconv.Itoa(inkThree))
-		Expect(err).NotTo(HaveOccurred())
-
-		// Reverse chronological order
-		expectedUrnChanges := []UrnState{
-			{
-				UrnId:       fakeUrn,
-				IlkId:       fakeIlk,
-				BlockHeight: blockThree,
-				Ink:         strconv.Itoa(inkThree),
-				Art:         strconv.Itoa(artTwo),
-				Ratio:       sql.NullString{Valid: false}, // 0 art => null ratio
-				Safe:        true,                         // 0 art => safe urn
-				Created:     sql.NullString{String: strconv.Itoa(timestampOne), Valid: true},
-				Updated:     sql.NullString{String: strconv.Itoa(timestampThree), Valid: true},
-			},
-			{
-				UrnId:       fakeUrn,
-				IlkId:       fakeIlk,
-				BlockHeight: blockTwo,
-				Ink:         strconv.Itoa(inkTwo),
-				Art:         strconv.Itoa(urnSetupData.Art),
-				Ratio:       sql.NullString{Valid: false}, // float; checked approximately below
-				Safe:        expectedRatioTwo >= 1,
-				Created:     sql.NullString{String: strconv.Itoa(timestampOne), Valid: true},
-				Updated:     sql.NullString{String: strconv.Itoa(timestampTwo), Valid: true},
-			},
-			{
-				UrnId:       fakeUrn,
-				IlkId:       fakeIlk,
-				BlockHeight: blockOne,
-				Ink:         strconv.Itoa(urnSetupData.Ink),
-				Art:         strconv.Itoa(urnSetupData.Art),
-				Ratio:       sql.NullString{Valid: false}, // float; checked approximately below
-				Safe:        expectedRatioOne >= 1,
-				Created:     sql.NullString{String: strconv.Itoa(timestampOne), Valid: true},
-				Updated:     sql.NullString{String: strconv.Itoa(timestampOne), Valid: true},
-			},
+		expectedUrnBlockThree := helper.UrnState{
+			UrnId:       fakeUrn,
+			IlkId:       fakeIlk,
+			BlockHeight: blockThree,
+			Ink:         strconv.Itoa(inkBlockTwo),
+			Art:         strconv.Itoa(artBlockThree),
+			Ratio:       sql.NullString{Valid: false}, // 0 art => null ratio
+			Safe:        true,                         // 0 art => safe urn
+			Created:     sql.NullString{String: strconv.Itoa(timestampOne), Valid: true},
+			Updated:     sql.NullString{String: strconv.Itoa(timestampThree), Valid: true},
 		}
 
-		var result []UrnState
+		var result []helper.UrnState
 		dbErr := db.Select(&result,
 			`SELECT * FROM maker.get_urn_history_before_block($1, $2, $3)`,
 			fakeIlk, fakeUrn, blockThree)
 		Expect(dbErr).NotTo(HaveOccurred())
 
-		// Extract actual ratios
-		actualRatioTwo, err := strconv.ParseFloat(result[1].Ratio.String, 64)
-		Expect(err).NotTo(HaveOccurred())
-		result[1].Ratio = sql.NullString{Valid: false}
-
-		actualRatioThree, err := strconv.ParseFloat(result[2].Ratio.String, 64)
-		Expect(err).NotTo(HaveOccurred())
-		result[2].Ratio = sql.NullString{Valid: false}
-
-		Expect(result).To(Equal(expectedUrnChanges))
-		// Check ratios one and two approximately
-		Expect(actualRatioTwo).To(BeNumerically("~", expectedRatioTwo))
-		Expect(actualRatioThree).To(BeNumerically("~", expectedRatioOne))
+		// Reverse chronological order
+		helper.AssertUrn(result[0], expectedUrnBlockThree)
+		helper.AssertUrn(result[1], expectedUrnBlockTwo)
+		helper.AssertUrn(result[2], expectedUrnBlockOne)
 	})
 })
 

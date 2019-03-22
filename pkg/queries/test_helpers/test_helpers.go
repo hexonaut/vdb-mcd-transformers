@@ -268,3 +268,25 @@ type UrnState struct {
 	Updated     sql.NullString
 	// Frobs and bites collections, and ilk object, are missing
 }
+
+func AssertUrn(actual, expected UrnState) {
+	Expect(actual.UrnId).To(Equal(expected.UrnId))
+	Expect(actual.IlkId).To(Equal(expected.IlkId))
+	Expect(actual.BlockHeight).To(Equal(expected.BlockHeight))
+	Expect(actual.Ink).To(Equal(expected.Ink))
+	Expect(actual.Art).To(Equal(expected.Art))
+
+	if actual.Ratio.Valid {
+		actualRatio, err := strconv.ParseFloat(actual.Ratio.String, 64)
+		Expect(err).NotTo(HaveOccurred())
+		expectedRatio, err := strconv.ParseFloat(expected.Ratio.String, 64)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(actualRatio).To(BeNumerically("~", expectedRatio))
+	} else {
+		Expect(!expected.Ratio.Valid)
+	}
+
+	Expect(actual.Safe).To(Equal(expected.Safe))
+	Expect(actual.Created).To(Equal(expected.Created))
+	Expect(actual.Updated).To(Equal(expected.Updated))
+}
