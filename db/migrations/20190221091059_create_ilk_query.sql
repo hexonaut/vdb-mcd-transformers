@@ -280,7 +280,7 @@ LANGUAGE SQL
 STABLE;
 
 -- +goose Down
-DROP FUNCTION IF EXISTS maker.get_relevent_ilk_blocks(block_number bigint, ilk_id int);
+DROP FUNCTION IF EXISTS maker.get_ilk_blocks_before(block_number bigint, ilk_id int);
 DROP TYPE maker.relevant_block CASCADE;
 DROP FUNCTION IF EXISTS maker.get_ilk_at_block_number(block_number bigint, ilk_id int );
 DROP TYPE maker.ilk_state CASCADE;

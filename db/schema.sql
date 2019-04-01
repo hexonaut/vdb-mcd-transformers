@@ -23,6 +23,13 @@ CREATE SCHEMA maker;
 
 
 --
+-- Name: postgraphile_watch; Type: SCHEMA; Schema: -; Owner: -
+--
+
+CREATE SCHEMA postgraphile_watch;
+
+
+--
 -- Name: plpgsql; Type: EXTENSION; Schema: -; Owner: -
 --
 
@@ -37,6 +44,16 @@ COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';
 
 
 --
+-- Name: era; Type: TYPE; Schema: maker; Owner: -
+--
+
+CREATE TYPE maker.era AS (
+	epoch bigint,
+	iso timestamp with time zone
+);
+
+
+--
 -- Name: frob_event; Type: TYPE; Schema: maker; Owner: -
 --
 
@@ -44,7 +61,8 @@ CREATE TYPE maker.frob_event AS (
 	ilkid text,
 	urnid text,
 	dink numeric,
-	dart numeric
+	dart numeric,
+	block_number bigint
 );
 
 
@@ -83,6 +101,20 @@ CREATE TYPE maker.relevant_block AS (
 
 
 --
+-- Name: tx; Type: TYPE; Schema: maker; Owner: -
+--
+
+CREATE TYPE maker.tx AS (
+	transaction_hash text,
+	transaction_index integer,
+	block_number bigint,
+	block_hash text,
+	tx_from text,
+	tx_to text
+);
+
+
+--
 -- Name: urn_state; Type: TYPE; Schema: maker; Owner: -
 --
 
@@ -100,26 +132,61 @@ CREATE TYPE maker.urn_state AS (
 
 
 --
--- Name: frobs(text, text); Type: FUNCTION; Schema: maker; Owner: -
+-- Name: all_frobs(text); Type: FUNCTION; Schema: maker; Owner: -
 --
 
-CREATE FUNCTION maker.frobs(ilk text, urn text) RETURNS SETOF maker.frob_event
-    LANGUAGE sql
+CREATE FUNCTION maker.all_frobs(ilk text) RETURNS SETOF maker.frob_event
+    LANGUAGE sql STABLE
     AS $_$
-WITH
-  ilk AS (SELECT id FROM maker.ilks WHERE ilks.ilk = $1),
-  urn AS (
-    SELECT id FROM maker.urns
-    WHERE ilk_id = (SELECT id FROM ilk)
-      AND guy = $2
-  )
+  WITH
+    ilk AS (SELECT id FROM maker.ilks WHERE ilks.ilk = $1)
 
-SELECT $1 AS ilkId, $2 AS urnId, dink, dart
-  FROM maker.vat_frob LEFT JOIN headers ON vat_frob.header_id = headers.id
-WHERE vat_frob.urn_id = (SELECT id FROM urn)
-ORDER BY block_number DESC
-
+  SELECT $1 AS ilkId, guy AS urnId, dink, dart, block_number
+  FROM maker.vat_frob
+  LEFT JOIN headers    ON vat_frob.header_id = headers.id
+  LEFT JOIN maker.urns ON vat_frob.urn_id = urns.id AND urns.ilk_id = (SELECT id FROM ilk)
+  ORDER BY guy, block_number DESC
 $_$;
+
+
+--
+-- Name: frob_event_ilk(maker.frob_event); Type: FUNCTION; Schema: maker; Owner: -
+--
+
+CREATE FUNCTION maker.frob_event_ilk(event maker.frob_event) RETURNS SETOF maker.ilk_state
+    LANGUAGE sql STABLE
+    AS $$
+  SELECT * FROM maker.get_ilk_at_block_number(
+    event.block_number::numeric,
+    (SELECT id FROM maker.ilks WHERE ilk = event.ilkid))
+$$;
+
+
+--
+-- Name: frob_event_tx(maker.frob_event); Type: FUNCTION; Schema: maker; Owner: -
+--
+
+CREATE FUNCTION maker.frob_event_tx(event maker.frob_event) RETURNS maker.tx
+    LANGUAGE sql STABLE
+    AS $$
+  SELECT txs.hash, txs.tx_index, block_number, headers.hash, tx_from, tx_to
+  FROM public.light_sync_transactions txs
+  LEFT JOIN headers ON txs.header_id = headers.id
+  WHERE block_number <= event.block_number
+  ORDER BY block_number DESC
+  LIMIT 1 -- Should always be true anyway?
+$$;
+
+
+--
+-- Name: frob_event_urn(maker.frob_event); Type: FUNCTION; Schema: maker; Owner: -
+--
+
+CREATE FUNCTION maker.frob_event_urn(event maker.frob_event) RETURNS SETOF maker.urn_state
+    LANGUAGE sql STABLE
+    AS $$
+  SELECT * FROM maker.get_urn_state_at_block(event.ilkid, event.urnid, event.block_number)
+$$;
 
 
 --
@@ -635,6 +702,106 @@ FROM ink
   -- Add collections of frob and bite events?
 WHERE ink.urn_id IS NOT NULL
 $_$;
+
+
+--
+-- Name: ilk_state_frobs(maker.ilk_state); Type: FUNCTION; Schema: maker; Owner: -
+--
+
+CREATE FUNCTION maker.ilk_state_frobs(state maker.ilk_state) RETURNS SETOF maker.frob_event
+    LANGUAGE sql STABLE
+    AS $$
+  SELECT * FROM maker.all_frobs(state.ilk)
+  WHERE block_number <= state.block_number
+$$;
+
+
+--
+-- Name: tx_era(maker.tx); Type: FUNCTION; Schema: maker; Owner: -
+--
+
+CREATE FUNCTION maker.tx_era(tx maker.tx) RETURNS maker.era
+    LANGUAGE sql STABLE
+    AS $$
+  SELECT block_timestamp::BIGINT AS "epoch", to_timestamp(block_timestamp) AS iso
+  FROM headers WHERE block_number = tx.block_number
+$$;
+
+
+--
+-- Name: urn_frobs(text, text); Type: FUNCTION; Schema: maker; Owner: -
+--
+
+CREATE FUNCTION maker.urn_frobs(ilk text, urn text) RETURNS SETOF maker.frob_event
+    LANGUAGE sql STABLE
+    AS $_$
+  WITH
+    ilk AS (SELECT id FROM maker.ilks WHERE ilks.ilk = $1),
+    urn AS (
+      SELECT id FROM maker.urns
+      WHERE ilk_id = (SELECT id FROM ilk)
+        AND guy = $2
+    )
+
+  SELECT $1 AS ilkId, $2 AS urnId, dink, dart, block_number
+  FROM maker.vat_frob LEFT JOIN headers ON vat_frob.header_id = headers.id
+  WHERE vat_frob.urn_id = (SELECT id FROM urn)
+  ORDER BY block_number DESC
+$_$;
+
+
+--
+-- Name: urn_state_frobs(maker.urn_state); Type: FUNCTION; Schema: maker; Owner: -
+--
+
+CREATE FUNCTION maker.urn_state_frobs(state maker.urn_state) RETURNS SETOF maker.frob_event
+    LANGUAGE sql STABLE
+    AS $$
+  SELECT * FROM maker.urn_frobs(state.ilkid, state.urnid)
+  WHERE block_number <= state.blockheight
+$$;
+
+
+--
+-- Name: notify_watchers_ddl(); Type: FUNCTION; Schema: postgraphile_watch; Owner: -
+--
+
+CREATE FUNCTION postgraphile_watch.notify_watchers_ddl() RETURNS event_trigger
+    LANGUAGE plpgsql
+    AS $$
+begin
+  perform pg_notify(
+    'postgraphile_watch',
+    json_build_object(
+      'type',
+      'ddl',
+      'payload',
+      (select json_agg(json_build_object('schema', schema_name, 'command', command_tag)) from pg_event_trigger_ddl_commands() as x)
+    )::text
+  );
+end;
+$$;
+
+
+--
+-- Name: notify_watchers_drop(); Type: FUNCTION; Schema: postgraphile_watch; Owner: -
+--
+
+CREATE FUNCTION postgraphile_watch.notify_watchers_drop() RETURNS event_trigger
+    LANGUAGE plpgsql
+    AS $$
+begin
+  perform pg_notify(
+    'postgraphile_watch',
+    json_build_object(
+      'type',
+      'drop',
+      'payload',
+      (select json_agg(distinct x.schema_name) from pg_event_trigger_dropped_objects() as x)
+    )::text
+  );
+end;
+$$;
 
 
 --
@@ -5515,6 +5682,23 @@ ALTER TABLE ONLY public.blocks
 
 ALTER TABLE ONLY public.logs
     ADD CONSTRAINT receipts_fk FOREIGN KEY (receipt_id) REFERENCES public.receipts(id) ON DELETE CASCADE;
+
+
+--
+-- Name: postgraphile_watch_ddl; Type: EVENT TRIGGER; Schema: -; Owner: -
+--
+
+CREATE EVENT TRIGGER postgraphile_watch_ddl ON ddl_command_end
+         WHEN TAG IN ('ALTER AGGREGATE', 'ALTER DOMAIN', 'ALTER EXTENSION', 'ALTER FOREIGN TABLE', 'ALTER FUNCTION', 'ALTER POLICY', 'ALTER SCHEMA', 'ALTER TABLE', 'ALTER TYPE', 'ALTER VIEW', 'COMMENT', 'CREATE AGGREGATE', 'CREATE DOMAIN', 'CREATE EXTENSION', 'CREATE FOREIGN TABLE', 'CREATE FUNCTION', 'CREATE INDEX', 'CREATE POLICY', 'CREATE RULE', 'CREATE SCHEMA', 'CREATE TABLE', 'CREATE TABLE AS', 'CREATE VIEW', 'DROP AGGREGATE', 'DROP DOMAIN', 'DROP EXTENSION', 'DROP FOREIGN TABLE', 'DROP FUNCTION', 'DROP INDEX', 'DROP OWNED', 'DROP POLICY', 'DROP RULE', 'DROP SCHEMA', 'DROP TABLE', 'DROP TYPE', 'DROP VIEW', 'GRANT', 'REVOKE', 'SELECT INTO')
+   EXECUTE PROCEDURE postgraphile_watch.notify_watchers_ddl();
+
+
+--
+-- Name: postgraphile_watch_drop; Type: EVENT TRIGGER; Schema: -; Owner: -
+--
+
+CREATE EVENT TRIGGER postgraphile_watch_drop ON sql_drop
+   EXECUTE PROCEDURE postgraphile_watch.notify_watchers_drop();
 
 
 --

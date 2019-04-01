@@ -113,7 +113,8 @@ FROM inks
   LEFT JOIN updated  ON updated.urn_id = urns.urn_id
   -- Add collections of frob and bite events?
 $body$
-LANGUAGE SQL;
+LANGUAGE SQL
+STABLE;
 
 
 -- +goose Down

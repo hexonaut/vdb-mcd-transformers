@@ -27,7 +27,8 @@ BEGIN
     END LOOP;
 END;
 $$
-  LANGUAGE plpgsql;
+LANGUAGE plpgsql
+STABLE;
 -- +goose StatementEnd
 
 -- +goose Down
