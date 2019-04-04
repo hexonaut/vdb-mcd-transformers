@@ -8,7 +8,7 @@ BEGIN
   FOR r IN SELECT * FROM maker.get_ilk_blocks_before($1, $2)
   LOOP
     RETURN QUERY
-    SELECT * FROM maker.get_ilk_at_block_number(r.block_number::bigint, $2::integer);
+    SELECT * FROM maker.get_ilk_at_block_number(r.block_number, $2::integer);
   END LOOP;
 END;
 $$

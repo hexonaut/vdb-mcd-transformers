@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 10.6
--- Dumped by pg_dump version 10.6
+-- Dumped from database version 10.5
+-- Dumped by pg_dump version 10.5
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -20,13 +20,6 @@ SET row_security = off;
 --
 
 CREATE SCHEMA maker;
-
-
---
--- Name: postgraphile_watch; Type: SCHEMA; Schema: -; Owner: -
---
-
-CREATE SCHEMA postgraphile_watch;
 
 
 --
@@ -49,7 +42,7 @@ COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';
 
 CREATE TYPE maker.era AS (
 	epoch bigint,
-	iso timestamp with time zone
+	iso timestamp without time zone
 );
 
 
@@ -143,8 +136,9 @@ CREATE FUNCTION maker.all_frobs(ilk text) RETURNS SETOF maker.frob_event
 
   SELECT $1 AS ilkId, guy AS urnId, dink, dart, block_number
   FROM maker.vat_frob
+  LEFT JOIN maker.urns ON vat_frob.urn_id = urns.id
   LEFT JOIN headers    ON vat_frob.header_id = headers.id
-  LEFT JOIN maker.urns ON vat_frob.urn_id = urns.id AND urns.ilk_id = (SELECT id FROM ilk)
+  WHERE urns.ilk_id = (SELECT id FROM ilk)
   ORDER BY guy, block_number DESC
 $_$;
 
@@ -157,7 +151,7 @@ CREATE FUNCTION maker.frob_event_ilk(event maker.frob_event) RETURNS SETOF maker
     LANGUAGE sql STABLE
     AS $$
   SELECT * FROM maker.get_ilk_at_block_number(
-    event.block_number::numeric,
+    event.block_number,
     (SELECT id FROM maker.ilks WHERE ilk = event.ilkid))
 $$;
 
@@ -194,7 +188,7 @@ $$;
 --
 
 CREATE FUNCTION maker.get_all_urn_states_at_block(block_height numeric) RETURNS SETOF maker.urn_state
-    LANGUAGE sql
+    LANGUAGE sql STABLE
     AS $_$
 WITH
   urns AS (
@@ -468,7 +462,7 @@ $_$;
 --
 
 CREATE FUNCTION maker.get_ilk_blocks_before(block_number bigint, ilk_id integer) RETURNS SETOF maker.relevant_block
-    LANGUAGE sql
+    LANGUAGE sql STABLE
     AS $_$
 SELECT
   block_number,
@@ -557,15 +551,15 @@ $_$;
 --
 
 CREATE FUNCTION maker.get_ilk_history_before_block(block_number bigint, ilk_id integer) RETURNS SETOF maker.ilk_state
-    LANGUAGE plpgsql
+    LANGUAGE plpgsql STABLE
     AS $_$
 DECLARE
-  r record;
+  r maker.relevant_block;
 BEGIN
   FOR r IN SELECT * FROM maker.get_ilk_blocks_before($1, $2)
   LOOP
     RETURN QUERY
-    SELECT * FROM maker.get_ilk_at_block_number(r.block_number::bigint, $2::integer);
+    SELECT * FROM maker.get_ilk_at_block_number(r.block_number, $2::integer);
   END LOOP;
 END;
 $_$;
@@ -576,7 +570,7 @@ $_$;
 --
 
 CREATE FUNCTION maker.get_urn_history_before_block(ilk text, urn text, block_height numeric) RETURNS SETOF maker.urn_state
-    LANGUAGE plpgsql
+    LANGUAGE plpgsql STABLE
     AS $_$
 DECLARE
   i NUMERIC;
@@ -610,7 +604,7 @@ $_$;
 --
 
 CREATE FUNCTION maker.get_urn_state_at_block(ilk text, urn text, block_height numeric) RETURNS maker.urn_state
-    LANGUAGE sql
+    LANGUAGE sql STABLE
     AS $_$
 WITH
   urn AS (
@@ -723,7 +717,7 @@ $$;
 CREATE FUNCTION maker.tx_era(tx maker.tx) RETURNS maker.era
     LANGUAGE sql STABLE
     AS $$
-  SELECT block_timestamp::BIGINT AS "epoch", to_timestamp(block_timestamp) AS iso
+SELECT block_timestamp::BIGINT AS "epoch", (SELECT TIMESTAMP 'epoch' + block_timestamp * INTERVAL '1 second') AS iso
   FROM headers WHERE block_number = tx.block_number
 $$;
 
@@ -759,48 +753,6 @@ CREATE FUNCTION maker.urn_state_frobs(state maker.urn_state) RETURNS SETOF maker
     AS $$
   SELECT * FROM maker.urn_frobs(state.ilkid, state.urnid)
   WHERE block_number <= state.blockheight
-$$;
-
-
---
--- Name: notify_watchers_ddl(); Type: FUNCTION; Schema: postgraphile_watch; Owner: -
---
-
-CREATE FUNCTION postgraphile_watch.notify_watchers_ddl() RETURNS event_trigger
-    LANGUAGE plpgsql
-    AS $$
-begin
-  perform pg_notify(
-    'postgraphile_watch',
-    json_build_object(
-      'type',
-      'ddl',
-      'payload',
-      (select json_agg(json_build_object('schema', schema_name, 'command', command_tag)) from pg_event_trigger_ddl_commands() as x)
-    )::text
-  );
-end;
-$$;
-
-
---
--- Name: notify_watchers_drop(); Type: FUNCTION; Schema: postgraphile_watch; Owner: -
---
-
-CREATE FUNCTION postgraphile_watch.notify_watchers_drop() RETURNS event_trigger
-    LANGUAGE plpgsql
-    AS $$
-begin
-  perform pg_notify(
-    'postgraphile_watch',
-    json_build_object(
-      'type',
-      'drop',
-      'payload',
-      (select json_agg(distinct x.schema_name) from pg_event_trigger_dropped_objects() as x)
-    )::text
-  );
-end;
 $$;
 
 
@@ -1883,6 +1835,200 @@ ALTER SEQUENCE maker.jug_vow_id_seq OWNED BY maker.jug_vow.id;
 
 
 --
+-- Name: pit_drip; Type: TABLE; Schema: maker; Owner: -
+--
+
+CREATE TABLE maker.pit_drip (
+    id integer NOT NULL,
+    block_number bigint,
+    block_hash text,
+    drip text
+);
+
+
+--
+-- Name: pit_drip_id_seq; Type: SEQUENCE; Schema: maker; Owner: -
+--
+
+CREATE SEQUENCE maker.pit_drip_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: pit_drip_id_seq; Type: SEQUENCE OWNED BY; Schema: maker; Owner: -
+--
+
+ALTER SEQUENCE maker.pit_drip_id_seq OWNED BY maker.pit_drip.id;
+
+
+--
+-- Name: pit_ilk_line; Type: TABLE; Schema: maker; Owner: -
+--
+
+CREATE TABLE maker.pit_ilk_line (
+    id integer NOT NULL,
+    block_number bigint,
+    block_hash text,
+    ilk_id integer NOT NULL,
+    line numeric NOT NULL
+);
+
+
+--
+-- Name: pit_ilk_line_id_seq; Type: SEQUENCE; Schema: maker; Owner: -
+--
+
+CREATE SEQUENCE maker.pit_ilk_line_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: pit_ilk_line_id_seq; Type: SEQUENCE OWNED BY; Schema: maker; Owner: -
+--
+
+ALTER SEQUENCE maker.pit_ilk_line_id_seq OWNED BY maker.pit_ilk_line.id;
+
+
+--
+-- Name: pit_ilk_spot; Type: TABLE; Schema: maker; Owner: -
+--
+
+CREATE TABLE maker.pit_ilk_spot (
+    id integer NOT NULL,
+    block_number bigint,
+    block_hash text,
+    ilk_id integer NOT NULL,
+    spot numeric NOT NULL
+);
+
+
+--
+-- Name: pit_ilk_spot_id_seq; Type: SEQUENCE; Schema: maker; Owner: -
+--
+
+CREATE SEQUENCE maker.pit_ilk_spot_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: pit_ilk_spot_id_seq; Type: SEQUENCE OWNED BY; Schema: maker; Owner: -
+--
+
+ALTER SEQUENCE maker.pit_ilk_spot_id_seq OWNED BY maker.pit_ilk_spot.id;
+
+
+--
+-- Name: pit_line; Type: TABLE; Schema: maker; Owner: -
+--
+
+CREATE TABLE maker.pit_line (
+    id integer NOT NULL,
+    block_number bigint,
+    block_hash text,
+    line numeric NOT NULL
+);
+
+
+--
+-- Name: pit_line_id_seq; Type: SEQUENCE; Schema: maker; Owner: -
+--
+
+CREATE SEQUENCE maker.pit_line_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: pit_line_id_seq; Type: SEQUENCE OWNED BY; Schema: maker; Owner: -
+--
+
+ALTER SEQUENCE maker.pit_line_id_seq OWNED BY maker.pit_line.id;
+
+
+--
+-- Name: pit_live; Type: TABLE; Schema: maker; Owner: -
+--
+
+CREATE TABLE maker.pit_live (
+    id integer NOT NULL,
+    block_number bigint,
+    block_hash text,
+    live numeric NOT NULL
+);
+
+
+--
+-- Name: pit_live_id_seq; Type: SEQUENCE; Schema: maker; Owner: -
+--
+
+CREATE SEQUENCE maker.pit_live_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: pit_live_id_seq; Type: SEQUENCE OWNED BY; Schema: maker; Owner: -
+--
+
+ALTER SEQUENCE maker.pit_live_id_seq OWNED BY maker.pit_live.id;
+
+
+--
+-- Name: pit_vat; Type: TABLE; Schema: maker; Owner: -
+--
+
+CREATE TABLE maker.pit_vat (
+    id integer NOT NULL,
+    block_number bigint,
+    block_hash text,
+    vat text
+);
+
+
+--
+-- Name: pit_vat_id_seq; Type: SEQUENCE; Schema: maker; Owner: -
+--
+
+CREATE SEQUENCE maker.pit_vat_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: pit_vat_id_seq; Type: SEQUENCE OWNED BY; Schema: maker; Owner: -
+--
+
+ALTER SEQUENCE maker.pit_vat_id_seq OWNED BY maker.pit_vat.id;
+
+
+--
 -- Name: price_feeds; Type: TABLE; Schema: maker; Owner: -
 --
 
@@ -1891,7 +2037,6 @@ CREATE TABLE maker.price_feeds (
     block_number bigint NOT NULL,
     header_id integer NOT NULL,
     medianizer_address text,
-    age numeric,
     usd_value numeric,
     log_idx integer NOT NULL,
     tx_idx integer NOT NULL,
@@ -2409,6 +2554,39 @@ ALTER SEQUENCE maker.vat_ilk_dust_id_seq OWNED BY maker.vat_ilk_dust.id;
 
 
 --
+-- Name: vat_ilk_ink; Type: TABLE; Schema: maker; Owner: -
+--
+
+CREATE TABLE maker.vat_ilk_ink (
+    id integer NOT NULL,
+    block_number bigint,
+    block_hash text,
+    ilk_id integer NOT NULL,
+    ink numeric NOT NULL
+);
+
+
+--
+-- Name: vat_ilk_ink_id_seq; Type: SEQUENCE; Schema: maker; Owner: -
+--
+
+CREATE SEQUENCE maker.vat_ilk_ink_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: vat_ilk_ink_id_seq; Type: SEQUENCE OWNED BY; Schema: maker; Owner: -
+--
+
+ALTER SEQUENCE maker.vat_ilk_ink_id_seq OWNED BY maker.vat_ilk_ink.id;
+
+
+--
 -- Name: vat_ilk_line; Type: TABLE; Schema: maker; Owner: -
 --
 
@@ -2505,6 +2683,39 @@ CREATE SEQUENCE maker.vat_ilk_spot_id_seq
 --
 
 ALTER SEQUENCE maker.vat_ilk_spot_id_seq OWNED BY maker.vat_ilk_spot.id;
+
+
+--
+-- Name: vat_ilk_take; Type: TABLE; Schema: maker; Owner: -
+--
+
+CREATE TABLE maker.vat_ilk_take (
+    id integer NOT NULL,
+    block_number bigint,
+    block_hash text,
+    ilk_id integer NOT NULL,
+    take numeric NOT NULL
+);
+
+
+--
+-- Name: vat_ilk_take_id_seq; Type: SEQUENCE; Schema: maker; Owner: -
+--
+
+CREATE SEQUENCE maker.vat_ilk_take_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: vat_ilk_take_id_seq; Type: SEQUENCE OWNED BY; Schema: maker; Owner: -
+--
+
+ALTER SEQUENCE maker.vat_ilk_take_id_seq OWNED BY maker.vat_ilk_take.id;
 
 
 --
@@ -2708,6 +2919,44 @@ CREATE SEQUENCE maker.vat_slip_id_seq
 --
 
 ALTER SEQUENCE maker.vat_slip_id_seq OWNED BY maker.vat_slip.id;
+
+
+--
+-- Name: vat_tune; Type: TABLE; Schema: maker; Owner: -
+--
+
+CREATE TABLE maker.vat_tune (
+    id integer NOT NULL,
+    header_id integer NOT NULL,
+    urn_id integer NOT NULL,
+    v text,
+    w text,
+    dink numeric,
+    dart numeric,
+    tx_idx integer NOT NULL,
+    log_idx integer NOT NULL,
+    raw_log jsonb
+);
+
+
+--
+-- Name: vat_tune_id_seq; Type: SEQUENCE; Schema: maker; Owner: -
+--
+
+CREATE SEQUENCE maker.vat_tune_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: vat_tune_id_seq; Type: SEQUENCE OWNED BY; Schema: maker; Owner: -
+--
+
+ALTER SEQUENCE maker.vat_tune_id_seq OWNED BY maker.vat_tune.id;
 
 
 --
@@ -3165,6 +3414,38 @@ ALTER SEQUENCE maker.vow_wait_id_seq OWNED BY maker.vow_wait.id;
 
 
 --
+-- Name: vow_woe; Type: TABLE; Schema: maker; Owner: -
+--
+
+CREATE TABLE maker.vow_woe (
+    id integer NOT NULL,
+    block_number bigint,
+    block_hash text,
+    woe numeric
+);
+
+
+--
+-- Name: vow_woe_id_seq; Type: SEQUENCE; Schema: maker; Owner: -
+--
+
+CREATE SEQUENCE maker.vow_woe_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: vow_woe_id_seq; Type: SEQUENCE OWNED BY; Schema: maker; Owner: -
+--
+
+ALTER SEQUENCE maker.vow_woe_id_seq OWNED BY maker.vow_woe.id;
+
+
+--
 -- Name: logs; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -3267,6 +3548,7 @@ CREATE TABLE public.checked_headers (
     vat_move_checked integer DEFAULT 0 NOT NULL,
     vat_fold_checked integer DEFAULT 0 NOT NULL,
     vat_heal_checked integer DEFAULT 0 NOT NULL,
+    vat_tune_checked integer DEFAULT 0 NOT NULL,
     vat_grab_checked integer DEFAULT 0 NOT NULL,
     vat_flux_checked integer DEFAULT 0 NOT NULL,
     vat_slip_checked integer DEFAULT 0 NOT NULL,
@@ -3878,6 +4160,48 @@ ALTER TABLE ONLY maker.jug_vow ALTER COLUMN id SET DEFAULT nextval('maker.jug_vo
 
 
 --
+-- Name: pit_drip id; Type: DEFAULT; Schema: maker; Owner: -
+--
+
+ALTER TABLE ONLY maker.pit_drip ALTER COLUMN id SET DEFAULT nextval('maker.pit_drip_id_seq'::regclass);
+
+
+--
+-- Name: pit_ilk_line id; Type: DEFAULT; Schema: maker; Owner: -
+--
+
+ALTER TABLE ONLY maker.pit_ilk_line ALTER COLUMN id SET DEFAULT nextval('maker.pit_ilk_line_id_seq'::regclass);
+
+
+--
+-- Name: pit_ilk_spot id; Type: DEFAULT; Schema: maker; Owner: -
+--
+
+ALTER TABLE ONLY maker.pit_ilk_spot ALTER COLUMN id SET DEFAULT nextval('maker.pit_ilk_spot_id_seq'::regclass);
+
+
+--
+-- Name: pit_line id; Type: DEFAULT; Schema: maker; Owner: -
+--
+
+ALTER TABLE ONLY maker.pit_line ALTER COLUMN id SET DEFAULT nextval('maker.pit_line_id_seq'::regclass);
+
+
+--
+-- Name: pit_live id; Type: DEFAULT; Schema: maker; Owner: -
+--
+
+ALTER TABLE ONLY maker.pit_live ALTER COLUMN id SET DEFAULT nextval('maker.pit_live_id_seq'::regclass);
+
+
+--
+-- Name: pit_vat id; Type: DEFAULT; Schema: maker; Owner: -
+--
+
+ALTER TABLE ONLY maker.pit_vat ALTER COLUMN id SET DEFAULT nextval('maker.pit_vat_id_seq'::regclass);
+
+
+--
 -- Name: price_feeds id; Type: DEFAULT; Schema: maker; Owner: -
 --
 
@@ -3983,6 +4307,13 @@ ALTER TABLE ONLY maker.vat_ilk_dust ALTER COLUMN id SET DEFAULT nextval('maker.v
 
 
 --
+-- Name: vat_ilk_ink id; Type: DEFAULT; Schema: maker; Owner: -
+--
+
+ALTER TABLE ONLY maker.vat_ilk_ink ALTER COLUMN id SET DEFAULT nextval('maker.vat_ilk_ink_id_seq'::regclass);
+
+
+--
 -- Name: vat_ilk_line id; Type: DEFAULT; Schema: maker; Owner: -
 --
 
@@ -4001,6 +4332,13 @@ ALTER TABLE ONLY maker.vat_ilk_rate ALTER COLUMN id SET DEFAULT nextval('maker.v
 --
 
 ALTER TABLE ONLY maker.vat_ilk_spot ALTER COLUMN id SET DEFAULT nextval('maker.vat_ilk_spot_id_seq'::regclass);
+
+
+--
+-- Name: vat_ilk_take id; Type: DEFAULT; Schema: maker; Owner: -
+--
+
+ALTER TABLE ONLY maker.vat_ilk_take ALTER COLUMN id SET DEFAULT nextval('maker.vat_ilk_take_id_seq'::regclass);
 
 
 --
@@ -4043,6 +4381,13 @@ ALTER TABLE ONLY maker.vat_sin ALTER COLUMN id SET DEFAULT nextval('maker.vat_si
 --
 
 ALTER TABLE ONLY maker.vat_slip ALTER COLUMN id SET DEFAULT nextval('maker.vat_slip_id_seq'::regclass);
+
+
+--
+-- Name: vat_tune id; Type: DEFAULT; Schema: maker; Owner: -
+--
+
+ALTER TABLE ONLY maker.vat_tune ALTER COLUMN id SET DEFAULT nextval('maker.vat_tune_id_seq'::regclass);
 
 
 --
@@ -4141,6 +4486,13 @@ ALTER TABLE ONLY maker.vow_vat ALTER COLUMN id SET DEFAULT nextval('maker.vow_va
 --
 
 ALTER TABLE ONLY maker.vow_wait ALTER COLUMN id SET DEFAULT nextval('maker.vow_wait_id_seq'::regclass);
+
+
+--
+-- Name: vow_woe id; Type: DEFAULT; Schema: maker; Owner: -
+--
+
+ALTER TABLE ONLY maker.vow_woe ALTER COLUMN id SET DEFAULT nextval('maker.vow_woe_id_seq'::regclass);
 
 
 --
@@ -4588,6 +4940,54 @@ ALTER TABLE ONLY maker.jug_vow
 
 
 --
+-- Name: pit_drip pit_drip_pkey; Type: CONSTRAINT; Schema: maker; Owner: -
+--
+
+ALTER TABLE ONLY maker.pit_drip
+    ADD CONSTRAINT pit_drip_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: pit_ilk_line pit_ilk_line_pkey; Type: CONSTRAINT; Schema: maker; Owner: -
+--
+
+ALTER TABLE ONLY maker.pit_ilk_line
+    ADD CONSTRAINT pit_ilk_line_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: pit_ilk_spot pit_ilk_spot_pkey; Type: CONSTRAINT; Schema: maker; Owner: -
+--
+
+ALTER TABLE ONLY maker.pit_ilk_spot
+    ADD CONSTRAINT pit_ilk_spot_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: pit_line pit_line_pkey; Type: CONSTRAINT; Schema: maker; Owner: -
+--
+
+ALTER TABLE ONLY maker.pit_line
+    ADD CONSTRAINT pit_line_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: pit_live pit_live_pkey; Type: CONSTRAINT; Schema: maker; Owner: -
+--
+
+ALTER TABLE ONLY maker.pit_live
+    ADD CONSTRAINT pit_live_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: pit_vat pit_vat_pkey; Type: CONSTRAINT; Schema: maker; Owner: -
+--
+
+ALTER TABLE ONLY maker.pit_vat
+    ADD CONSTRAINT pit_vat_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: price_feeds price_feeds_header_id_medianizer_address_tx_idx_log_idx_key; Type: CONSTRAINT; Schema: maker; Owner: -
 --
 
@@ -4788,6 +5188,14 @@ ALTER TABLE ONLY maker.vat_ilk_dust
 
 
 --
+-- Name: vat_ilk_ink vat_ilk_ink_pkey; Type: CONSTRAINT; Schema: maker; Owner: -
+--
+
+ALTER TABLE ONLY maker.vat_ilk_ink
+    ADD CONSTRAINT vat_ilk_ink_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: vat_ilk_line vat_ilk_line_pkey; Type: CONSTRAINT; Schema: maker; Owner: -
 --
 
@@ -4809,6 +5217,14 @@ ALTER TABLE ONLY maker.vat_ilk_rate
 
 ALTER TABLE ONLY maker.vat_ilk_spot
     ADD CONSTRAINT vat_ilk_spot_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: vat_ilk_take vat_ilk_take_pkey; Type: CONSTRAINT; Schema: maker; Owner: -
+--
+
+ALTER TABLE ONLY maker.vat_ilk_take
+    ADD CONSTRAINT vat_ilk_take_pkey PRIMARY KEY (id);
 
 
 --
@@ -4881,6 +5297,22 @@ ALTER TABLE ONLY maker.vat_slip
 
 ALTER TABLE ONLY maker.vat_slip
     ADD CONSTRAINT vat_slip_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: vat_tune vat_tune_header_id_tx_idx_log_idx_key; Type: CONSTRAINT; Schema: maker; Owner: -
+--
+
+ALTER TABLE ONLY maker.vat_tune
+    ADD CONSTRAINT vat_tune_header_id_tx_idx_log_idx_key UNIQUE (header_id, tx_idx, log_idx);
+
+
+--
+-- Name: vat_tune vat_tune_pkey; Type: CONSTRAINT; Schema: maker; Owner: -
+--
+
+ALTER TABLE ONLY maker.vat_tune
+    ADD CONSTRAINT vat_tune_pkey PRIMARY KEY (id);
 
 
 --
@@ -5009,6 +5441,14 @@ ALTER TABLE ONLY maker.vow_vat
 
 ALTER TABLE ONLY maker.vow_wait
     ADD CONSTRAINT vow_wait_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: vow_woe vow_woe_pkey; Type: CONSTRAINT; Schema: maker; Owner: -
+--
+
+ALTER TABLE ONLY maker.vow_woe
+    ADD CONSTRAINT vow_woe_pkey PRIMARY KEY (id);
 
 
 --
@@ -5389,6 +5829,22 @@ ALTER TABLE ONLY maker.jug_ilk_tax
 
 
 --
+-- Name: pit_ilk_line pit_ilk_line_ilk_id_fkey; Type: FK CONSTRAINT; Schema: maker; Owner: -
+--
+
+ALTER TABLE ONLY maker.pit_ilk_line
+    ADD CONSTRAINT pit_ilk_line_ilk_id_fkey FOREIGN KEY (ilk_id) REFERENCES maker.ilks(id);
+
+
+--
+-- Name: pit_ilk_spot pit_ilk_spot_ilk_id_fkey; Type: FK CONSTRAINT; Schema: maker; Owner: -
+--
+
+ALTER TABLE ONLY maker.pit_ilk_spot
+    ADD CONSTRAINT pit_ilk_spot_ilk_id_fkey FOREIGN KEY (ilk_id) REFERENCES maker.ilks(id);
+
+
+--
 -- Name: price_feeds price_feeds_header_id_fkey; Type: FK CONSTRAINT; Schema: maker; Owner: -
 --
 
@@ -5533,6 +5989,14 @@ ALTER TABLE ONLY maker.vat_ilk_dust
 
 
 --
+-- Name: vat_ilk_ink vat_ilk_ink_ilk_id_fkey; Type: FK CONSTRAINT; Schema: maker; Owner: -
+--
+
+ALTER TABLE ONLY maker.vat_ilk_ink
+    ADD CONSTRAINT vat_ilk_ink_ilk_id_fkey FOREIGN KEY (ilk_id) REFERENCES maker.ilks(id);
+
+
+--
 -- Name: vat_ilk_line vat_ilk_line_ilk_id_fkey; Type: FK CONSTRAINT; Schema: maker; Owner: -
 --
 
@@ -5554,6 +6018,14 @@ ALTER TABLE ONLY maker.vat_ilk_rate
 
 ALTER TABLE ONLY maker.vat_ilk_spot
     ADD CONSTRAINT vat_ilk_spot_ilk_id_fkey FOREIGN KEY (ilk_id) REFERENCES maker.ilks(id);
+
+
+--
+-- Name: vat_ilk_take vat_ilk_take_ilk_id_fkey; Type: FK CONSTRAINT; Schema: maker; Owner: -
+--
+
+ALTER TABLE ONLY maker.vat_ilk_take
+    ADD CONSTRAINT vat_ilk_take_ilk_id_fkey FOREIGN KEY (ilk_id) REFERENCES maker.ilks(id);
 
 
 --
@@ -5594,6 +6066,22 @@ ALTER TABLE ONLY maker.vat_slip
 
 ALTER TABLE ONLY maker.vat_slip
     ADD CONSTRAINT vat_slip_ilk_id_fkey FOREIGN KEY (ilk_id) REFERENCES maker.ilks(id);
+
+
+--
+-- Name: vat_tune vat_tune_header_id_fkey; Type: FK CONSTRAINT; Schema: maker; Owner: -
+--
+
+ALTER TABLE ONLY maker.vat_tune
+    ADD CONSTRAINT vat_tune_header_id_fkey FOREIGN KEY (header_id) REFERENCES public.headers(id) ON DELETE CASCADE;
+
+
+--
+-- Name: vat_tune vat_tune_urn_id_fkey; Type: FK CONSTRAINT; Schema: maker; Owner: -
+--
+
+ALTER TABLE ONLY maker.vat_tune
+    ADD CONSTRAINT vat_tune_urn_id_fkey FOREIGN KEY (urn_id) REFERENCES maker.urns(id);
 
 
 --
@@ -5682,23 +6170,6 @@ ALTER TABLE ONLY public.blocks
 
 ALTER TABLE ONLY public.logs
     ADD CONSTRAINT receipts_fk FOREIGN KEY (receipt_id) REFERENCES public.receipts(id) ON DELETE CASCADE;
-
-
---
--- Name: postgraphile_watch_ddl; Type: EVENT TRIGGER; Schema: -; Owner: -
---
-
-CREATE EVENT TRIGGER postgraphile_watch_ddl ON ddl_command_end
-         WHEN TAG IN ('ALTER AGGREGATE', 'ALTER DOMAIN', 'ALTER EXTENSION', 'ALTER FOREIGN TABLE', 'ALTER FUNCTION', 'ALTER POLICY', 'ALTER SCHEMA', 'ALTER TABLE', 'ALTER TYPE', 'ALTER VIEW', 'COMMENT', 'CREATE AGGREGATE', 'CREATE DOMAIN', 'CREATE EXTENSION', 'CREATE FOREIGN TABLE', 'CREATE FUNCTION', 'CREATE INDEX', 'CREATE POLICY', 'CREATE RULE', 'CREATE SCHEMA', 'CREATE TABLE', 'CREATE TABLE AS', 'CREATE VIEW', 'DROP AGGREGATE', 'DROP DOMAIN', 'DROP EXTENSION', 'DROP FOREIGN TABLE', 'DROP FUNCTION', 'DROP INDEX', 'DROP OWNED', 'DROP POLICY', 'DROP RULE', 'DROP SCHEMA', 'DROP TABLE', 'DROP TYPE', 'DROP VIEW', 'GRANT', 'REVOKE', 'SELECT INTO')
-   EXECUTE PROCEDURE postgraphile_watch.notify_watchers_ddl();
-
-
---
--- Name: postgraphile_watch_drop; Type: EVENT TRIGGER; Schema: -; Owner: -
---
-
-CREATE EVENT TRIGGER postgraphile_watch_drop ON sql_drop
-   EXECUTE PROCEDURE postgraphile_watch.notify_watchers_drop();
 
 
 --

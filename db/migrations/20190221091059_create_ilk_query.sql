@@ -87,7 +87,7 @@ FROM maker.jug_ilk_tax
 WHERE block_number <= $1
       AND ilk_id = $2
 $$
-LANGUAGE sql;
+LANGUAGE sql STABLE;
 
 CREATE TYPE maker.ilk_state AS (
   ilk_id       integer,

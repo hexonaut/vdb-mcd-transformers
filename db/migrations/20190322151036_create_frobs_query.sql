@@ -38,8 +38,9 @@ $$
 
   SELECT $1 AS ilkId, guy AS urnId, dink, dart, block_number
   FROM maker.vat_frob
+  LEFT JOIN maker.urns ON vat_frob.urn_id = urns.id
   LEFT JOIN headers    ON vat_frob.header_id = headers.id
-  LEFT JOIN maker.urns ON vat_frob.urn_id = urns.id AND urns.ilk_id = (SELECT id FROM ilk)
+  WHERE urns.ilk_id = (SELECT id FROM ilk)
   ORDER BY guy, block_number DESC
 $$ LANGUAGE sql STABLE;
 

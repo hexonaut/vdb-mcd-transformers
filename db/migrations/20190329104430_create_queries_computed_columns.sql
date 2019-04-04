@@ -9,7 +9,7 @@ CREATE OR REPLACE FUNCTION maker.frob_event_ilk(event maker.frob_event)
   RETURNS SETOF maker.ilk_state AS
 $$
   SELECT * FROM maker.get_ilk_at_block_number(
-    event.block_number::numeric,
+    event.block_number,
     (SELECT id FROM maker.ilks WHERE ilk = event.ilkid))
 $$ LANGUAGE sql STABLE;
 
@@ -34,7 +34,7 @@ CREATE TYPE maker.tx AS (
 
 CREATE TYPE maker.era AS (
   "epoch" BIGINT,
-  iso TIMESTAMPTZ
+  iso TIMESTAMP
 );
 
 
@@ -42,7 +42,7 @@ CREATE TYPE maker.era AS (
 CREATE OR REPLACE FUNCTION maker.tx_era(tx maker.tx)
   RETURNS maker.era AS
 $$
-  SELECT block_timestamp::BIGINT AS "epoch", to_timestamp(block_timestamp) AS iso
+SELECT block_timestamp::BIGINT AS "epoch", (SELECT TIMESTAMP 'epoch' + block_timestamp * INTERVAL '1 second') AS iso
   FROM headers WHERE block_number = tx.block_number
 $$ LANGUAGE sql STABLE;
 
@@ -67,6 +67,7 @@ $$
   SELECT * FROM maker.all_frobs(state.ilk)
   WHERE block_number <= state.block_number
 $$ LANGUAGE sql STABLE;
+
 
 -- Extend urn_state with frob_events
 CREATE OR REPLACE FUNCTION maker.urn_state_frobs(state maker.urn_state)

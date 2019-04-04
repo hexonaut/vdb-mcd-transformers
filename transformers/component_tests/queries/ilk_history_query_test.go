@@ -1,7 +1,6 @@
 package queries
 
 import (
-	"database/sql"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/vulcanize/mcd_transformers/test_config"
@@ -18,14 +17,14 @@ import (
 var _ = Describe("Ilk State History Query", func() {
 	var (
 		db                       *postgres.DB
-		blockOne                 = rand.Int()
-		blockTwo                 = blockOne + 1
+		blockOne                                                   = rand.Int()
+		blockTwo                                                   = blockOne + 1
 		vatRepository            vat.VatStorageRepository
 		catRepository            cat.CatStorageRepository
 		dripRepository           jug.JugStorageRepository
-		fakeIlk                  = test_helpers.FakeIlk
-		blockOneIlkState         map[string]string
-		blockTwoIlkState         map[string]string
+		fakeIlk                                                      = test_helpers.FakeIlk
+		blockOneIlkValues        map[string]string
+		blockTwoIlkValues        map[string]string
 		expectedBlockOneIlkState test_helpers.IlkState
 		expectedBlockTwoIlkState test_helpers.IlkState
 	)
@@ -48,57 +47,17 @@ var _ = Describe("Ilk State History Query", func() {
 		_, err = headerRepository.CreateOrUpdateHeader(blockTwoHeader)
 		Expect(err).NotTo(HaveOccurred())
 
-		blockOneIlkState = test_helpers.GetIlkState(0)
+		blockOneIlkValues = test_helpers.GetIlkValues(0)
+		test_helpers.CreateVatRecords(blockOneHeader, blockOneIlkValues, test_helpers.FakeIlkVatMetadatas, vatRepository)
+		test_helpers.CreateCatRecords(blockOneHeader, blockOneIlkValues, test_helpers.FakeIlkCatMetadatas, catRepository)
+		test_helpers.CreateJugRecords(blockOneHeader, blockOneIlkValues, test_helpers.FakeIlkJugMetadatas, dripRepository)
+		expectedBlockOneIlkState = test_helpers.IlkStateFromValues(fakeIlk, blockOneHeader.Timestamp, blockOneHeader.Timestamp, blockOneIlkValues)
 
-		test_helpers.CreateVatRecords(blockOneHeader, blockOneIlkState, test_helpers.FakeIlkVatMetadatas, vatRepository)
-		test_helpers.CreateCatRecords(blockOneHeader, blockOneIlkState, test_helpers.FakeIlkCatMetadatas, catRepository)
-		test_helpers.CreateJugRecords(blockOneHeader, blockOneIlkState, test_helpers.FakeIlkJugMetadatas, dripRepository)
-
-		expectedBlockOneIlkState = test_helpers.IlkState{
-			Ilk:  fakeIlk,
-			Rate: blockOneIlkState[vat.IlkRate],
-			Art:  blockOneIlkState[vat.IlkArt],
-			Spot: blockOneIlkState[vat.IlkSpot],
-			Line: blockOneIlkState[vat.IlkLine],
-			Chop: blockOneIlkState[cat.IlkChop],
-			Lump: blockOneIlkState[cat.IlkLump],
-			Flip: blockOneIlkState[cat.IlkFlip],
-			Rho:  blockOneIlkState[jug.IlkRho],
-			Tax:  blockOneIlkState[jug.IlkTax],
-			Created: sql.NullString{
-				String: blockOneHeader.Timestamp,
-				Valid:  true,
-			},
-			Updated: sql.NullString{
-				String: blockOneHeader.Timestamp,
-				Valid:  true,
-			},
-		}
-
-		blockTwoIlkState = test_helpers.GetIlkState(1)
-		test_helpers.CreateVatRecords(blockTwoHeader, blockTwoIlkState, test_helpers.FakeIlkVatMetadatas, vatRepository)
-		test_helpers.CreateCatRecords(blockTwoHeader, blockTwoIlkState, test_helpers.FakeIlkCatMetadatas, catRepository)
-		test_helpers.CreateJugRecords(blockTwoHeader, blockTwoIlkState, test_helpers.FakeIlkJugMetadatas, dripRepository)
-		expectedBlockTwoIlkState = test_helpers.IlkState{
-			Ilk:  fakeIlk,
-			Rate: blockTwoIlkState[vat.IlkRate],
-			Art:  blockTwoIlkState[vat.IlkArt],
-			Spot: blockTwoIlkState[vat.IlkSpot],
-			Line: blockTwoIlkState[vat.IlkLine],
-			Chop: blockTwoIlkState[cat.IlkChop],
-			Lump: blockTwoIlkState[cat.IlkLump],
-			Flip: blockTwoIlkState[cat.IlkFlip],
-			Rho:  blockTwoIlkState[jug.IlkRho],
-			Tax:  blockTwoIlkState[jug.IlkTax],
-			Created: sql.NullString{
-				String: blockOneHeader.Timestamp,
-				Valid:  true,
-			},
-			Updated: sql.NullString{
-				String: blockTwoHeader.Timestamp,
-				Valid:  true,
-			},
-		}
+		blockTwoIlkValues = test_helpers.GetIlkValues(1)
+		test_helpers.CreateVatRecords(blockTwoHeader, blockTwoIlkValues, test_helpers.FakeIlkVatMetadatas, vatRepository)
+		test_helpers.CreateCatRecords(blockTwoHeader, blockTwoIlkValues, test_helpers.FakeIlkCatMetadatas, catRepository)
+		test_helpers.CreateJugRecords(blockTwoHeader, blockTwoIlkValues, test_helpers.FakeIlkJugMetadatas, dripRepository)
+		expectedBlockTwoIlkState = test_helpers.IlkStateFromValues(fakeIlk, blockTwoHeader.Timestamp, blockOneHeader.Timestamp, blockTwoIlkValues)
 	})
 
 	It("returns the history of an ilk from the given block number", func() {
@@ -121,11 +80,11 @@ var _ = Describe("Ilk State History Query", func() {
 	})
 
 	It("can handle multiple ilks in the db", func() {
-		blockOneAnotherFakeIlkState := test_helpers.GetIlkState(3)
+		blockOneAnotherFakeIlkValues := test_helpers.GetIlkValues(3)
 
-		test_helpers.CreateVatRecords(blockOneHeader, blockOneAnotherFakeIlkState, test_helpers.AnotherFakeIlkVatMetadatas, vatRepository)
-		test_helpers.CreateCatRecords(blockOneHeader, blockOneAnotherFakeIlkState, test_helpers.AnotherFakeIlkCatMetadatas, catRepository)
-		test_helpers.CreateJugRecords(blockOneHeader, blockOneAnotherFakeIlkState, test_helpers.AnotherFakeIlkJugMetadatas, dripRepository)
+		test_helpers.CreateVatRecords(blockOneHeader, blockOneAnotherFakeIlkValues, test_helpers.AnotherFakeIlkVatMetadatas, vatRepository)
+		test_helpers.CreateCatRecords(blockOneHeader, blockOneAnotherFakeIlkValues, test_helpers.AnotherFakeIlkCatMetadatas, catRepository)
+		test_helpers.CreateJugRecords(blockOneHeader, blockOneAnotherFakeIlkValues, test_helpers.AnotherFakeIlkJugMetadatas, dripRepository)
 
 		var ilkId int
 		err := db.Get(&ilkId, `SELECT id FROM maker.ilks WHERE ilk = $1`, test_helpers.AnotherFakeIlk)
@@ -137,26 +96,8 @@ var _ = Describe("Ilk State History Query", func() {
 			blockTwo,
 			ilkId)
 		Expect(err).NotTo(HaveOccurred())
-		expectedBlockOneAnotherIlkState := test_helpers.IlkState{
-			Ilk:  test_helpers.AnotherFakeIlk,
-			Rate: blockOneAnotherFakeIlkState[vat.IlkRate],
-			Art:  blockOneAnotherFakeIlkState[vat.IlkArt],
-			Spot: blockOneAnotherFakeIlkState[vat.IlkSpot],
-			Line: blockOneAnotherFakeIlkState[vat.IlkLine],
-			Chop: blockOneAnotherFakeIlkState[cat.IlkChop],
-			Lump: blockOneAnotherFakeIlkState[cat.IlkLump],
-			Flip: blockOneAnotherFakeIlkState[cat.IlkFlip],
-			Rho:  blockOneAnotherFakeIlkState[jug.IlkRho],
-			Tax:  blockOneAnotherFakeIlkState[jug.IlkTax],
-			Created: sql.NullString{
-				String: blockOneHeader.Timestamp,
-				Valid:  true,
-			},
-			Updated: sql.NullString{
-				String: blockOneHeader.Timestamp,
-				Valid:  true,
-			},
-		}
+		expectedBlockOneAnotherIlkState := test_helpers.IlkStateFromValues(test_helpers.AnotherFakeIlk,
+			blockOneHeader.Timestamp, blockOneHeader.Timestamp, blockOneAnotherFakeIlkValues)
 
 		//does not include fake ilk's results
 		Expect(len(dbResult)).To(Equal(1))
@@ -191,7 +132,8 @@ var _ = Describe("Ilk State History Query", func() {
 		blockOneHundredHeader := fakes.GetFakeHeader(blockOneHundred)
 		_, err := headerRepository.CreateOrUpdateHeader(blockOneHundredHeader)
 		Expect(err).NotTo(HaveOccurred())
-		test_helpers.CreateVatRecords(blockOneHundredHeader, test_helpers.GetIlkState(100), test_helpers.AnotherFakeIlkVatMetadatas, vatRepository)
+
+		test_helpers.CreateVatRecords(blockOneHundredHeader, test_helpers.GetIlkValues(100), test_helpers.AnotherFakeIlkVatMetadatas, vatRepository)
 
 		var ilkId int
 		err = db.Get(&ilkId, `SELECT id FROM maker.ilks WHERE ilk = $1`, fakeIlk)
