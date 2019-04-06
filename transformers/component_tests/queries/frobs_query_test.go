@@ -4,8 +4,8 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/vulcanize/mcd_transformers/test_config"
-    "github.com/vulcanize/mcd_transformers/transformers/component_tests/queries/test_helpers"
-    "github.com/vulcanize/mcd_transformers/transformers/events/vat_frob"
+	"github.com/vulcanize/mcd_transformers/transformers/component_tests/queries/test_helpers"
+	"github.com/vulcanize/mcd_transformers/transformers/events/vat_frob"
 	"github.com/vulcanize/mcd_transformers/transformers/test_data"
 	"github.com/vulcanize/vulcanizedb/pkg/datastore/postgres"
 	"github.com/vulcanize/vulcanizedb/pkg/datastore/postgres/repositories"
@@ -74,44 +74,44 @@ var _ = Describe("Frobs query", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(actualFrobs).To(ConsistOf(
-				test_helpers.FrobEvent{fakeIlk, fakeUrn, frobBlockOne.Dink, frobBlockOne.Dart},
-				test_helpers.FrobEvent{fakeIlk, fakeUrn, frobBlockTwo.Dink, frobBlockTwo.Dart},
+				test_helpers.FrobEvent{IlkId: fakeIlk, UrnId: fakeUrn, Dink: frobBlockOne.Dink, Dart: frobBlockOne.Dart},
+				test_helpers.FrobEvent{IlkId: fakeIlk, UrnId: fakeUrn, Dink: frobBlockTwo.Dink, Dart: frobBlockTwo.Dart},
 			))
 		})
 	})
 
 	Describe("all_frobs", func() {
 		It("returns all frobs for a whole ilk", func() {
-            headerOne := fakes.GetFakeHeader(1)
+			headerOne := fakes.GetFakeHeader(1)
 
-            headerOneId, err := headerRepo.CreateOrUpdateHeader(headerOne)
-            Expect(err).NotTo(HaveOccurred())
+			headerOneId, err := headerRepo.CreateOrUpdateHeader(headerOne)
+			Expect(err).NotTo(HaveOccurred())
 
-            frobOne := test_data.VatFrobModel
-            frobOne.Ilk = fakeIlk
-            frobOne.Urn = fakeUrn
-            frobOne.Dink = strconv.Itoa(rand.Int())
-            frobOne.Dart = strconv.Itoa(rand.Int())
+			frobOne := test_data.VatFrobModel
+			frobOne.Ilk = fakeIlk
+			frobOne.Urn = fakeUrn
+			frobOne.Dink = strconv.Itoa(rand.Int())
+			frobOne.Dart = strconv.Itoa(rand.Int())
 
-            anotherUrn := "anotherUrn"
-            frobTwo := test_data.VatFrobModel
-            frobTwo.Ilk = fakeIlk
-            frobTwo.Urn = anotherUrn
-            frobTwo.Dink = strconv.Itoa(rand.Int())
-            frobTwo.Dart = strconv.Itoa(rand.Int())
-            frobTwo.TransactionIndex = frobOne.TransactionIndex + 1
+			anotherUrn := "anotherUrn"
+			frobTwo := test_data.VatFrobModel
+			frobTwo.Ilk = fakeIlk
+			frobTwo.Urn = anotherUrn
+			frobTwo.Dink = strconv.Itoa(rand.Int())
+			frobTwo.Dart = strconv.Itoa(rand.Int())
+			frobTwo.TransactionIndex = frobOne.TransactionIndex + 1
 
-            err = frobRepo.Create(headerOneId, []interface{}{frobOne, frobTwo})
-            Expect(err).NotTo(HaveOccurred())
+			err = frobRepo.Create(headerOneId, []interface{}{frobOne, frobTwo})
+			Expect(err).NotTo(HaveOccurred())
 
-            var actualFrobs []test_helpers.FrobEvent
-            err = db.Select(&actualFrobs, `SELECT ilkId, urnId, dink, dart FROM maker.all_frobs($1)`, fakeIlk)
-            Expect(err).NotTo(HaveOccurred())
+			var actualFrobs []test_helpers.FrobEvent
+			err = db.Select(&actualFrobs, `SELECT ilkId, urnId, dink, dart FROM maker.all_frobs($1)`, fakeIlk)
+			Expect(err).NotTo(HaveOccurred())
 
-            Expect(actualFrobs).To(ConsistOf(
-                test_helpers.FrobEvent{fakeIlk, fakeUrn, frobOne.Dink, frobOne.Dart},
-                test_helpers.FrobEvent{fakeIlk, anotherUrn, frobTwo.Dink, frobTwo.Dart},
-            ))
+			Expect(actualFrobs).To(ConsistOf(
+				test_helpers.FrobEvent{IlkId: fakeIlk, UrnId: fakeUrn, Dink: frobOne.Dink, Dart: frobOne.Dart},
+				test_helpers.FrobEvent{IlkId: fakeIlk, UrnId: anotherUrn, Dink: frobTwo.Dink, Dart: frobTwo.Dart},
+			))
 		})
 	})
 })

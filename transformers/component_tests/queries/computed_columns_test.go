@@ -12,7 +12,7 @@ import (
 	"github.com/vulcanize/vulcanizedb/pkg/datastore/postgres/repositories"
 	"github.com/vulcanize/vulcanizedb/pkg/fakes"
 	"math/rand"
-    "strconv"
+	"strconv"
 )
 
 var _ = Describe("Extension function", func() {
@@ -35,146 +35,143 @@ var _ = Describe("Extension function", func() {
 	})
 
 	Describe("using ilk and frob", func() {
-	    var (
-	        frobRepo vat_frob.VatFrobRepository
-	        frobEvent vat_frob.VatFrobModel
-	        ilkValues map[string]string
-        )
+		var (
+			frobRepo  vat_frob.VatFrobRepository
+			frobEvent vat_frob.VatFrobModel
+			ilkValues map[string]string
+		)
 
-	    BeforeEach(func() {
-            frobRepo = vat_frob.VatFrobRepository{}
-            frobRepo.SetDB(db)
-            vatRepository.SetDB(db)
-            pitRepository.SetDB(db)
-            catRepository.SetDB(db)
-            jugRepository.SetDB(db)
+		BeforeEach(func() {
+			frobRepo = vat_frob.VatFrobRepository{}
+			frobRepo.SetDB(db)
+			vatRepository.SetDB(db)
+			catRepository.SetDB(db)
+			jugRepository.SetDB(db)
 
-            // Create an ilk
-            ilkValues = test_helpers.GetIlkValues(0)
-            createIlkAtBlock(fakeHeader, ilkValues, test_helpers.FakeIlkVatMetadatas, test_helpers.FakeIlkPitMetadatas,
-                test_helpers.FakeIlkCatMetadatas, test_helpers.FakeIlkJugMetadatas)
+			// Create an ilk
+			ilkValues = test_helpers.GetIlkValues(0)
+			createIlkAtBlock(fakeHeader, ilkValues, test_helpers.FakeIlkVatMetadatas,
+				test_helpers.FakeIlkCatMetadatas, test_helpers.FakeIlkJugMetadatas)
 
-            // Create a frob event
-            frobEvent = test_data.VatFrobModel
-            frobEvent.Ilk = test_helpers.FakeIlk
-            err = frobRepo.Create(headerId, []interface{}{frobEvent})
-            Expect(err).NotTo(HaveOccurred())
-        })
+			// Create a frob event
+			frobEvent = test_data.VatFrobModel
+			frobEvent.Ilk = test_helpers.FakeIlk
+			err = frobRepo.Create(headerId, []interface{}{frobEvent})
+			Expect(err).NotTo(HaveOccurred())
+		})
 
-        Describe("ilk_state_frobs", func() {
-            It("returns relevant frobs for an ilk_state", func() {
-                irrelevantFrob := test_data.VatFrobModel
-                irrelevantFrob.Ilk = "irrelevantIlk"
-                irrelevantFrob.Urn = "anotherGuy"
-                irrelevantFrob.TransactionIndex = frobEvent.TransactionIndex + 1
-                err = frobRepo.Create(headerId, []interface{}{irrelevantFrob})
-                Expect(err).NotTo(HaveOccurred())
+		Describe("ilk_state_frobs", func() {
+			It("returns relevant frobs for an ilk_state", func() {
+				irrelevantFrob := test_data.VatFrobModel
+				irrelevantFrob.Ilk = "irrelevantIlk"
+				irrelevantFrob.Urn = "anotherGuy"
+				irrelevantFrob.TransactionIndex = frobEvent.TransactionIndex + 1
+				err = frobRepo.Create(headerId, []interface{}{irrelevantFrob})
+				Expect(err).NotTo(HaveOccurred())
 
-                var ilkId int
-                err = db.Get(&ilkId, `SELECT id FROM maker.ilks WHERE ilk = $1`, test_helpers.FakeIlk)
-                Expect(err).NotTo(HaveOccurred())
+				var ilkId int
+				err = db.Get(&ilkId, `SELECT id FROM maker.ilks WHERE ilk = $1`, test_helpers.FakeIlk)
+				Expect(err).NotTo(HaveOccurred())
 
-                var actualFrobs []test_helpers.FrobEvent
-                err = db.Select(&actualFrobs,
-                    `SELECT ilkid, urnid, dink, dart FROM maker.ilk_state_frobs(
-                        (SELECT (ilk_id, ilk, block_number, take, rate, ink, art, spot, line, chop, lump, flip, rho, tax, created, updated)::maker.ilk_state
+				var actualFrobs []test_helpers.FrobEvent
+				err = db.Select(&actualFrobs,
+					`SELECT ilkid, urnid, dink, dart FROM maker.ilk_state_frobs(
+                        (SELECT (ilk_id, ilk, block_number, rate, art, spot, line, dust, chop, lump, flip, rho, tax, created, updated)::maker.ilk_state
                          FROM maker.get_ilk_at_block_number($1, $2))
                     )`, fakeBlock, ilkId)
-                Expect(err).NotTo(HaveOccurred())
+				Expect(err).NotTo(HaveOccurred())
 
-                expectedFrobs := []test_helpers.FrobEvent{{
-                    IlkId: test_helpers.FakeIlk,
-                    UrnId: frobEvent.Urn,
-                    Dink:  frobEvent.Dink,
-                    Dart:  frobEvent.Dart,
-                }}
+				expectedFrobs := []test_helpers.FrobEvent{{
+					IlkId: test_helpers.FakeIlk,
+					UrnId: frobEvent.Urn,
+					Dink:  frobEvent.Dink,
+					Dart:  frobEvent.Dart,
+				}}
 
-                Expect(actualFrobs).To(Equal(expectedFrobs))
-            })
-        })
+				Expect(actualFrobs).To(Equal(expectedFrobs))
+			})
+		})
 
-        Describe("frob_event_ilk", func() {
-            It("returns ilk_state for a frob_event", func() {
-                expectedIlk := test_helpers.IlkStateFromValues(test_helpers.FakeIlk, fakeHeader.Timestamp, fakeHeader.Timestamp, ilkValues)
+		Describe("frob_event_ilk", func() {
+			It("returns ilk_state for a frob_event", func() {
+				expectedIlk := test_helpers.IlkStateFromValues(test_helpers.FakeIlk, fakeHeader.Timestamp, fakeHeader.Timestamp, ilkValues)
 
-                var result test_helpers.IlkState
-                err = db.Get(&result,
-                    `SELECT ilk, take, rate, ink, art, spot, line, chop, lump, flip, rho, tax, created, updated
+				var result test_helpers.IlkState
+				err = db.Get(&result,
+					`SELECT ilk, rate, art, spot, line, dust, chop, lump, flip, rho, tax, created, updated
                     FROM maker.frob_event_ilk(
                         (SELECT (ilkid, urnid, dink, dart, block_number)::maker.frob_event FROM maker.all_frobs($1))
                     )`, test_helpers.FakeIlk)
 
-                Expect(err).NotTo(HaveOccurred())
-                Expect(result).To(Equal(expectedIlk))
-            })
-        })
-    })
+				Expect(err).NotTo(HaveOccurred())
+				Expect(result).To(Equal(expectedIlk))
+			})
+		})
+	})
 
 	Describe("using urn and frob", func() {
-	    var (
-	        frobRepo vat_frob.VatFrobRepository
-	        frobEvent vat_frob.VatFrobModel
-	        fakeGuy = "fakeAddress"
-        )
+		var (
+			frobRepo  vat_frob.VatFrobRepository
+			frobEvent vat_frob.VatFrobModel
+			fakeGuy   = "fakeAddress"
+		)
 
-	    BeforeEach(func() {
-            frobRepo = vat_frob.VatFrobRepository{}
-            frobRepo.SetDB(db)
-            vatRepository.SetDB(db)
-            pitRepository.SetDB(db)
+		BeforeEach(func() {
+			frobRepo = vat_frob.VatFrobRepository{}
+			frobRepo.SetDB(db)
+			vatRepository.SetDB(db)
 
-            urnSetupData := test_helpers.GetUrnSetupData(fakeBlock, 1)
-            urnSetupData.Header.Hash = fakeHeader.Hash
-            urnMetadata := test_helpers.GetUrnMetadata(test_helpers.FakeIlk, fakeGuy)
-            test_helpers.CreateUrn(urnSetupData, urnMetadata, vatRepository, pitRepository, headerRepository)
+			urnSetupData := test_helpers.GetUrnSetupData(fakeBlock, 1)
+			urnSetupData.Header.Hash = fakeHeader.Hash
+			urnMetadata := test_helpers.GetUrnMetadata(test_helpers.FakeIlk, fakeGuy)
+			test_helpers.CreateUrn(urnSetupData, urnMetadata, vatRepository, headerRepository)
 
-            frobEvent = test_data.VatFrobModel
-            frobEvent.Urn = fakeGuy
-            frobEvent.Ilk = test_helpers.FakeIlk
-            err = frobRepo.Create(headerId, []interface{}{frobEvent})
-            Expect(err).NotTo(HaveOccurred())
-        })
+			frobEvent = test_data.VatFrobModel
+			frobEvent.Urn = fakeGuy
+			frobEvent.Ilk = test_helpers.FakeIlk
+			err = frobRepo.Create(headerId, []interface{}{frobEvent})
+			Expect(err).NotTo(HaveOccurred())
+		})
 
-        Describe("frob_event_urn", func() {
-            It("returns urn_state for a frob_event", func() {
-                var actualUrn test_helpers.UrnState
-                err = db.Get(&actualUrn,
-                    `SELECT urnId, ilkId FROM maker.frob_event_urn(
+		Describe("frob_event_urn", func() {
+			It("returns urn_state for a frob_event", func() {
+				var actualUrn test_helpers.UrnState
+				err = db.Get(&actualUrn,
+					`SELECT urnId, ilkId FROM maker.frob_event_urn(
                         (SELECT (ilkid, urnid, dink, dart, block_number)::maker.frob_event FROM maker.all_frobs($1)))`,
-                        test_helpers.FakeIlk)
-                Expect(err).NotTo(HaveOccurred())
+					test_helpers.FakeIlk)
+				Expect(err).NotTo(HaveOccurred())
 
-                expectedUrn := test_helpers.UrnState{
-                    UrnId: fakeGuy,
-                    IlkId: test_helpers.FakeIlk,
-                }
+				expectedUrn := test_helpers.UrnState{
+					UrnId: fakeGuy,
+					IlkId: test_helpers.FakeIlk,
+				}
 
-                test_helpers.AssertUrn(actualUrn, expectedUrn)
-            })
-        })
+				test_helpers.AssertUrn(actualUrn, expectedUrn)
+			})
+		})
 
-        Describe("urn_state_frobs", func() {
-            It("returns relevant frobs for an urn_state", func() {
-                var actualFrobs test_helpers.FrobEvent
-                err = db.Get(&actualFrobs,
-                    `SELECT ilkid, urnid, dink, dart FROM maker.urn_state_frobs(
+		Describe("urn_state_frobs", func() {
+			It("returns relevant frobs for an urn_state", func() {
+				var actualFrobs test_helpers.FrobEvent
+				err = db.Get(&actualFrobs,
+					`SELECT ilkid, urnid, dink, dart FROM maker.urn_state_frobs(
                         (SELECT (urnid, ilkid, blockheight, ink, art, ratio, safe, created, updated)::maker.urn_state
                          FROM maker.get_all_urn_states_at_block($1))
                     )`, fakeBlock)
-                Expect(err).NotTo(HaveOccurred())
+				Expect(err).NotTo(HaveOccurred())
 
-                expectedFrobs := test_helpers.FrobEvent{
-                    IlkId: test_helpers.FakeIlk,
-                    UrnId: fakeGuy,
-                    Dink:  frobEvent.Dink,
-                    Dart:  frobEvent.Dart,
-                }
+				expectedFrobs := test_helpers.FrobEvent{
+					IlkId: test_helpers.FakeIlk,
+					UrnId: fakeGuy,
+					Dink:  frobEvent.Dink,
+					Dart:  frobEvent.Dart,
+				}
 
-                Expect(actualFrobs).To(Equal(expectedFrobs))
-            })
-        })
-    })
-
+				Expect(actualFrobs).To(Equal(expectedFrobs))
+			})
+		})
+	})
 
 	Describe("tx_era", func() {
 		It("returns an era object for a transaction", func() {
@@ -183,7 +180,7 @@ var _ = Describe("Extension function", func() {
 			txIndex := rand.Intn(10)
 			_, err = db.Exec(`INSERT INTO light_sync_transactions (header_id, hash, tx_from, tx_index, tx_to)
                 VALUES ($1, $2, $3, $4, $5)`, headerId, fakeHeader.Hash, txFrom, txIndex, txTo)
-            Expect(err).NotTo(HaveOccurred())
+			Expect(err).NotTo(HaveOccurred())
 
 			var actualEra Era
 			err = db.Get(&actualEra, `SELECT * FROM maker.tx_era(
@@ -210,24 +207,24 @@ var _ = Describe("Extension function", func() {
 			err = frobRepo.Create(headerId, []interface{}{frobEvent})
 			Expect(err).NotTo(HaveOccurred())
 
-            expectedTx := Tx{
-                TransactionHash:  "txHash",
-                TransactionIndex: strconv.Itoa(rand.Intn(10)),
-                BlockNumber:      strconv.Itoa(fakeBlock),
-                BlockHash:        fakeHeader.Hash,
-                TxFrom:           "fromAddress",
-                TxTo:             "toAddress",
-            }
+			expectedTx := Tx{
+				TransactionHash:  "txHash",
+				TransactionIndex: strconv.Itoa(rand.Intn(10)),
+				BlockNumber:      strconv.Itoa(fakeBlock),
+				BlockHash:        fakeHeader.Hash,
+				TxFrom:           "fromAddress",
+				TxTo:             "toAddress",
+			}
 
 			_, err = db.Exec(`INSERT INTO light_sync_transactions (header_id, hash, tx_from, tx_index, tx_to)
                 VALUES ($1, $2, $3, $4, $5)`, headerId, expectedTx.TransactionHash, expectedTx.TxFrom,
-                expectedTx.TransactionIndex, expectedTx.TxTo)
+				expectedTx.TransactionIndex, expectedTx.TxTo)
 			Expect(err).NotTo(HaveOccurred())
 
 			var actualTx Tx
 			err = db.Get(&actualTx, `SELECT * FROM maker.frob_event_tx(
 			    (SELECT (ilkid, urnid, dink, dart, block_number)::maker.frob_event FROM maker.all_frobs($1)))`,
-			    test_helpers.FakeIlk)
+				test_helpers.FakeIlk)
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(actualTx).To(Equal(expectedTx))

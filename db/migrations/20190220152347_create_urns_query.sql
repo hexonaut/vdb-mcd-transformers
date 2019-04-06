@@ -5,7 +5,7 @@
 CREATE TYPE maker.urn_state AS (
   urnId       TEXT,
   ilkId       TEXT,
-  blockHeight NUMERIC,
+  blockHeight BIGINT,
   -- ilk object
   ink         NUMERIC,
   art         NUMERIC,
@@ -18,7 +18,7 @@ CREATE TYPE maker.urn_state AS (
   );
 
 -- Function returning state for all urns as of given block
-CREATE OR REPLACE FUNCTION maker.get_all_urn_states_at_block(block_height numeric)
+CREATE OR REPLACE FUNCTION maker.get_all_urn_states_at_block(block_height BIGINT)
   RETURNS SETOF maker.urn_state
 AS
 
@@ -118,5 +118,5 @@ STABLE;
 
 
 -- +goose Down
-DROP FUNCTION IF EXISTS maker.get_all_urn_states_at_block(numeric);
+DROP FUNCTION IF EXISTS maker.get_all_urn_states_at_block(BIGINT);
 DROP TYPE IF EXISTS maker.urn_state CASCADE;

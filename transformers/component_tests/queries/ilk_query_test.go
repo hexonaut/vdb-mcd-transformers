@@ -140,8 +140,8 @@ var _ = Describe("Ilk State Query", func() {
 			createIlkAtBlock(blockOneHeader, blockOneFakeIlkValues, test_helpers.FakeIlkVatMetadatas, test_helpers.EmptyMetadatas, test_helpers.EmptyMetadatas)
 			// block two doesn't update rate or art
 			blockTwoFakeIlkValues := test_helpers.GetIlkValues(2)
-            vatMetadatasWithoutRateOrArt := []utils.StorageValueMetadata{test_helpers.FakeIlkSpotMetadata, test_helpers.FakeIlkLineMetadata}
-            createIlkAtBlock(blockTwoHeader, blockTwoFakeIlkValues, vatMetadatasWithoutRateOrArt, test_helpers.EmptyMetadatas, test_helpers.EmptyMetadatas)
+			vatMetadatasWithoutRateOrArt := []utils.StorageValueMetadata{test_helpers.FakeIlkSpotMetadata, test_helpers.FakeIlkLineMetadata}
+			createIlkAtBlock(blockTwoHeader, blockTwoFakeIlkValues, vatMetadatasWithoutRateOrArt, test_helpers.EmptyMetadatas, test_helpers.EmptyMetadatas)
 
 			var fakeIlkId int
 			err := db.Get(&fakeIlkId, `SELECT id FROM maker.ilks WHERE ilk = $1`, fakeIlk)
@@ -166,12 +166,12 @@ var _ = Describe("Ilk State Query", func() {
 			createIlkAtBlock(blockOneHeader, blockOneFakeIlkValues, test_helpers.FakeIlkVatMetadatas, test_helpers.EmptyMetadatas, test_helpers.EmptyMetadatas)
 			// block two doesn't update rate or art
 			blockTwoFakeIlkValues := test_helpers.GetIlkValues(1)
-            vatMetadatasWithoutRateOrArt := []utils.StorageValueMetadata{test_helpers.FakeIlkSpotMetadata, test_helpers.FakeIlkLineMetadata}
-            createIlkAtBlock(blockTwoHeader, blockTwoFakeIlkValues, vatMetadatasWithoutRateOrArt, test_helpers.EmptyMetadatas, test_helpers.EmptyMetadatas)
+			vatMetadatasWithoutRateOrArt := []utils.StorageValueMetadata{test_helpers.FakeIlkSpotMetadata, test_helpers.FakeIlkLineMetadata}
+			createIlkAtBlock(blockTwoHeader, blockTwoFakeIlkValues, vatMetadatasWithoutRateOrArt, test_helpers.EmptyMetadatas, test_helpers.EmptyMetadatas)
 			// block three doesn't update art
 			blockThreeFakeIlkValues := test_helpers.GetIlkValues(3)
-            vatMetadatasWithoutArt := []utils.StorageValueMetadata{test_helpers.FakeIlkRateMetadata, test_helpers.FakeIlkSpotMetadata, test_helpers.FakeIlkLineMetadata}
-            createIlkAtBlock(blockThreeHeader, blockThreeFakeIlkValues, vatMetadatasWithoutArt, test_helpers.EmptyMetadatas, test_helpers.EmptyMetadatas)
+			vatMetadatasWithoutArt := []utils.StorageValueMetadata{test_helpers.FakeIlkRateMetadata, test_helpers.FakeIlkSpotMetadata, test_helpers.FakeIlkLineMetadata}
+			createIlkAtBlock(blockThreeHeader, blockThreeFakeIlkValues, vatMetadatasWithoutArt, test_helpers.EmptyMetadatas, test_helpers.EmptyMetadatas)
 
 			var fakeIlkId int
 			err := db.Get(&fakeIlkId, `SELECT id FROM maker.ilks WHERE ilk = $1`, fakeIlk)
@@ -198,13 +198,13 @@ var _ = Describe("Ilk State Query", func() {
 			// block two doesn't update rate or art for fakeIlk
 			// and doesn't update rate, art or line for anotherFakeIlk
 			blockTwoFakeIlkValues := test_helpers.GetIlkValues(1)
-            vatMetadatasWithoutRateOrArt := []utils.StorageValueMetadata{test_helpers.FakeIlkSpotMetadata, test_helpers.FakeIlkLineMetadata}
-            createIlkAtBlock(blockTwoHeader, blockTwoFakeIlkValues, vatMetadatasWithoutRateOrArt, test_helpers.EmptyMetadatas, test_helpers.EmptyMetadatas)
+			vatMetadatasWithoutRateOrArt := []utils.StorageValueMetadata{test_helpers.FakeIlkSpotMetadata, test_helpers.FakeIlkLineMetadata}
+			createIlkAtBlock(blockTwoHeader, blockTwoFakeIlkValues, vatMetadatasWithoutRateOrArt, test_helpers.EmptyMetadatas, test_helpers.EmptyMetadatas)
 			// block three doesn't update ink
 			// and doesn't update take, rate or ink for anotherFakeIlk
 			blockThreeFakeIlkValues := test_helpers.GetIlkValues(3)
-            vatMetadatasWithoutRate := []utils.StorageValueMetadata{test_helpers.FakeIlkArtMetadata, test_helpers.FakeIlkSpotMetadata, test_helpers.FakeIlkLineMetadata}
-            createIlkAtBlock(blockThreeHeader, blockThreeFakeIlkValues, vatMetadatasWithoutRate, test_helpers.EmptyMetadatas, test_helpers.EmptyMetadatas)
+			vatMetadatasWithoutRate := []utils.StorageValueMetadata{test_helpers.FakeIlkArtMetadata, test_helpers.FakeIlkSpotMetadata, test_helpers.FakeIlkLineMetadata}
+			createIlkAtBlock(blockThreeHeader, blockThreeFakeIlkValues, vatMetadatasWithoutRate, test_helpers.EmptyMetadatas, test_helpers.EmptyMetadatas)
 
 			var fakeIlkId int
 			err := db.Get(&fakeIlkId, `SELECT id FROM maker.ilks WHERE ilk = $1`, fakeIlk)
@@ -244,6 +244,7 @@ var _ = Describe("Ilk State Query", func() {
 	It("returns the rest of the Ilk data if a field has missing data", func() {
 		vatMetadatasWithoutRate := test_helpers.FakeIlkVatMetadatas[1:]
 		blockOneFakeIlkValues := test_helpers.GetIlkValues(1)
+		blockOneFakeIlkValues[vat.IlkRate] = ""
 		createIlkAtBlock(blockOneHeader, blockOneFakeIlkValues, vatMetadatasWithoutRate, test_helpers.FakeIlkCatMetadatas, test_helpers.FakeIlkJugMetadatas)
 
 		var fakeIlkId int

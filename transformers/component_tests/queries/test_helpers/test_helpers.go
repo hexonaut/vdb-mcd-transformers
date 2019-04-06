@@ -117,13 +117,14 @@ func IlkStateFromValues(ilk, updated, created string, ilkValues map[string]strin
 		Art:     ilkValues[vat.IlkArt],
 		Spot:    ilkValues[vat.IlkSpot],
 		Line:    ilkValues[vat.IlkLine],
+		Dust:    ilkValues[vat.IlkDust],
 		Chop:    ilkValues[cat.IlkChop],
 		Lump:    ilkValues[cat.IlkLump],
 		Flip:    ilkValues[cat.IlkFlip],
 		Rho:     ilkValues[jug.IlkRho],
 		Tax:     ilkValues[jug.IlkTax],
-		Created: sql.NullString{String: updated, Valid: true},
-		Updated: sql.NullString{String: created, Valid: true},
+		Created: sql.NullString{String: created, Valid: true},
+		Updated: sql.NullString{String: updated, Valid: true},
 	}
 }
 
