@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/jmoiron/sqlx"
+	"github.com/vulcanize/mcd_transformers/transformers/events/pip_log_value"
 	"github.com/vulcanize/mcd_transformers/transformers/events/vat_frob"
 	"github.com/vulcanize/mcd_transformers/transformers/shared"
 	"github.com/vulcanize/mcd_transformers/transformers/storage/cat"
@@ -128,6 +129,7 @@ func (state *GeneratorState) doInitialSetup() {
 	}
 
 	state.currentHeader = fakes.GetFakeHeaderWithTimestamp(0, 0)
+	state.currentHeader.Hash = test_data.RandomString(10)
 	headerErr := state.insertCurrentHeader()
 	if headerErr != nil {
 		panic(fmt.Sprintf("Could not insert initial header: %v", headerErr))
@@ -176,14 +178,30 @@ func (state *GeneratorState) updateIlk() error {
 	randomIlkId := state.ilks[rand.Intn(len(state.ilks))]
 	blockNumber, blockHash := state.getCurrentBlockAndHash()
 
-	var err error
+	var storageErr error
+	var eventErr error
 	p := rand.Float64()
+	newValue := rand.Int()
+	tx, _ := state.db.Beginx()
 	if p < 0.1 {
-		_, err = state.db.Exec(vat.InsertIlkRateQuery, blockNumber, blockHash, randomIlkId, rand.Int())
+		_, storageErr = tx.Exec(vat.InsertIlkRateQuery, blockNumber, blockHash, randomIlkId, newValue)
+		// Rate is changed in fold, event which isn't included in spec
 	} else {
-		_, err = state.db.Exec(vat.InsertIlkSpotQuery, blockNumber, blockHash, randomIlkId, rand.Int())
+		_, storageErr = tx.Exec(vat.InsertIlkSpotQuery, blockNumber, blockHash, randomIlkId, newValue)
+		_, eventErr = tx.Exec(pip_log_value.InsertPipLogValueQuery,
+			blockNumber, state.currentHeader.Id, getRandomAddress(), newValue, 0, 0, emptyRaw) // log_idx, tx_idx, raw_log omitted
 	}
-	return err
+
+	if storageErr != nil {
+		_ = tx.Rollback()
+		return storageErr
+	}
+	if eventErr != nil {
+		_ = tx.Rollback()
+		return eventErr
+	}
+	_ = tx.Commit()
+	return nil
 }
 
 func (state *GeneratorState) touchUrns() error {
@@ -286,6 +304,7 @@ func (state *GeneratorState) insertIlk(hexIlk, name string) (int64, error) {
 	return id, nil
 }
 
+// Skips initial events for everything, annoying to do individually
 func (state *GeneratorState) insertInitialIlkData(ilkId int64) error {
 	tx, _ := state.db.Beginx()
 	blockNumber, blockHash := state.getCurrentBlockAndHash()
