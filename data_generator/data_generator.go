@@ -23,8 +23,10 @@ import (
 
 const (
 	headerSql = `INSERT INTO public.headers (hash, block_number, raw, block_timestamp, eth_node_id, eth_node_fingerprint)
-				  VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`
+		VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`
 	nodeSql = `INSERT INTO public.eth_nodes (genesis_block, network_id, eth_node_id) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`
+	txSql = `INSERT INTO header_sync_transactions (header_id, hash, tx_from, tx_index, tx_to)
+		VALUES ($1, $2, $3, $4, $5)`
 
 	// Event data
 	// TODO add event data
@@ -189,7 +191,13 @@ func (state *GeneratorState) updateIlk() error {
 	} else {
 		_, storageErr = tx.Exec(vat.InsertIlkSpotQuery, blockNumber, blockHash, randomIlkId, newValue)
 		_, eventErr = tx.Exec(pip_log_value.InsertPipLogValueQuery,
-			blockNumber, state.currentHeader.Id, getRandomAddress(), newValue, 0, 0, emptyRaw) // log_idx, tx_idx, raw_log omitted
+			blockNumber, state.currentHeader.Id, getRandomAddress(), newValue, 0, 0, emptyRaw) // tx_idx 0 to match tx
+
+		txErr := state.insertCurrentTx(tx)
+		if txErr != nil {
+			_ = tx.Rollback()
+			return txErr
+		}
 	}
 
 	if storageErr != nil {
@@ -200,6 +208,7 @@ func (state *GeneratorState) updateIlk() error {
 		_ = tx.Rollback()
 		return eventErr
 	}
+
 	_ = tx.Commit()
 	return nil
 }
@@ -231,11 +240,17 @@ func (state *GeneratorState) createUrn() error {
 	_, artErr := tx.Exec(vat.InsertUrnArtQuery, blockNumber, blockHash, urnId, rand.Int())
 	_, inkErr := tx.Exec(vat.InsertUrnInkQuery, blockNumber, blockHash, urnId, rand.Int())
 	_, frobErr := tx.Exec(vat_frob.InsertVatFrobQuery,
-		state.currentHeader.Id, urnId, guy, guy, ink, art, emptyRaw, 0, 0) // raw, logIx, txIx discarded
+		state.currentHeader.Id, urnId, guy, guy, ink, art, emptyRaw, 0, 0) // txIx 0 to match tx
 
 	if artErr != nil || inkErr != nil || frobErr != nil {
 		_ = tx.Rollback()
-		return fmt.Errorf("Error creating urn.\n artErr: %v\ninkErr: %v\nfrobErr: %v", artErr, inkErr, frobErr)
+		return fmt.Errorf("error creating urn.\n artErr: %v\ninkErr: %v\nfrobErr: %v", artErr, inkErr, frobErr)
+	}
+
+	txErr := state.insertCurrentTx(tx)
+	if txErr != nil {
+		_ = tx.Rollback()
+		return fmt.Errorf("error creating matching tx: %v", txErr)
 	}
 
 	_ = tx.Commit()
@@ -261,12 +276,12 @@ func (state *GeneratorState) updateUrn() error {
 		// Update ink
 		_, updateErr = tx.Exec(vat.InsertUrnInkQuery, blockNumber, blockHash, randomUrnId, newValue)
 		_, frobErr = tx.Exec(vat_frob.InsertVatFrobQuery,
-			state.currentHeader.Id, randomUrnId, randomGuy, randomGuy, newValue, 0, emptyRaw, 0, 0) // raw, logIx, txIx discarded
+			state.currentHeader.Id, randomUrnId, randomGuy, randomGuy, newValue, 0, emptyRaw, 0, 0) // txIx 0 to match tx
 	} else {
 		// Update art
 		_, updateErr = state.db.Exec(vat.InsertUrnArtQuery, blockNumber, blockHash, randomUrnId, newValue)
 		_, frobErr = tx.Exec(vat_frob.InsertVatFrobQuery,
-			state.currentHeader.Id, randomUrnId, randomGuy, randomGuy, 0, newValue, emptyRaw, 0, 0) // raw, logIx, txIx discarded
+			state.currentHeader.Id, randomUrnId, randomGuy, randomGuy, 0, newValue, emptyRaw, 0, 0) // txIx 0 to match tx
 	}
 
 	if updateErr != nil {
@@ -276,6 +291,12 @@ func (state *GeneratorState) updateUrn() error {
 	if frobErr != nil {
 		_ = tx.Rollback()
 		return frobErr
+	}
+
+	txErr := state.insertCurrentTx(tx)
+	if txErr != nil {
+		_ = tx.Rollback()
+		return txErr
 	}
 
 	_ = tx.Commit()
@@ -343,6 +364,16 @@ func (state *GeneratorState) insertCurrentHeader() error {
 	err := state.db.QueryRow(headerSql, header.Hash, header.BlockNumber, header.Raw, header.Timestamp, 1, node.ID).Scan(&id)
 	state.currentHeader.Id = id
 	return err
+}
+
+// Inserts a tx for the current header, with index 0. This matches the events, that are all generated with index 0
+func (state *GeneratorState) insertCurrentTx(tx *sqlx.Tx) error {
+	txHash := test_data.RandomString(10)
+	txFrom := getRandomAddress()
+	txIndex := 0
+	txTo := getRandomAddress()
+	_, txErr := tx.Exec(txSql, state.currentHeader.Id, txHash, txFrom, txIndex, txTo)
+	return txErr
 }
 
 func (state *GeneratorState) getCurrentBlockAndHash() (int64, string) {
