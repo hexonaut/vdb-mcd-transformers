@@ -184,32 +184,32 @@ func (state *GeneratorState) updateIlk() error {
 	var eventErr error
 	p := rand.Float64()
 	newValue := rand.Int()
-	tx, _ := state.db.Beginx()
+	pgTx, _ := state.db.Beginx()
 	if p < 0.1 {
-		_, storageErr = tx.Exec(vat.InsertIlkRateQuery, blockNumber, blockHash, randomIlkId, newValue)
+		_, storageErr = pgTx.Exec(vat.InsertIlkRateQuery, blockNumber, blockHash, randomIlkId, newValue)
 		// Rate is changed in fold, event which isn't included in spec
 	} else {
-		_, storageErr = tx.Exec(vat.InsertIlkSpotQuery, blockNumber, blockHash, randomIlkId, newValue)
-		_, eventErr = tx.Exec(pip_log_value.InsertPipLogValueQuery,
+		_, storageErr = pgTx.Exec(vat.InsertIlkSpotQuery, blockNumber, blockHash, randomIlkId, newValue)
+		_, eventErr = pgTx.Exec(pip_log_value.InsertPipLogValueQuery,
 			blockNumber, state.currentHeader.Id, getRandomAddress(), newValue, 0, 0, emptyRaw) // tx_idx 0 to match tx
 
-		txErr := state.insertCurrentTx(tx)
+		txErr := state.insertCurrentBlockTx(pgTx)
 		if txErr != nil {
-			_ = tx.Rollback()
+			_ = pgTx.Rollback()
 			return txErr
 		}
 	}
 
 	if storageErr != nil {
-		_ = tx.Rollback()
+		_ = pgTx.Rollback()
 		return storageErr
 	}
 	if eventErr != nil {
-		_ = tx.Rollback()
+		_ = pgTx.Rollback()
 		return eventErr
 	}
 
-	_ = tx.Commit()
+	_ = pgTx.Commit()
 	return nil
 }
 
@@ -236,24 +236,24 @@ func (state *GeneratorState) createUrn() error {
 
 	ink := rand.Int()
 	art := rand.Int()
-	tx, _ := state.db.Beginx()
-	_, artErr := tx.Exec(vat.InsertUrnArtQuery, blockNumber, blockHash, urnId, rand.Int())
-	_, inkErr := tx.Exec(vat.InsertUrnInkQuery, blockNumber, blockHash, urnId, rand.Int())
-	_, frobErr := tx.Exec(vat_frob.InsertVatFrobQuery,
+	pgTx, _ := state.db.Beginx()
+	_, artErr := pgTx.Exec(vat.InsertUrnArtQuery, blockNumber, blockHash, urnId, rand.Int())
+	_, inkErr := pgTx.Exec(vat.InsertUrnInkQuery, blockNumber, blockHash, urnId, rand.Int())
+	_, frobErr := pgTx.Exec(vat_frob.InsertVatFrobQuery,
 		state.currentHeader.Id, urnId, guy, guy, ink, art, emptyRaw, 0, 0) // txIx 0 to match tx
 
 	if artErr != nil || inkErr != nil || frobErr != nil {
-		_ = tx.Rollback()
+		_ = pgTx.Rollback()
 		return fmt.Errorf("error creating urn.\n artErr: %v\ninkErr: %v\nfrobErr: %v", artErr, inkErr, frobErr)
 	}
 
-	txErr := state.insertCurrentTx(tx)
+	txErr := state.insertCurrentBlockTx(pgTx)
 	if txErr != nil {
-		_ = tx.Rollback()
+		_ = pgTx.Rollback()
 		return fmt.Errorf("error creating matching tx: %v", txErr)
 	}
 
-	_ = tx.Commit()
+	_ = pgTx.Commit()
 	state.urns = append(state.urns, urnId)
 	return nil
 }
@@ -268,38 +268,38 @@ func (state *GeneratorState) updateUrn() error {
 
 	// Computing correct diff complicated, also getting correct guy :(
 
-	tx, _ := state.db.Beginx()
+	pgTx, _ := state.db.Beginx()
 	var updateErr error
 	var frobErr error
 	p := rand.Float32()
 	if p < 0.5 {
 		// Update ink
-		_, updateErr = tx.Exec(vat.InsertUrnInkQuery, blockNumber, blockHash, randomUrnId, newValue)
-		_, frobErr = tx.Exec(vat_frob.InsertVatFrobQuery,
+		_, updateErr = pgTx.Exec(vat.InsertUrnInkQuery, blockNumber, blockHash, randomUrnId, newValue)
+		_, frobErr = pgTx.Exec(vat_frob.InsertVatFrobQuery,
 			state.currentHeader.Id, randomUrnId, randomGuy, randomGuy, newValue, 0, emptyRaw, 0, 0) // txIx 0 to match tx
 	} else {
 		// Update art
 		_, updateErr = state.db.Exec(vat.InsertUrnArtQuery, blockNumber, blockHash, randomUrnId, newValue)
-		_, frobErr = tx.Exec(vat_frob.InsertVatFrobQuery,
+		_, frobErr = pgTx.Exec(vat_frob.InsertVatFrobQuery,
 			state.currentHeader.Id, randomUrnId, randomGuy, randomGuy, 0, newValue, emptyRaw, 0, 0) // txIx 0 to match tx
 	}
 
 	if updateErr != nil {
-		_ = tx.Rollback()
+		_ = pgTx.Rollback()
 		return updateErr
 	}
 	if frobErr != nil {
-		_ = tx.Rollback()
+		_ = pgTx.Rollback()
 		return frobErr
 	}
 
-	txErr := state.insertCurrentTx(tx)
+	txErr := state.insertCurrentBlockTx(pgTx)
 	if txErr != nil {
-		_ = tx.Rollback()
+		_ = pgTx.Rollback()
 		return txErr
 	}
 
-	_ = tx.Commit()
+	_ = pgTx.Commit()
 	return nil
 }
 
@@ -327,7 +327,7 @@ func (state *GeneratorState) insertIlk(hexIlk, name string) (int64, error) {
 
 // Skips initial events for everything, annoying to do individually
 func (state *GeneratorState) insertInitialIlkData(ilkId int64) error {
-	tx, _ := state.db.Beginx()
+	pgTx, _ := state.db.Beginx()
 	blockNumber, blockHash := state.getCurrentBlockAndHash()
 	intInsertions := []string{
 		vat.InsertIlkRateQuery,
@@ -342,19 +342,19 @@ func (state *GeneratorState) insertInitialIlkData(ilkId int64) error {
 	}
 
 	for _, intInsertSql := range intInsertions {
-		_, err := tx.Exec(intInsertSql, blockNumber, blockHash, ilkId, rand.Int())
+		_, err := pgTx.Exec(intInsertSql, blockNumber, blockHash, ilkId, rand.Int())
 		if err != nil {
-			_ = tx.Rollback()
+			_ = pgTx.Rollback()
 			return fmt.Errorf("error inserting initial ilk data: %v", err)
 		}
 	}
-	_, flipErr := tx.Exec(cat.InsertCatIlkFlipQuery, blockNumber, blockHash, ilkId, test_data.RandomString(10))
+	_, flipErr := pgTx.Exec(cat.InsertCatIlkFlipQuery, blockNumber, blockHash, ilkId, test_data.RandomString(10))
 	if flipErr != nil {
-		_ = tx.Rollback()
+		_ = pgTx.Rollback()
 		return fmt.Errorf("error inserting initial ilk data: %v", flipErr)
 	}
 
-	_ = tx.Commit()
+	_ = pgTx.Commit()
 	return nil
 }
 
@@ -367,12 +367,12 @@ func (state *GeneratorState) insertCurrentHeader() error {
 }
 
 // Inserts a tx for the current header, with index 0. This matches the events, that are all generated with index 0
-func (state *GeneratorState) insertCurrentTx(tx *sqlx.Tx) error {
+func (state *GeneratorState) insertCurrentBlockTx(pgTx *sqlx.Tx) error {
 	txHash := getRandomHash()
 	txFrom := getRandomAddress()
 	txIndex := 0
 	txTo := getRandomAddress()
-	_, txErr := tx.Exec(txSql, state.currentHeader.Id, txHash, txFrom, txIndex, txTo)
+	_, txErr := pgTx.Exec(txSql, state.currentHeader.Id, txHash, txFrom, txIndex, txTo)
 	return txErr
 }
 
