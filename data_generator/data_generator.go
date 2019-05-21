@@ -368,7 +368,7 @@ func (state *GeneratorState) insertCurrentHeader() error {
 
 // Inserts a tx for the current header, with index 0. This matches the events, that are all generated with index 0
 func (state *GeneratorState) insertCurrentTx(tx *sqlx.Tx) error {
-	txHash := test_data.RandomString(10)
+	txHash := getRandomHash()
 	txFrom := getRandomAddress()
 	txIndex := 0
 	txTo := getRandomAddress()
@@ -391,8 +391,13 @@ func GetHexIlk(ilkName string) string {
 }
 
 func getRandomAddress() string {
+	hash := getRandomHash()
+	address := hash[:42]
+	return address
+}
+
+func getRandomHash() string {
 	seed := test_data.RandomString(5)
 	hash := sha3.Sum256([]byte(seed))
-	address := fmt.Sprintf("0x%x", hash)[:42]
-	return address
+	return fmt.Sprintf("0x%x", hash)
 }
