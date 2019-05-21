@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"github.com/jmoiron/sqlx"
-	"github.com/vulcanize/mcd_transformers/test_config"
 	"github.com/vulcanize/mcd_transformers/transformers/events/vat_frob"
 	"github.com/vulcanize/mcd_transformers/transformers/shared"
 	"github.com/vulcanize/mcd_transformers/transformers/storage/cat"
@@ -15,6 +14,7 @@ import (
 	"github.com/vulcanize/vulcanizedb/pkg/core"
 	"github.com/vulcanize/vulcanizedb/pkg/datastore/postgres"
 	"github.com/vulcanize/vulcanizedb/pkg/fakes"
+	"golang.org/x/crypto/sha3"
 	"math/rand"
 	"os"
 	"strings"
@@ -28,6 +28,16 @@ const (
 	// Event data
 	// TODO add event data
 	// TODO add tx for events
+)
+
+var (
+	node = core.Node{
+		GenesisBlock: "GENESIS",
+		NetworkID:    1,
+		ID:           "b6f90c0fdd8ec9607aed8ee45c69322e47b7063f0bfb7a29c8ecafab24d0a22d24dd2329b5ee6ed4125a03cb14e57fd584e67f9e53e6c631055cbbd82f080845",
+		ClientName:   "Geth/v1.7.2-stable-1db4ecdc/darwin-amd64/go1.9",
+	}
+	emptyRaw, _ = json.Marshal("nothing")
 )
 
 func main() {
@@ -45,7 +55,7 @@ func main() {
 
 	pg := postgres.DB{
 		DB:     db,
-		Node:   test_config.NewTestNode(),
+		Node:   node,
 		NodeID: 0,
 	}
 
@@ -112,8 +122,7 @@ func (state *GeneratorState) Run(steps int) {
 // Creates a starting ilk and urn, with the corresponding header.
 func (state *GeneratorState) doInitialSetup() {
 	// This may or may not have been initialised, needed for a FK constraint
-	nodeId := test_config.NewTestNode().ID
-	_, nodeErr := state.db.Exec(nodeSql, "GENESIS", 1, nodeId)
+	_, nodeErr := state.db.Exec(nodeSql, "GENESIS", 1, node.ID)
 	if nodeErr != nil {
 		panic(fmt.Sprintf("Could not insert initial node: %v", nodeErr))
 	}
@@ -189,7 +198,7 @@ func (state *GeneratorState) touchUrns() error {
 // Creates a new urn associated with a random ilk
 func (state *GeneratorState) createUrn() error {
 	randomIlkId := state.ilks[rand.Intn(len(state.ilks))]
-	guy := test_data.RandomString(10)
+	guy := getRandomAddress()
 	urnId, insertUrnErr := state.insertUrn(randomIlkId, guy)
 	if insertUrnErr != nil {
 		return insertUrnErr
@@ -200,7 +209,6 @@ func (state *GeneratorState) createUrn() error {
 
 	ink := rand.Int()
 	art := rand.Int()
-	emptyRaw, _ := json.Marshal("emptyLog")
 	tx, _ := state.db.Beginx()
 	_, artErr := tx.Exec(vat.InsertUrnArtQuery, blockNumber, blockHash, urnId, rand.Int())
 	_, inkErr := tx.Exec(vat.InsertUrnInkQuery, blockNumber, blockHash, urnId, rand.Int())
@@ -222,20 +230,38 @@ func (state *GeneratorState) updateUrn() error {
 	randomUrnId := state.urns[rand.Intn(len(state.urns))]
 	blockNumber := state.currentHeader.BlockNumber
 	blockHash := state.currentHeader.Hash
+	randomGuy := getRandomAddress()
+	newValue := rand.Int()
 
-	// TODO create frob event for updates.
 	// Computing correct diff complicated, also getting correct guy :(
 
-	var err error
+	tx, _ := state.db.Beginx()
+	var updateErr error
+	var frobErr error
 	p := rand.Float32()
 	if p < 0.5 {
 		// Update ink
-		_, err = state.db.Exec(vat.InsertUrnInkQuery, blockNumber, blockHash, randomUrnId, rand.Int())
+		_, updateErr = tx.Exec(vat.InsertUrnInkQuery, blockNumber, blockHash, randomUrnId, newValue)
+		_, frobErr = tx.Exec(vat_frob.InsertVatFrobQuery,
+			state.currentHeader.Id, randomUrnId, randomGuy, randomGuy, newValue, 0, emptyRaw, 0, 0) // raw, logIx, txIx discarded
 	} else {
 		// Update art
-		_, err = state.db.Exec(vat.InsertUrnArtQuery, blockNumber, blockHash, randomUrnId, rand.Int())
+		_, updateErr = state.db.Exec(vat.InsertUrnArtQuery, blockNumber, blockHash, randomUrnId, newValue)
+		_, frobErr = tx.Exec(vat_frob.InsertVatFrobQuery,
+			state.currentHeader.Id, randomUrnId, randomGuy, randomGuy, 0, newValue, emptyRaw, 0, 0) // raw, logIx, txIx discarded
 	}
-	return err
+
+	if updateErr != nil {
+		_ = tx.Rollback()
+		return updateErr
+	}
+	if frobErr != nil {
+		_ = tx.Rollback()
+		return frobErr
+	}
+
+	_ = tx.Commit()
+	return nil
 }
 
 // Inserts into `urns` table, returning the urn_id from the database
@@ -294,9 +320,8 @@ func (state *GeneratorState) insertInitialIlkData(ilkId int64) error {
 
 func (state *GeneratorState) insertCurrentHeader() error {
 	header := state.currentHeader
-	nodeId := test_config.NewTestNode().ID
 	var id int64
-	err := state.db.QueryRow(headerSql, header.Hash, header.BlockNumber, header.Raw, header.Timestamp, 1, nodeId).Scan(&id)
+	err := state.db.QueryRow(headerSql, header.Hash, header.BlockNumber, header.Raw, header.Timestamp, 1, node.ID).Scan(&id)
 	state.currentHeader.Id = id
 	return err
 }
@@ -313,4 +338,11 @@ func GetHexIlk(ilkName string) string {
 		hexIlk = hexIlk + "0"
 	}
 	return hexIlk
+}
+
+func getRandomAddress() string {
+	seed := test_data.RandomString(5)
+	hash := sha3.Sum256([]byte(seed))
+	address := fmt.Sprintf("0x%x", hash)[:42]
+	return address
 }
