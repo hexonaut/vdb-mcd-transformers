@@ -370,6 +370,7 @@ func (state *GeneratorState) insertInitialIlkData(ilkId int64) error {
 	}
 	_, flipErr := pgTx.Exec(cat.InsertCatIlkFlipQuery,
 		blockNumber, blockHash, ilkId, test_data.AlreadySeededRandomString(10))
+
 	if flipErr != nil {
 		_ = pgTx.Rollback()
 		return fmt.Errorf("error inserting initial ilk data: %v", flipErr)
