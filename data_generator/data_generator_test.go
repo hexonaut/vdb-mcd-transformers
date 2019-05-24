@@ -66,7 +66,9 @@ func dumpTables() []byte {
 // This allows the id columns to match between subsequent runs.
 func resetIdColumnSequences(db *postgres.DB) {
 	var sequences []string
-	seqErr := db.Select(&sequences, `SELECT schemaname || '.' || relname from pg_statio_user_sequences`)
+	seqErr := db.Select(&sequences,
+		`SELECT schemaname || '.' || relname from pg_statio_user_sequences
+		WHERE relname NOT IN ('goose_db_version_id_seq')`)
 	Expect(seqErr).NotTo(HaveOccurred())
 
 	for _, seq := range sequences {
