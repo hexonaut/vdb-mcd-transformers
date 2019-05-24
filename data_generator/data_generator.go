@@ -86,7 +86,10 @@ func main() {
 	}
 
 	generatorState := NewGenerator(&pg)
-	generatorState.Run(*stepsPtr)
+	runErr := generatorState.Run(*stepsPtr)
+	if runErr != nil {
+		fmt.Println("Error occurred while running generator, results may be partial: ", runErr.Error())
+	}
 }
 
 type GeneratorState struct {
@@ -106,8 +109,11 @@ func NewGenerator(db *postgres.DB) GeneratorState {
 }
 
 // Runs probabilistic generator for random ilk/urn interaction.
-func (state *GeneratorState) Run(steps int) {
-	state.doInitialSetup()
+func (state *GeneratorState) Run(steps int) error {
+	initErr := state.doInitialSetup()
+	if initErr != nil {
+		return initErr
+	}
 
 	var p float32
 	var err error
@@ -116,48 +122,49 @@ func (state *GeneratorState) Run(steps int) {
 		state.currentHeader.Hash = test_data.UnseededRandomString(10)
 		headerErr := state.insertCurrentHeader()
 		if headerErr != nil {
-			fmt.Println("Error inserting current header: ", headerErr)
-			continue
+			return fmt.Errorf("error inserting current header: %v", headerErr)
 		}
 
 		p = rand.Float32()
 		if p < 0.2 { // Interact with Ilks
 			err = state.touchIlks()
 			if err != nil {
-				fmt.Println("Error touching ilks: ", err)
+				return fmt.Errorf("error touching ilks: %v", err)
 			}
 		} else { // Interact with Urns
 			err = state.touchUrns()
 			if err != nil {
-				fmt.Println("Error touching urns: ", err)
+				return fmt.Errorf("error touching urns: %v", err)
 			}
 		}
 	}
+	return nil
 }
 
 // Creates a starting ilk and urn, with the corresponding header.
-func (state *GeneratorState) doInitialSetup() {
+func (state *GeneratorState) doInitialSetup() error {
 	// This may or may not have been initialised, needed for a FK constraint
 	_, nodeErr := state.db.Exec(nodeSql, "GENESIS", 1, node.ID)
 	if nodeErr != nil {
-		panic(fmt.Sprintf("Could not insert initial node: %v", nodeErr))
+		return fmt.Errorf("could not insert initial node: %v", nodeErr)
 	}
 
 	state.currentHeader = fakes.GetFakeHeaderWithTimestamp(0, 0)
 	state.currentHeader.Hash = test_data.UnseededRandomString(10)
 	headerErr := state.insertCurrentHeader()
 	if headerErr != nil {
-		panic(fmt.Sprintf("Could not insert initial header: %v", headerErr))
+		return fmt.Errorf("could not insert initial header: %v", headerErr)
 	}
 
 	ilkErr := state.createIlk()
 	if ilkErr != nil {
-		panic(fmt.Sprintf("Could not create initial ilk: %v", ilkErr))
+		return fmt.Errorf("could not create initial ilk: %v", ilkErr)
 	}
 	urnErr := state.createUrn()
 	if urnErr != nil {
-		panic(fmt.Sprintf("Could not create initial urn: %v", urnErr))
+		return fmt.Errorf("could not create initial urn: %v", urnErr)
 	}
+	return nil
 }
 
 // Creates a new ilk, or updates a random one
