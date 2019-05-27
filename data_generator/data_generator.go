@@ -85,11 +85,17 @@ func main() {
 		os.Exit(0)
 	}
 
+	startTime := time.Now()
 	generatorState := NewGenerator(&pg)
 	runErr := generatorState.Run(*stepsPtr)
 	if runErr != nil {
 		fmt.Println("Error occurred while running generator, results may be partial: ", runErr.Error())
 	}
+
+	duration := time.Now().Sub(startTime)
+	speed := float64(*stepsPtr) / duration.Seconds()
+	fmt.Printf("Simulated %v interactions in %v. (%.f/s)\n",
+		*stepsPtr, duration.Round(time.Duration(time.Second)).String(), speed)
 }
 
 type GeneratorState struct {
