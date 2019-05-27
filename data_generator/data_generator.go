@@ -65,13 +65,13 @@ func main() {
 		NodeID: 0,
 	}
 
-	var seed int64
 	if *seedPtr != -1 {
-		seed = *seedPtr
+		rand.Seed(*seedPtr)
 		fmt.Println("\nUsing passed seed. If data from this seed is already in the DB, there will be database constraint errors.")
 	} else {
-		seed = time.Now().UnixNano()
-		fmt.Printf("\nUsing random seed %v. Pass this with '-seed' to reproduce results on a fresh DB.\n", seed)
+		seed := time.Now().UnixNano()
+		rand.Seed(seed)
+		fmt.Printf("\nUsing current time as seed: %v. Pass this with '-seed' to reproduce results on a fresh DB.\n", seed)
 	}
 
 	fmt.Println("\nRunning this will write mock data to the DB you specified, possibly contaminating real data:")
@@ -119,7 +119,7 @@ func (state *GeneratorState) Run(steps int) error {
 	var err error
 	for i := 1; i <= steps; i++ {
 		state.currentHeader = fakes.GetFakeHeaderWithTimestamp(int64(i), int64(i))
-		state.currentHeader.Hash = test_data.UnseededRandomString(10)
+		state.currentHeader.Hash = test_data.AlreadySeededRandomString(10)
 		headerErr := state.insertCurrentHeader()
 		if headerErr != nil {
 			return fmt.Errorf("error inserting current header: %v", headerErr)
@@ -150,7 +150,7 @@ func (state *GeneratorState) doInitialSetup() error {
 	}
 
 	state.currentHeader = fakes.GetFakeHeaderWithTimestamp(0, 0)
-	state.currentHeader.Hash = test_data.UnseededRandomString(10)
+	state.currentHeader.Hash = test_data.AlreadySeededRandomString(10)
 	headerErr := state.insertCurrentHeader()
 	if headerErr != nil {
 		return fmt.Errorf("could not insert initial header: %v", headerErr)
@@ -178,7 +178,7 @@ func (state *GeneratorState) touchIlks() error {
 }
 
 func (state *GeneratorState) createIlk() error {
-	ilkName := strings.ToUpper(test_data.UnseededRandomString(5))
+	ilkName := strings.ToUpper(test_data.AlreadySeededRandomString(5))
 	hexIlk := GetHexIlk(ilkName)
 
 	ilkId, insertIlkErr := state.insertIlk(hexIlk, ilkName)
@@ -369,7 +369,7 @@ func (state *GeneratorState) insertInitialIlkData(ilkId int64) error {
 		}
 	}
 	_, flipErr := pgTx.Exec(cat.InsertCatIlkFlipQuery,
-		blockNumber, blockHash, ilkId, test_data.UnseededRandomString(10))
+		blockNumber, blockHash, ilkId, test_data.AlreadySeededRandomString(10))
 	if flipErr != nil {
 		_ = pgTx.Rollback()
 		return fmt.Errorf("error inserting initial ilk data: %v", flipErr)
@@ -418,7 +418,7 @@ func getRandomAddress() string {
 }
 
 func getRandomHash() string {
-	seed := test_data.UnseededRandomString(5)
+	seed := test_data.AlreadySeededRandomString(5)
 	hash := sha3.Sum256([]byte(seed))
 	return fmt.Sprintf("0x%x", hash)
 }
