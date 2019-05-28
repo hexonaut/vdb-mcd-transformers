@@ -90,6 +90,8 @@ func main() {
 	runErr := generatorState.Run(*stepsPtr)
 	if runErr != nil {
 		fmt.Println("Error occurred while running generator: ", runErr.Error())
+		fmt.Println("Exiting without writing any data to DB.")
+		os.Exit(1)
 	}
 
 	duration := time.Now().Sub(startTime)
@@ -153,8 +155,7 @@ func (state *GeneratorState) Run(steps int) error {
 			}
 		}
 	}
-	commitErr := state.pgTx.Commit()
-	return commitErr
+	return state.pgTx.Commit()
 }
 
 // Creates a starting ilk and urn, with the corresponding header.
@@ -194,7 +195,7 @@ func (state *GeneratorState) touchIlks() error {
 }
 
 func (state *GeneratorState) createIlk() error {
-	ilkName := strings.ToUpper(test_data.AlreadySeededRandomString(5))
+	ilkName := strings.ToUpper(test_data.AlreadySeededRandomString(7))
 	hexIlk := GetHexIlk(ilkName)
 
 	ilkId, insertIlkErr := state.insertIlk(hexIlk, ilkName)
@@ -417,7 +418,7 @@ func getRandomAddress() string {
 }
 
 func getRandomHash() string {
-	seed := test_data.AlreadySeededRandomString(5)
+	seed := test_data.AlreadySeededRandomString(10)
 	hash := sha3.Sum256([]byte(seed))
 	return fmt.Sprintf("0x%x", hash)
 }
