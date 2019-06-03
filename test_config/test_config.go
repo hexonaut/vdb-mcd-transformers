@@ -76,6 +76,8 @@ func NewTestDB(node core.Node) *postgres.DB {
 	return db
 }
 
+// Cleans all tables in the DB. Note that this requires cascade constraints to be in place,
+// so deletion can be run in any order.
 func CleanTestDB(db *postgres.DB) {
 	if len(wipeTableQueries) == 0 {
 		// The generated queries delete from all tables in the public and maker schemas,
@@ -84,12 +86,10 @@ func CleanTestDB(db *postgres.DB) {
 			`SELECT 'DELETE FROM ' || schemaname || '.' || relname || ';'
 			FROM pg_stat_user_tables
 			WHERE schemaname IN ('public', 'maker')
-			AND relname NOT IN ('eth_nodes', 'goose_db_version', 'ilks', 'urns');`)
+			AND relname NOT IN ('eth_nodes', 'goose_db_version');`)
 		if err != nil {
 			panic("Failed to generate DB cleaning query: " + err.Error())
 		}
-		// Since ON DELETE CASCADE-constraints are missing from most event/sdiff tables, take these last
-		wipeTableQueries = append(wipeTableQueries, "DELETE FROM maker.urns", "DELETE FROM maker.ilks;")
 	}
 
 	for _, query := range wipeTableQueries {
