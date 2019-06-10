@@ -54,7 +54,7 @@ func (repository *MakerStorageRepository) GetDaiKeys() ([]string, error) {
 		SELECT DISTINCT v FROM maker.vat_suck
 		UNION
 		SELECT DISTINCT tx_from FROM public.header_sync_transactions AS transactions
-			LEFT JOIN maker.vat_heal AS vat_heal ON vat_heal.header_id = transactions.header_id
+			LEFT JOIN maker.vat_heal ON vat_heal.header_id = transactions.header_id
 			WHERE vat_heal.tx_idx = transactions.tx_index
 		UNION
 		SELECT DISTINCT urns.identifier FROM maker.vat_fold
