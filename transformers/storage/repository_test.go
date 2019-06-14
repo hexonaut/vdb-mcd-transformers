@@ -252,6 +252,15 @@ var _ = Describe("Maker storage repository", func() {
 			Expect(sinKeys).To(ConsistOf(guy1))
 		})
 
+		It("fetches guy from u field of vat suck", func() {
+			insertVatSuck(guy1, guy2, 0, 1, db)
+			sinKeys, repoErr := repository.GetVatSinKeys()
+
+			Expect(repoErr).NotTo(HaveOccurred())
+			Expect(len(sinKeys)).To(Equal(1))
+			Expect(sinKeys).To(ConsistOf(guy1))
+		})
+
 		It("fetches the correct guy when there are multiple transactions in a block", func() {
 			insertVatHeal(1, transactionFromGuy1, db)
 			unrelatedTransaction := core.TransactionModel{From: "unrelated guy", TxIndex: 15, Value: "0"}
@@ -264,19 +273,21 @@ var _ = Describe("Maker storage repository", func() {
 			Expect(sinKeys).To(ConsistOf(guy1))
 		})
 
-		It("fetches unique sin keys from vat_grab + vat_heal", func() {
+		It("fetches unique sin keys from vat_grab + vat_heal + vat_suck", func() {
 			transactionFromGuy2 := core.TransactionModel{From: guy2, TxIndex: 2, Value: "0"}
 			insertVatGrab(guy3, guy3, guy3, guy1, 1, db)
 			insertVatHeal(2, transactionFromGuy2, db)
-			// duplicates
-			insertVatGrab(guy2, guy2, guy2, guy2, 3, db)
-			insertVatHeal(4, transactionFromGuy2, db)
+			insertVatSuck(guy3, guy3, 0, 3, db)
+			// duplicate
+			insertVatGrab(guy2, guy2, guy2, guy2, 4, db)
+			insertVatHeal(5, transactionFromGuy2, db)
+			insertVatSuck(guy1, guy2, 0, 6, db)
 
 			sinKeys, err := repository.GetVatSinKeys()
 
 			Expect(err).NotTo(HaveOccurred())
-			Expect(len(sinKeys)).To(Equal(2))
-			Expect(sinKeys).To(ConsistOf(guy1, guy2))
+			Expect(len(sinKeys)).To(Equal(3))
+			Expect(sinKeys).To(ConsistOf(guy1, guy2, guy3))
 		})
 
 		It("does not return error if no matching rows", func() {
@@ -504,6 +515,19 @@ func insertVatGrab(ilk, urn, v, w string, blockNumber int64, db *postgres.DB) {
 		`INSERT INTO maker.vat_grab (header_id, urn_id, v, w, log_idx, tx_idx)
 			VALUES($1, $2, $3, $4, $5, $6)`,
 		headerID, urnID, v, w, 0, 0,
+	)
+	Expect(execErr).NotTo(HaveOccurred())
+}
+
+func insertVatSuck(u, v string, rad int, blockNumber int64, db *postgres.DB) {
+	headerRepository := repositories.NewHeaderRepository(db)
+	headerID, err := headerRepository.CreateOrUpdateHeader(fakes.GetFakeHeader(blockNumber))
+	Expect(err).NotTo(HaveOccurred())
+
+	_, execErr := db.Exec(
+		`INSERT INTO maker.vat_suck (header_id, u, v, rad, log_idx, tx_idx)
+			VALUES($1, $2, $3, $4, $5, $6)`,
+		headerID, u, v, rad, 0, 0,
 	)
 	Expect(execErr).NotTo(HaveOccurred())
 }
