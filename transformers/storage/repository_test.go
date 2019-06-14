@@ -91,25 +91,49 @@ var _ = Describe("Maker storage repository", func() {
 			Expect(keys).To(ConsistOf(guy1))
 		})
 
-		It("fetches unique guys from vat_move + vat_frob + vat_heal + vat_fold", func() {
+		It("fetches guy from v field on vat_suck", func() {
+			insertVatSuck(guy1, guy2, 0, 1, db)
+
+			daiKeys , repoErr := repository.GetDaiKeys()
+
+			Expect(repoErr).NotTo(HaveOccurred())
+			Expect(len(daiKeys)).To(Equal(1))
+			Expect(daiKeys).To(ConsistOf(guy2))
+		})
+
+		It("fetches guy from u field on vat_fold", func() {
+			insertVatFold(guy1, 1, db)
+
+			daiKeys , repoErr := repository.GetDaiKeys()
+
+			Expect(repoErr).NotTo(HaveOccurred())
+			Expect(len(daiKeys)).To(Equal(1))
+			Expect(daiKeys).To(ConsistOf(guy1))
+		})
+
+		It("fetches unique guys from vat_move + vat_frob + vat_heal + vat_fold + vat_suck", func() {
 			guy4 := "47555934"
 			guy5 := "47555935"
+			guy6 := "47555936"
 			transactionFromGuy4 := core.TransactionModel{From: guy4, TxIndex: 4, Value: "0"}
 			insertVatMove(guy1, guy2, 1, db)
 			insertVatFrob(ilk1, guy1, guy1, guy3, 2, db)
 			insertVatHeal(3, transactionFromGuy4, db)
 			insertVatFold(guy5, 4, db)
+			insertVatSuck(guy1, guy6, 0, 5, db)
+
 			// duplicates
-			insertVatMove(guy3, guy1, 5, db)
-			insertVatFrob(ilk2, guy2, guy2, guy5, 6, db)
-			insertVatHeal(7, transactionFromGuy1, db)
-			insertVatFold(guy4, 8, db)
+			insertVatMove(guy3, guy1, 6, db)
+			insertVatFrob(ilk2, guy2, guy2, guy5, 7, db)
+			insertVatHeal(8, transactionFromGuy1, db)
+			insertVatFold(guy4, 9, db)
+			insertVatSuck(guy1, guy1, 0, 10, db)
 
 			keys, err := repository.GetDaiKeys()
 
 			Expect(err).NotTo(HaveOccurred())
-			Expect(len(keys)).To(Equal(5))
-			Expect(keys).To(ConsistOf(guy1, guy2, guy3, guy4, guy5))
+			Expect(len(keys)).To(Equal(6))
+			Expect(keys).To(ConsistOf(guy1, guy2, guy3, guy4, guy5, guy6))
 		})
 
 		It("fetches the correct guy when there are multiple transactions in a block", func() {
