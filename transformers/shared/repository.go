@@ -37,6 +37,7 @@ const (
 type InsertionModel struct {
 	TableName      string                 // For MarkHeaderChecked, insert query
 	OrderedColumns []string               // Defines the fields to insert, and in which order the table expects them
+	// ColumnToValue needs to be typed interface{}, since `raw_log` is a slice of bytes and not a string
 	ColumnToValue  map[string]interface{} // Associated values for columns, some "magic" populated automatically
 	IlkIdentifier  string                 // For inserting ilk and getting id, empty if not required
 	UrnIdentifier  string                 // For inserting ilk and getting id, empty if not required
@@ -84,6 +85,10 @@ testModel = shared.InsertionModel{
 }
 */
 func Create(headerID int64, models []InsertionModel, db *postgres.DB) error {
+	if len(models) < 1 {
+		return fmt.Errorf("repository got empty model slice")
+	}
+
 	tx, dBaseErr := db.Beginx()
 	if dBaseErr != nil {
 		return dBaseErr
@@ -101,7 +106,6 @@ func Create(headerID int64, models []InsertionModel, db *postgres.DB) error {
 		// Quick 'n' dirty solution to these not being declared in config.
 		// a) Couldn't we somewhere create the table and add a checked column inside the plugin, instead of a migration?
 		// b) By defining the checked column to be tableName_checked, we can do away with all the strings anyway :)
-		// c) If the model list is empty, we don't know what to set as checked. Need to pass as arg?
 		if checkedHeaderColumn == "" {
 			checkedHeaderColumn = model.TableName + "_checked"
 		}
@@ -118,7 +122,7 @@ func Create(headerID int64, models []InsertionModel, db *postgres.DB) error {
 				return ilkErr
 			}
 			// Save id in mapping for insertion query
-			model.ColumnToValue["ilk_id"] = strconv.Itoa(ilkID)
+			model.ColumnToValue["ilk_id"] = ilkID
 		}
 
 		// if an urn identifier is supplied in the model, create/lookup it's id
@@ -132,7 +136,7 @@ func Create(headerID int64, models []InsertionModel, db *postgres.DB) error {
 				return urnErr
 			}
 			// Save id in mapping for insertion query
-			model.ColumnToValue["urn_id"] = strconv.Itoa(urnID)
+			model.ColumnToValue["urn_id"] = urnID
 		}
 
 		// Maps can't be iterated over in a reliable manner, so we rely on OrderedColumns to define the order to insert
@@ -153,7 +157,6 @@ func Create(headerID int64, models []InsertionModel, db *postgres.DB) error {
 		}
 	}
 
-	// This won't work if the model slice was empty... :thinking:
 	checkHeaderErr := repository.MarkHeaderCheckedInTransaction(headerID, tx, checkedHeaderColumn)
 	if checkHeaderErr != nil {
 		rollbackErr := tx.Rollback()
