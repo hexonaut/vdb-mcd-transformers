@@ -35,12 +35,11 @@ const (
 )
 
 type InsertionModel struct {
-	TableName      string                 // For MarkHeaderChecked, insert query
-	OrderedColumns []string               // Defines the fields to insert, and in which order the table expects them
+	TableName      string   // For MarkHeaderChecked, insert query
+	OrderedColumns []string // Defines the fields to insert, and in which order the table expects them
 	// ColumnToValue needs to be typed interface{}, since `raw_log` is a slice of bytes and not a string
-	ColumnToValue  map[string]interface{} // Associated values for columns, some "magic" populated automatically
-	IlkIdentifier  string                 // For inserting ilk and getting id, empty if not required
-	UrnIdentifier  string                 // For inserting ilk and getting id, empty if not required
+	ColumnToValue     map[string]interface{} // Associated values for columns, headerID, FKs and event metadata populated automatically
+	ForeignKeyToValue map[string]string      // FK name and value to get/create ID for
 }
 
 // Creates an insertion query from an insertion model
@@ -68,76 +67,47 @@ func generateInsertionQuery(model InsertionModel) string {
 }
 
 /* Given an instance of InsertionModel, example below, generates an insertion query and fills in
-header_id, ilk_id, urn_id automatically after getting from the DB. These "special fields" are populated in the
+foreign keys automatically after getting from the DB. These "special fields" are populated in the
 columnToValue mapping, and are treated like any other in the insertion.
 
 testModel = shared.InsertionModel{
-    TableName:      "testEvent",
-    OrderedColumns: []string{"header_id", "log_idx", "tx_idx", "raw_log", "ilk_id", "urn_id", "variable1"},
-    ColumnToValue: map[string]interface{}{
-        "log_idx":   "1",
-        "tx_idx":    "2",
-        "raw_log":   fakeLog,
-        "variable1": "value1",
-        },
-    IlkIdentifier: test_helpers.FakeIlk.Hex,
-    UrnIdentifier: "0x12345",
-}
+			TableName:      "testEvent",
+			OrderedColumns: []string{"header_id", "log_idx", "tx_idx", "raw_log", "ilk_id", "urn_id", "variable1"},
+			ColumnToValue: map[string]interface{}{
+				"log_idx":   "1",
+				"tx_idx":    "2",
+				"raw_log":   fakeLog,
+				"variable1": "value1",
+			},
+			ForeignKeyToValue: map[string]string{
+				"ilk_id": test_helpers.FakeIlk.Hex,
+				"urn_id": "0x12345",
+			},
+		}
 */
 func Create(headerID int64, models []InsertionModel, db *postgres.DB) error {
-	if len(models) < 1 {
+	if len(models) == 0 {
 		return fmt.Errorf("repository got empty model slice")
 	}
 
-	tx, dBaseErr := db.Beginx()
-	if dBaseErr != nil {
-		return dBaseErr
+	// Quick 'n' dirty solution to these not being declared in config.
+	// a) Couldn't we somewhere create the table and add a checked column inside the plugin, instead of a migration?
+	// b) By defining the checked column to be tableName_checked, we can do away with all the strings anyway :)
+	checkedHeaderColumn := models[0].TableName + "_checked"
+
+	tx, dbErr := db.Beginx()
+	if dbErr != nil {
+		return dbErr
 	}
 
-	var checkedHeaderColumn string
 	for _, model := range models {
-		var (
-			ilkID  int
-			ilkErr error
-			urnID  int
-			urnErr error
-		)
-
-		// Quick 'n' dirty solution to these not being declared in config.
-		// a) Couldn't we somewhere create the table and add a checked column inside the plugin, instead of a migration?
-		// b) By defining the checked column to be tableName_checked, we can do away with all the strings anyway :)
-		if checkedHeaderColumn == "" {
-			checkedHeaderColumn = model.TableName + "_checked"
+		fkErr := populateForeignKeyIDs(model.ForeignKeyToValue, model.ColumnToValue, tx)
+		if fkErr != nil {
+			return fmt.Errorf("error gettings FK ids: %s", fkErr.Error())
 		}
 
 		// Save headerId in mapping for insertion query
 		model.ColumnToValue["header_id"] = strconv.FormatInt(headerID, 10)
-		if model.IlkIdentifier != "" {
-			ilkID, ilkErr = GetOrCreateIlkInTransaction(model.IlkIdentifier, tx)
-			if ilkErr != nil {
-				rollbackErr := tx.Rollback()
-				if rollbackErr != nil {
-					log.Error("failed to rollback ", rollbackErr)
-				}
-				return ilkErr
-			}
-			// Save id in mapping for insertion query
-			model.ColumnToValue["ilk_id"] = ilkID
-		}
-
-		// if an urn identifier is supplied in the model, create/lookup it's id
-		if model.UrnIdentifier != "" {
-			urnID, urnErr = GetOrCreateUrnInTransaction(model.UrnIdentifier, ilkID, tx)
-			if urnErr != nil {
-				rollbackErr := tx.Rollback()
-				if rollbackErr != nil {
-					log.Error("failed to rollback", rollbackErr)
-				}
-				return urnErr
-			}
-			// Save id in mapping for insertion query
-			model.ColumnToValue["urn_id"] = urnID
-		}
 
 		// Maps can't be iterated over in a reliable manner, so we rely on OrderedColumns to define the order to insert
 		// tx.Exec is variadically typed in the args, so if we wrap in []interface{} we can apply them all automatically
@@ -168,6 +138,34 @@ func Create(headerID int64, models []InsertionModel, db *postgres.DB) error {
 	return tx.Commit()
 }
 
+// Gets or creates the FK for the key/values supplied, and inserts the resulting ID into the columnToValue mapping
+func populateForeignKeyIDs(fkToValue map[string]string, columnToValue map[string]interface{}, tx *sqlx.Tx) error {
+	var dbErr error
+	var fkID int
+	for fk, value := range fkToValue {
+		switch fk {
+		case "ilk_id":
+			fkID, dbErr = GetOrCreateIlkInTransaction(value, tx)
+		case "urn_id":
+			fkID, dbErr = GetOrCreateUrnInTransaction(value, fkToValue["ilk_id"], tx)
+		default:
+			return fmt.Errorf("repository got unrecognised FK: %s", fk)
+		}
+
+		if dbErr != nil {
+			rollbackErr := tx.Rollback()
+			if rollbackErr != nil {
+				log.Error("failed to rollback ", rollbackErr)
+			}
+			return fmt.Errorf("couldn't get or create FK (%s, %s): %s", fk, value, dbErr.Error())
+		} else {
+			columnToValue[fk] = fkID
+		}
+	}
+
+	return nil
+}
+
 func GetOrCreateIlk(ilk string, db *postgres.DB) (int, error) {
 	var ilkID int
 	err := db.Get(&ilkID, getIlkIdQuery, ilk)
@@ -190,9 +188,13 @@ func GetOrCreateIlkInTransaction(ilk string, tx *sqlx.Tx) (int, error) {
 	return ilkID, err
 }
 
-func GetOrCreateUrn(guy string, ilkID int, db *postgres.DB) (int, error) {
-	var urnID int
-	err := db.Get(&urnID, getUrnIdQuery, guy, ilkID)
+func GetOrCreateUrn(guy string, hexIlk string, db *postgres.DB) (urnID int, err error) {
+	ilkID, ilkErr := GetOrCreateIlk(hexIlk, db)
+	if ilkErr != nil {
+		return 0, fmt.Errorf("error getting ilkID for urn: %s", ilkErr.Error())
+	}
+
+	err = db.Get(&urnID, getUrnIdQuery, guy, ilkID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			insertErr := db.QueryRow(InsertUrnQuery, guy, ilkID).Scan(&urnID)
@@ -203,9 +205,12 @@ func GetOrCreateUrn(guy string, ilkID int, db *postgres.DB) (int, error) {
 	return urnID, err
 }
 
-func GetOrCreateUrnInTransaction(guy string, ilkID int, tx *sqlx.Tx) (int, error) {
-	var urnID int
-	err := tx.Get(&urnID, getUrnIdQuery, guy, ilkID)
+func GetOrCreateUrnInTransaction(guy string, hexIlk string, tx *sqlx.Tx) (urnID int, err error) {
+	ilkID, ilkErr := GetOrCreateIlkInTransaction(hexIlk, tx)
+	if ilkErr != nil {
+		return 0, fmt.Errorf("error getting ilkID for urn")
+	}
+	err = tx.Get(&urnID, getUrnIdQuery, guy, ilkID)
 
 	if err != nil {
 		if err == sql.ErrNoRows {

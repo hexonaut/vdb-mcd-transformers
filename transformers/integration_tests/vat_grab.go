@@ -78,9 +78,8 @@ var _ = XDescribe("Vat Grab Transformer", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		Expect(len(dbResult)).To(Equal(1))
-		ilkID, err := shared.GetOrCreateIlk("0x5245500000000000000000000000000000000000000000000000000000000000", db)
-		Expect(err).NotTo(HaveOccurred())
-		urnID, err := shared.GetOrCreateUrn("0000000000000000000000006a3ae20c315e845b2e398e68effe39139ec6060c", ilkID, db)
+		urnID, err := shared.GetOrCreateUrn("0000000000000000000000006a3ae20c315e845b2e398e68effe39139ec6060c",
+			"0x5245500000000000000000000000000000000000000000000000000000000000", db)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(dbResult[0].Urn).To(Equal(strconv.Itoa(urnID)))
 		Expect(dbResult[0].V).To(Equal("0000000000000000000000002f34f22a00ee4b7a8f8bbc4eaee1658774c624e0")) //cat contract address as bytes32

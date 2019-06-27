@@ -23,8 +23,8 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/vulcanize/mcd_transformers/test_config"
 	"github.com/vulcanize/mcd_transformers/transformers/component_tests/queries/test_helpers"
-    "github.com/vulcanize/mcd_transformers/transformers/shared"
-    "github.com/vulcanize/vulcanizedb/pkg/datastore/postgres"
+	"github.com/vulcanize/mcd_transformers/transformers/shared"
+	"github.com/vulcanize/vulcanizedb/pkg/datastore/postgres"
 	"github.com/vulcanize/vulcanizedb/pkg/datastore/postgres/repositories"
 	"github.com/vulcanize/vulcanizedb/pkg/fakes"
 )
@@ -67,8 +67,10 @@ var _ = Describe("Create function ...", func() {
 				"raw_log":   fakeLog,
 				"variable1": "value1",
 			},
-			IlkIdentifier: test_helpers.FakeIlk.Hex,
-			UrnIdentifier: "0x12345",
+			ForeignKeyToValue: map[string]string{
+				"ilk_id": test_helpers.FakeIlk.Hex,
+				"urn_id": "0x12345",
+			},
 		}
 	})
 
@@ -88,8 +90,8 @@ var _ = Describe("Create function ...", func() {
 		var res TestEvent
 		dbErr := db.Get(&res, `SELECT header_id, log_idx, tx_idx, raw_log, ilk_id, urn_id, variable1
             FROM maker.testEvent;`)
-        Expect(dbErr).NotTo(HaveOccurred())
-        fmt.Println(res)
+		Expect(dbErr).NotTo(HaveOccurred())
+		fmt.Println(res)
 	})
 })
 

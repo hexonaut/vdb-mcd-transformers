@@ -73,9 +73,8 @@ var _ = Describe("Vat.fold repository", func() {
 			err = db.Get(&dbVatFold, `SELECT urn_id, rate, log_idx, tx_idx, raw_log FROM maker.vat_fold WHERE header_id = $1`, headerID)
 			Expect(err).NotTo(HaveOccurred())
 
-			ilkID, err := shared.GetOrCreateIlk(test_data.VatFoldModelWithPositiveRate.Ilk, db)
-			Expect(err).NotTo(HaveOccurred())
-			urnID, err := shared.GetOrCreateUrn(test_data.VatFoldModelWithPositiveRate.Urn, ilkID, db)
+			urnID, err := shared.GetOrCreateUrn(test_data.VatFoldModelWithPositiveRate.Urn,
+				test_data.VatFoldModelWithPositiveRate.Ilk, db)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(dbVatFold.Urn).To(Equal(strconv.Itoa(urnID)))
 			Expect(dbVatFold.Rate).To(Equal(test_data.VatFoldModelWithPositiveRate.Rate))

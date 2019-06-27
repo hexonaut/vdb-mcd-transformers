@@ -54,16 +54,7 @@ func (repository VatFrobRepository) Create(headerID int64, models []interface{})
 			return fmt.Errorf("model of type %T, not %T", model, VatFrobModel{})
 		}
 
-		ilkID, ilkErr := shared.GetOrCreateIlkInTransaction(vatFrobModel.Ilk, tx)
-		if ilkErr != nil {
-			rollbackErr := tx.Rollback()
-			if rollbackErr != nil {
-				log.Error("failed to rollback ", rollbackErr)
-			}
-			return ilkErr
-		}
-
-		urnID, urnErr := shared.GetOrCreateUrnInTransaction(vatFrobModel.Urn, ilkID, tx)
+		urnID, urnErr := shared.GetOrCreateUrnInTransaction(vatFrobModel.Urn, vatFrobModel.Ilk, tx)
 		if urnErr != nil {
 			rollbackErr := tx.Rollback()
 			if rollbackErr != nil {

@@ -71,9 +71,7 @@ var _ = Describe("Vat frob repository", func() {
 			err = db.Get(&dbVatFrob, `SELECT urn_id, v, w, dink, dart, log_idx, tx_idx, raw_log FROM maker.vat_frob WHERE header_id = $1`, headerID)
 
 			Expect(err).NotTo(HaveOccurred())
-			ilkID, err := shared.GetOrCreateIlk(test_data.VatFrobModelWithPositiveDart.Ilk, db)
-			Expect(err).NotTo(HaveOccurred())
-			urnID, err := shared.GetOrCreateUrn(test_data.VatFrobModelWithPositiveDart.Urn, ilkID, db)
+			urnID, err := shared.GetOrCreateUrn(test_data.VatFrobModelWithPositiveDart.Urn, test_data.VatFrobModelWithPositiveDart.Ilk, db)
 			Expect(dbVatFrob.Urn).To(Equal(strconv.Itoa(urnID)))
 			Expect(dbVatFrob.V).To(Equal(test_data.VatFrobModelWithPositiveDart.V))
 			Expect(dbVatFrob.W).To(Equal(test_data.VatFrobModelWithPositiveDart.W))

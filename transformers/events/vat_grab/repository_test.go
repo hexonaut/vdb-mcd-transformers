@@ -57,9 +57,9 @@ var _ = Describe("Vat grab repository", func() {
 			var dbVatGrab vat_grab.VatGrabModel
 			err = db.Get(&dbVatGrab, `SELECT urn_id, v, w, dink, dart, log_idx, tx_idx, raw_log FROM maker.vat_grab WHERE header_id = $1`, headerID)
 			Expect(err).NotTo(HaveOccurred())
-			ilkID, err := shared.GetOrCreateIlk(test_data.VatGrabModelWithPositiveDink.Ilk, db)
-			Expect(err).NotTo(HaveOccurred())
-			urnID, err := shared.GetOrCreateUrn(test_data.VatGrabModelWithPositiveDink.Urn, ilkID, db)
+
+			urnID, err := shared.GetOrCreateUrn(test_data.VatGrabModelWithPositiveDink.Urn,
+				test_data.VatGrabModelWithPositiveDink.Ilk, db)
 			Expect(dbVatGrab.Urn).To(Equal(strconv.Itoa(urnID)))
 			Expect(dbVatGrab.V).To(Equal(test_data.VatGrabModelWithPositiveDink.V))
 			Expect(dbVatGrab.W).To(Equal(test_data.VatGrabModelWithPositiveDink.W))

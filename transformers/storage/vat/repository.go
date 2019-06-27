@@ -249,21 +249,14 @@ func (repository *VatStorageRepository) insertFieldWithIlkAndUrn(blockNumber int
 	if txErr != nil {
 		return txErr
 	}
-	ilkID, ilkErr := shared.GetOrCreateIlkInTransaction(ilk, tx)
-	if ilkErr != nil {
-		rollbackErr := tx.Rollback()
-		if rollbackErr != nil {
-			return formatRollbackError("ilk", ilkErr.Error())
-		}
-		return ilkErr
-	}
-	urnID, urnErr := shared.GetOrCreateUrnInTransaction(urn, ilkID, tx)
+
+	urnID, urnErr := shared.GetOrCreateUrnInTransaction(urn, ilk, tx)
 	if urnErr != nil {
 		rollbackErr := tx.Rollback()
 		if rollbackErr != nil {
 			return formatRollbackError("urn", urnErr.Error())
 		}
-		return ilkErr
+		return urnErr
 	}
 	_, writeErr := tx.Exec(query, blockNumber, blockHash, urnID, value)
 	if writeErr != nil {

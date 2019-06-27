@@ -413,9 +413,7 @@ func insertVatFold(urn string, blockNumber int64, db *postgres.DB) {
 	headerRepository := repositories.NewHeaderRepository(db)
 	headerID, err := headerRepository.CreateOrUpdateHeader(fakes.GetFakeHeader(blockNumber))
 	Expect(err).NotTo(HaveOccurred())
-	ilkID, err := shared.GetOrCreateIlk(test_helpers.FakeIlk.Hex, db)
-	Expect(err).NotTo(HaveOccurred())
-	urnID, err := shared.GetOrCreateUrn(urn, ilkID, db)
+	urnID, err := shared.GetOrCreateUrn(urn, test_helpers.FakeIlk.Hex, db)
 	Expect(err).NotTo(HaveOccurred())
 
 	_, execErr := db.Exec(
@@ -513,9 +511,7 @@ func insertVatFrob(ilk, urn, v, w string, blockNumber int64, db *postgres.DB) {
 	headerRepository := repositories.NewHeaderRepository(db)
 	headerID, err := headerRepository.CreateOrUpdateHeader(fakes.GetFakeHeader(blockNumber))
 	Expect(err).NotTo(HaveOccurred())
-	ilkID, err := shared.GetOrCreateIlk(ilk, db)
-	Expect(err).NotTo(HaveOccurred())
-	urnID, err := shared.GetOrCreateUrn(urn, ilkID, db)
+	urnID, err := shared.GetOrCreateUrn(urn, ilk, db)
 	Expect(err).NotTo(HaveOccurred())
 
 	_, execErr := db.Exec(
@@ -530,9 +526,7 @@ func insertVatGrab(ilk, urn, v, w string, blockNumber int64, db *postgres.DB) {
 	headerRepository := repositories.NewHeaderRepository(db)
 	headerID, err := headerRepository.CreateOrUpdateHeader(fakes.GetFakeHeader(blockNumber))
 	Expect(err).NotTo(HaveOccurred())
-	ilkID, err := shared.GetOrCreateIlk(ilk, db)
-	Expect(err).NotTo(HaveOccurred())
-	urnID, err := shared.GetOrCreateUrn(urn, ilkID, db)
+	urnID, err := shared.GetOrCreateUrn(urn, ilk, db)
 	Expect(err).NotTo(HaveOccurred())
 
 	_, execErr := db.Exec(

@@ -187,16 +187,14 @@ var _ = Describe("Executing the transformer", func() {
 
 	Describe("urn", func() {
 		var (
-			ilkID, urnID   int
-			ilkErr, urnErr error
+			urnID  int
+			urnErr error
 		)
 
 		BeforeEach(func() {
 			ilk := "0x434f4c312d410000000000000000000000000000000000000000000000000000"
-			ilkID, ilkErr = shared.GetOrCreateIlk(ilk, db)
-			Expect(ilkErr).NotTo(HaveOccurred())
 			urn := "0x118D6a283f9044Ce17b95226822e5c73F50e0B90"
-			urnID, urnErr = shared.GetOrCreateUrn(urn, ilkID, db)
+			urnID, urnErr = shared.GetOrCreateUrn(urn, ilk, db)
 			Expect(urnErr).NotTo(HaveOccurred())
 		})
 
