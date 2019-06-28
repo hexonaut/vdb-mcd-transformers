@@ -11,14 +11,14 @@ ADD . .
 # Build migration tool
 RUN go get -u -d github.com/pressly/goose/cmd/goose
 WORKDIR /go/src/github.com/pressly/goose/cmd/goose
-RUN GCO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags '-extldflags "-static"' -tags='no_mysql no_sqlite' -o goose
+RUN go build -a -ldflags '-s' -tags='no_mysql no_sqlite' -o goose
 
 RUN go get -u -d github.com/vulcanize/vulcanizedb
 WORKDIR /go/src/github.com/vulcanize/vulcanizedb
-RUN GCO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags '-extldflags "-static"' .
+RUN go build -a -ldflags '-s' .
 
 # app container
-FROM alpine
+FROM golang:alpine
 WORKDIR /app
 
 RUN apk update \
@@ -27,7 +27,7 @@ RUN apk update \
         ca-certificates \
         && update-ca-certificates 2>/dev/null || true
 
-RUN apk add --update --no-cache go g++
+RUN apk add --update --no-cache g++
 
 ARG USER
 ARG config_file=environments/example.toml
