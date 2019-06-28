@@ -62,7 +62,7 @@ var _ = Describe("JugInit LogNoteTransformer", func() {
 			header)
 		Expect(err).NotTo(HaveOccurred())
 
-		transformer := shared.LogNoteTransformer{
+		transformer := shared.LogNoteSharedRepoTransformer{
 			Config:     jugInitConfig,
 			Converter:  &jug_init.JugInitConverter{},
 			Repository: &jug_init.JugInitRepository{},
@@ -105,7 +105,7 @@ var _ = Describe("JugInit LogNoteTransformer", func() {
 			header)
 		Expect(err).NotTo(HaveOccurred())
 
-		transformer := shared.LogNoteTransformer{
+		transformer := shared.LogNoteSharedRepoTransformer{
 			Config:     jugInitConfig,
 			Converter:  &jug_init.JugInitConverter{},
 			Repository: &jug_init.JugInitRepository{},

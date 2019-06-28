@@ -14,17 +14,10 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package initializer
+package shared
 
-import (
-	"github.com/vulcanize/vulcanizedb/libraries/shared/transformer"
+import "github.com/ethereum/go-ethereum/core/types"
 
-	"github.com/vulcanize/mcd_transformers/transformers/events/jug_init"
-	"github.com/vulcanize/mcd_transformers/transformers/shared"
-)
-
-var EventTransformerInitializer transformer.EventTransformerInitializer = shared.LogNoteSharedRepoTransformer{
-	Config:     jug_init.GetJugInitConfig(),
-	Converter:  &jug_init.JugInitConverter{},
-	Repository: &jug_init.JugInitRepository{},
-}.NewLogNoteTransformer
+type LogNoteSharedRepoConverter interface {
+	ToModels(ethLog []types.Log) ([]InsertionModel, error)
+}
