@@ -17,9 +17,11 @@
 package jug_init_test
 
 import (
+	"fmt"
 	"github.com/ethereum/go-ethereum/core/types"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/vulcanize/mcd_transformers/transformers/shared"
 
 	"github.com/vulcanize/mcd_transformers/transformers/events/jug_init"
 	"github.com/vulcanize/mcd_transformers/transformers/test_data"
@@ -35,12 +37,26 @@ var _ = Describe("Jug init converter", func() {
 		Expect(err).To(HaveOccurred())
 	})
 
-	It("converts log to a model", func() {
+	It("convert a log to an insertion model", func() {
 		converter := jug_init.JugInitConverter{}
 
-		model, err := converter.ToModels([]types.Log{test_data.EthJugInitLog})
-
+		models, err := converter.ToModels([]types.Log{test_data.EthJugInitLog})
 		Expect(err).NotTo(HaveOccurred())
-		Expect(model).To(Equal([]interface{}{test_data.JugInitModel}))
+
+		expectedModel := shared.InsertionModel{
+			TableName:      "jug_init",
+			OrderedColumns: []string{"header_id", "ilk_id", "log_idx", "tx_idx", "raw_log"},
+			ColumnToValue: map[string]interface{}{
+				"log_idx": 11,
+				"tx_idx":  10,
+				"raw_log": test_data.RawJugInitLog,
+			},
+			ForeignKeyToValue: map[string]string{
+				"ilk_id": "0x434f4c352d410000000000000000000000000000000000000000000000000000",
+			},
+		}
+
+		Expect(len(models)).To(Equal(1))
+		Expect(fmt.Sprint(models[0])).To(Equal(fmt.Sprint(expectedModel)))
 	})
 })

@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package shared_test
+package shared
 
 import (
 	"encoding/json"
@@ -22,8 +22,6 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/vulcanize/mcd_transformers/test_config"
-	"github.com/vulcanize/mcd_transformers/transformers/component_tests/queries/test_helpers"
-	"github.com/vulcanize/mcd_transformers/transformers/shared"
 	"github.com/vulcanize/vulcanizedb/pkg/datastore/postgres"
 	"github.com/vulcanize/vulcanizedb/pkg/datastore/postgres/repositories"
 	"github.com/vulcanize/vulcanizedb/pkg/fakes"
@@ -44,9 +42,11 @@ var _ = Describe("Create function ...", func() {
 	const addCheckedColumnQuery = `ALTER TABLE public.checked_headers
 		ADD COLUMN testevent_checked INTEGER NOT NULL DEFAULT 0;`
 
+	const hexIlk = "0x464b450000000000000000000000000000000000000000000000000000000000"
+
 	var (
 		headerRepository repositories.HeaderRepository
-		testModel        shared.InsertionModel
+		testModel        InsertionModel
 		db               *postgres.DB
 	)
 
@@ -58,7 +58,7 @@ var _ = Describe("Create function ...", func() {
 		headerRepository = repositories.NewHeaderRepository(db)
 
 		fakeLog, _ := json.Marshal("fake log")
-		testModel = shared.InsertionModel{
+		testModel = InsertionModel{
 			TableName:      "testEvent",
 			OrderedColumns: []string{"header_id", "log_idx", "tx_idx", "raw_log", "ilk_id", "urn_id", "variable1"},
 			ColumnToValue: map[string]interface{}{
@@ -68,7 +68,7 @@ var _ = Describe("Create function ...", func() {
 				"variable1": "value1",
 			},
 			ForeignKeyToValue: map[string]string{
-				"ilk_id": test_helpers.FakeIlk.Hex,
+				"ilk_id": hexIlk,
 				"urn_id": "0x12345",
 			},
 		}
@@ -79,13 +79,22 @@ var _ = Describe("Create function ...", func() {
 		db.MustExec(`ALTER TABLE public.checked_headers DROP COLUMN testevent_checked;`)
 	})
 
+	// Needs to run before the other tests, since those insert keys in map
+	It("memoizes queries", func() {
+		Expect(len(modelToQuery)).To(Equal(0))
+		getMemoizedQuery(testModel)
+		Expect(len(modelToQuery)).To(Equal(1))
+		getMemoizedQuery(testModel)
+		Expect(len(modelToQuery)).To(Equal(1))
+	})
+
 	// TODO test repository with random table, columns, and data
 	It("persists a model to postgres", func() {
 		header := fakes.GetFakeHeader(1)
 		headerID, headerErr := headerRepository.CreateOrUpdateHeader(header)
 		Expect(headerErr).NotTo(HaveOccurred())
 
-		createErr := shared.Create(headerID, []shared.InsertionModel{testModel}, db)
+		createErr := Create(headerID, []InsertionModel{testModel}, db)
 		Expect(createErr).NotTo(HaveOccurred())
 
 		var res TestEvent
@@ -95,19 +104,31 @@ var _ = Describe("Create function ...", func() {
 		fmt.Println(res)
 	})
 
-	It("memoizes queries", func() {
-		// TODO test query memoization
-	})
-
 	It("generates correct queries", func() {
-		// TODO test query generation
+		actualQuery := generateInsertionQuery(testModel)
+		expectedQuery := `INSERT INTO maker.testEvent (header_id, log_idx, tx_idx, raw_log, ilk_id, urn_id, variable1) VALUES($1, $2, $3, $4, $5, $6, $7)
+		ON CONFLICT (header_id, tx_idx, log_idx) DO UPDATE SET header_id = $1, log_idx = $2, tx_idx = $3, raw_log = $4, ilk_id = $5, urn_id = $6, variable1 = $7;`
+		Expect(actualQuery).To(Equal(expectedQuery))
 	})
 
-	It("populates FK ids in columnToValue", func() {
-		// TODO test FK id population
+	It("looks up FK id and persists in columnToValue", func() {
+		guy := "0x12345"
+		fkToValue := map[string]string{"ilk_id": hexIlk, "urn_id": guy}
+		columnToValue := map[string]interface{}{}
+
+		tx, txErr := db.Beginx()
+		Expect(txErr).NotTo(HaveOccurred())
+		fkErr := populateForeignKeyIDs(fkToValue, columnToValue, tx)
+		Expect(fkErr).NotTo(HaveOccurred())
+		commitErr := tx.Commit()
+		Expect(commitErr).NotTo(HaveOccurred())
+
+		var expectedUrnID int
+		urnErr := db.Get(&expectedUrnID, `SELECT id FROM maker.urns WHERE identifier = $1`, guy)
+		Expect(urnErr).NotTo(HaveOccurred())
+		actualUrnID := columnToValue["urn_id"].(int)
+		Expect(actualUrnID).To(Equal(expectedUrnID))
 	})
-
-
 })
 
 type TestEvent struct {

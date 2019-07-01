@@ -44,6 +44,7 @@ type InsertionModel struct {
 
 // TODO Can I use a top-level variable for persistent memoization?
 var modelToQuery = map[string]string{}
+
 func getMemoizedQuery(model InsertionModel) string {
 	// These two fields uniquely determines the insertion query, use that for memoization
 	key := fmt.Sprint(model.TableName, model.OrderedColumns)

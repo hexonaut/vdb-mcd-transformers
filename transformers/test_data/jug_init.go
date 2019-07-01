@@ -18,13 +18,11 @@ package test_data
 
 import (
 	"encoding/json"
-
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/vulcanize/vulcanizedb/pkg/fakes"
 
-	"github.com/vulcanize/mcd_transformers/transformers/events/jug_init"
 	"github.com/vulcanize/mcd_transformers/transformers/shared/constants"
 )
 
@@ -45,10 +43,4 @@ var EthJugInitLog = types.Log{
 	Removed:     false,
 }
 
-var rawJugInitLog, _ = json.Marshal(EthJugInitLog)
-var JugInitModel = jug_init.JugInitModel{
-	Ilk:              "0x434f4c352d410000000000000000000000000000000000000000000000000000",
-	LogIndex:         EthJugInitLog.Index,
-	TransactionIndex: EthJugInitLog.TxIndex,
-	Raw:              rawJugInitLog,
-}
+var RawJugInitLog, _ = json.Marshal(EthJugInitLog)
