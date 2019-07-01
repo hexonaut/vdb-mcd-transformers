@@ -79,6 +79,7 @@ var _ = Describe("Create function ...", func() {
 		db.MustExec(`ALTER TABLE public.checked_headers DROP COLUMN testevent_checked;`)
 	})
 
+	// TODO test repository with random table, columns, and data
 	It("persists a model to postgres", func() {
 		header := fakes.GetFakeHeader(1)
 		headerID, headerErr := headerRepository.CreateOrUpdateHeader(header)
@@ -93,6 +94,20 @@ var _ = Describe("Create function ...", func() {
 		Expect(dbErr).NotTo(HaveOccurred())
 		fmt.Println(res)
 	})
+
+	It("memoizes queries", func() {
+		// TODO test query memoization
+	})
+
+	It("generates correct queries", func() {
+		// TODO test query generation
+	})
+
+	It("populates FK ids in columnToValue", func() {
+		// TODO test FK id population
+	})
+
+
 })
 
 type TestEvent struct {

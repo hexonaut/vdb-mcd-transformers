@@ -42,6 +42,19 @@ type InsertionModel struct {
 	ForeignKeyToValue map[string]string      // FK name and value to get/create ID for
 }
 
+// TODO Can I use a top-level variable for persistent memoization?
+var modelToQuery = map[string]string{}
+func getMemoizedQuery(model InsertionModel) string {
+	// These two fields uniquely determines the insertion query, use that for memoization
+	key := fmt.Sprint(model.TableName, model.OrderedColumns)
+	query, queryMemoized := modelToQuery[key]
+	if !queryMemoized {
+		query = generateInsertionQuery(model)
+		modelToQuery[key] = query
+	}
+	return query
+}
+
 // Creates an insertion query from an insertion model
 // Note: With extraction of event metadata, one would not have to supply header_id, tx_idx, etc in InsertionModel.OrderedColumns?
 // Note: I have a feeling we can actually do away with the OrderedColumns field, but the tricky part is that some fields
@@ -116,7 +129,8 @@ func Create(headerID int64, models []InsertionModel, db *postgres.DB) error {
 			args = append(args, model.ColumnToValue[col])
 		}
 
-		_, execErr := tx.Exec(generateInsertionQuery(model), args...) //couldn't do this trick with []string for example
+		insertionQuery := getMemoizedQuery(model)
+		_, execErr := tx.Exec(insertionQuery, args...) //couldn't do this trick with args :: []string
 
 		if execErr != nil {
 			rollbackErr := tx.Rollback()
