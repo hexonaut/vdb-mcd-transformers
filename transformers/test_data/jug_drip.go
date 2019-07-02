@@ -18,13 +18,13 @@ package test_data
 
 import (
 	"encoding/json"
+	"github.com/vulcanize/mcd_transformers/transformers/shared"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/vulcanize/vulcanizedb/pkg/fakes"
 
-	"github.com/vulcanize/mcd_transformers/transformers/events/jug_drip"
 	"github.com/vulcanize/mcd_transformers/transformers/shared/constants"
 )
 
@@ -46,9 +46,17 @@ var EthJugDripLog = types.Log{
 }
 
 var rawJugDripLog, _ = json.Marshal(EthJugDripLog)
-var JugDripModel = jug_drip.JugDripModel{
-	Ilk:              "0x66616b6520696c6b000000000000000000000000000000000000000000000000",
-	LogIndex:         EthJugDripLog.Index,
-	TransactionIndex: EthJugDripLog.TxIndex,
-	Raw:              rawJugDripLog,
+var JugDripModel = shared.InsertionModel{
+	TableName: "jug_drip",
+	OrderedColumns: []string{
+		"header_id", "ilk_id", "log_idx", "tx_idx", "raw_log",
+	},
+	ColumnToValue: map[string]interface{}{
+		"log_idx": EthJugDripLog.Index,
+		"tx_idx":  EthJugDripLog.TxIndex,
+		"raw_log": rawJugDripLog,
+	},
+	ForeignKeyToValue: map[string]string{
+		"ilk_id": "0x66616b6520696c6b000000000000000000000000000000000000000000000000",
+	},
 }

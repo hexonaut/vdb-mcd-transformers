@@ -19,14 +19,15 @@ package jug_drip
 import (
 	"encoding/json"
 	"errors"
+	"github.com/vulcanize/mcd_transformers/transformers/shared"
 
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
 type JugDripConverter struct{}
 
-func (JugDripConverter) ToModels(ethLogs []types.Log) ([]interface{}, error) {
-	var models []interface{}
+func (JugDripConverter) ToModels(ethLogs []types.Log) ([]shared.InsertionModel, error) {
+	var models []shared.InsertionModel
 	for _, ethLog := range ethLogs {
 		err := verifyLog(ethLog)
 		if err != nil {
@@ -37,11 +38,19 @@ func (JugDripConverter) ToModels(ethLogs []types.Log) ([]interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
-		model := JugDripModel{
-			Ilk:              ilk,
-			LogIndex:         ethLog.Index,
-			TransactionIndex: ethLog.TxIndex,
-			Raw:              raw,
+		model := shared.InsertionModel{
+			TableName:         "jug_drip",
+			OrderedColumns:    []string{
+				"header_id", "ilk_id", "log_idx", "tx_idx", "raw_log",
+			},
+			ColumnToValue:     map[string]interface{}{
+				"log_idx": ethLog.Index,
+				"tx_idx": ethLog.TxIndex,
+				"raw_log": raw,
+			},
+			ForeignKeyToValue: map[string]string{
+				"ilk_id": ilk,
+			},
 		}
 		models = append(models, model)
 	}

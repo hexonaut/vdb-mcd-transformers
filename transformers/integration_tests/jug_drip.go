@@ -63,7 +63,7 @@ var _ = XDescribe("JugDrip Transformer", func() {
 		header, err := persistHeader(db, blockNumber, blockChain)
 		Expect(err).NotTo(HaveOccurred())
 
-		initializer := shared.LogNoteTransformer{
+		initializer := shared.LogNoteSharedRepoTransformer{
 			Config:     jugDripConfig,
 			Converter:  &jug_drip.JugDripConverter{},
 			Repository: &jug_drip.JugDripRepository{},
@@ -80,7 +80,7 @@ var _ = XDescribe("JugDrip Transformer", func() {
 		err = tr.Execute(logs, header)
 		Expect(err).NotTo(HaveOccurred())
 
-		var dbResults []jug_drip.JugDripModel
+		var dbResults []jugDripModel
 		err = db.Select(&dbResults, `SELECT ilk_id from maker.jug_drip`)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -99,7 +99,7 @@ var _ = XDescribe("JugDrip Transformer", func() {
 		header, err := persistHeader(db, blockNumber, blockChain)
 		Expect(err).NotTo(HaveOccurred())
 
-		initializer := shared.LogNoteTransformer{
+		initializer := shared.LogNoteSharedRepoTransformer{
 			Config:     jugDripConfig,
 			Converter:  &jug_drip.JugDripConverter{},
 			Repository: &jug_drip.JugDripRepository{},
@@ -128,3 +128,10 @@ var _ = XDescribe("JugDrip Transformer", func() {
 		Expect(err).NotTo(HaveOccurred())
 	})
 })
+
+type jugDripModel struct {
+	Ilk              string `db:"ilk_id"`
+	LogIndex         uint   `db:"log_idx"`
+	TransactionIndex uint   `db:"tx_idx"`
+	Raw              []byte `db:"raw_log"`
+}
