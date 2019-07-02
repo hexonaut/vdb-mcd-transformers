@@ -231,7 +231,7 @@ var _ = Describe("Cat File transformer", func() {
 		catFileConfig.StartingBlockNumber = vowBlockNumber
 		catFileConfig.EndingBlockNumber = vowBlockNumber
 
-		initializer := shared.LogNoteTransformer{
+		initializer := shared.LogNoteSharedRepoTransformer{
 			Config:     catFileConfig,
 			Converter:  &vow.CatFileVowConverter{},
 			Repository: &vow.CatFileVowRepository{},
@@ -270,7 +270,7 @@ var _ = Describe("Cat File transformer", func() {
 		catFileConfig.StartingBlockNumber = vowBlockNumber
 		catFileConfig.EndingBlockNumber = vowBlockNumber
 
-		initializer := shared.LogNoteTransformer{
+		initializer := shared.LogNoteSharedRepoTransformer{
 			Config:     catFileConfig,
 			Converter:  &vow.CatFileVowConverter{},
 			Repository: &vow.CatFileVowRepository{},

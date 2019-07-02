@@ -25,7 +25,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/vulcanize/vulcanizedb/pkg/fakes"
 
-	"github.com/vulcanize/mcd_transformers/transformers/events/cat_file/vow"
 	"github.com/vulcanize/mcd_transformers/transformers/shared/constants"
 )
 
@@ -152,10 +151,17 @@ var EthCatFileVowLog = types.Log{
 }
 
 var rawCatFileVowLog, _ = json.Marshal(EthCatFileVowLog)
-var CatFileVowModel = vow.CatFileVowModel{
-	What:             "vow",
-	Data:             "0x17560834075DA3Db54f737db74377E799c865821",
-	TransactionIndex: EthCatFileVowLog.TxIndex,
-	LogIndex:         EthCatFileVowLog.Index,
-	Raw:              rawCatFileVowLog,
+var CatFileVowModel = shared.InsertionModel{
+	TableName: "cat_file_vow",
+	OrderedColumns: []string{
+		"header_id", "what", "data", "tx_idx", "log_idx", "raw_log",
+	},
+	ColumnToValue: map[string]interface{}{
+		"what":    "vow",
+		"data":    "0x17560834075DA3Db54f737db74377E799c865821",
+		"tx_idx":  EthCatFileVowLog.TxIndex,
+		"log_idx": EthCatFileVowLog.Index,
+		"raw_log": rawCatFileVowLog,
+	},
+	ForeignKeyToValue: map[string]string{},
 }
