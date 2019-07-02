@@ -1,6 +1,7 @@
 package queries
 
 import (
+	"github.com/vulcanize/mcd_transformers/transformers/shared"
 	"math/rand"
 
 	. "github.com/onsi/ginkgo"
@@ -83,8 +84,8 @@ var _ = Describe("Ilk state computed columns", func() {
 			fileRepo := ilk.VatFileIlkRepository{}
 			fileRepo.SetDB(db)
 			fileEvent := test_data.VatFileIlkDustModel
-			fileEvent.Ilk = test_helpers.FakeIlk.Hex
-			insertFileErr := fileRepo.Create(headerId, []interface{}{fileEvent})
+			fileEvent.ForeignKeyToValue["ilk_id"] = test_helpers.FakeIlk.Hex
+			insertFileErr := fileRepo.Create(headerId, []shared.InsertionModel{fileEvent})
 			Expect(insertFileErr).NotTo(HaveOccurred())
 
 			var actualFiles []test_helpers.IlkFileEvent
@@ -97,8 +98,8 @@ var _ = Describe("Ilk state computed columns", func() {
 
 			expectedFiles := []test_helpers.IlkFileEvent{{
 				IlkIdentifier: test_helpers.GetValidNullString(test_helpers.FakeIlk.Identifier),
-				What:          fileEvent.What,
-				Data:          fileEvent.Data,
+				What:          fileEvent.ColumnToValue["what"].(string),
+				Data:          fileEvent.ColumnToValue["data"].(string),
 			}}
 
 			Expect(actualFiles).To(Equal(expectedFiles))

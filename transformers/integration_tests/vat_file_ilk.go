@@ -38,7 +38,7 @@ var _ = Describe("VatFileIlk LogNoteTransformer", func() {
 	var (
 		db          *postgres.DB
 		blockChain  core.BlockChain
-		initializer shared.LogNoteTransformer
+		initializer shared.LogNoteSharedRepoTransformer
 		addresses   []common.Address
 		topics      []common.Hash
 	)
@@ -60,7 +60,7 @@ var _ = Describe("VatFileIlk LogNoteTransformer", func() {
 		addresses = transformer.HexStringsToAddresses(vatFileIlkConfig.ContractAddresses)
 		topics = []common.Hash{common.HexToHash(vatFileIlkConfig.Topic)}
 
-		initializer = shared.LogNoteTransformer{
+		initializer = shared.LogNoteSharedRepoTransformer{
 			Config:     vatFileIlkConfig,
 			Converter:  &ilk.VatFileIlkConverter{},
 			Repository: &ilk.VatFileIlkRepository{},
@@ -83,7 +83,7 @@ var _ = Describe("VatFileIlk LogNoteTransformer", func() {
 		err = tr.Execute(logs, header)
 		Expect(err).NotTo(HaveOccurred())
 
-		var dbResult []ilk.VatFileIlkModel
+		var dbResult []vatFileIlkModel
 		err = db.Select(&dbResult, `SELECT ilk_id, what, data from maker.vat_file_ilk`)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -111,7 +111,7 @@ var _ = Describe("VatFileIlk LogNoteTransformer", func() {
 		err = tr.Execute(logs, header)
 		Expect(err).NotTo(HaveOccurred())
 
-		var dbResults []ilk.VatFileIlkModel
+		var dbResults []vatFileIlkModel
 		err = db.Select(&dbResults, `SELECT ilk_id, what, data from maker.vat_file_ilk`)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -126,7 +126,16 @@ var _ = Describe("VatFileIlk LogNoteTransformer", func() {
 	})
 })
 
-type byLogIndexVatFileIlk []ilk.VatFileIlkModel
+type vatFileIlkModel struct {
+	Ilk              string `db:"ilk_id"`
+	What             string
+	Data             string
+	LogIndex         uint   `db:"log_idx"`
+	TransactionIndex uint   `db:"tx_idx"`
+	Raw              []byte `db:"raw_log"`
+}
+
+type byLogIndexVatFileIlk []vatFileIlkModel
 
 func (c byLogIndexVatFileIlk) Len() int           { return len(c) }
 func (c byLogIndexVatFileIlk) Less(i, j int) bool { return c[i].LogIndex < c[j].LogIndex }

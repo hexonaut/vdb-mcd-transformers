@@ -28,8 +28,8 @@ import (
 
 type VatFileDebtCeilingConverter struct{}
 
-func (VatFileDebtCeilingConverter) ToModels(ethLogs []types.Log) ([]interface{}, error) {
-	var models []interface{}
+func (VatFileDebtCeilingConverter) ToModels(ethLogs []types.Log) ([]shared.InsertionModel, error) {
+	var models []shared.InsertionModel
 	for _, ethLog := range ethLogs {
 		err := verifyLog(ethLog)
 		if err != nil {
@@ -42,12 +42,19 @@ func (VatFileDebtCeilingConverter) ToModels(ethLogs []types.Log) ([]interface{},
 		if err != nil {
 			return nil, err
 		}
-		model := VatFileDebtCeilingModel{
-			What:             what,
-			Data:             data.String(),
-			LogIndex:         ethLog.Index,
-			TransactionIndex: ethLog.TxIndex,
-			Raw:              raw,
+		model := shared.InsertionModel{
+			TableName: "vat_file_debt_ceiling",
+			OrderedColumns: []string{
+				"header_id", "what", "data", "log_idx", "tx_idx", "raw_log",
+			},
+			ColumnToValue: map[string]interface{}{
+				"what":    what,
+				"data":    data.String(),
+				"log_idx": ethLog.Index,
+				"tx_idx":  ethLog.TxIndex,
+				"raw_log": raw,
+			},
+			ForeignKeyToValue: map[string]string{},
 		}
 		models = append(models, model)
 	}

@@ -3,7 +3,6 @@ package queries
 import (
 	"github.com/vulcanize/mcd_transformers/transformers/shared"
 	"math/rand"
-	"strconv"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -86,8 +85,8 @@ var _ = Describe("Ilk File Events Query", func() {
 		Expect(spotFilePipErr).NotTo(HaveOccurred())
 
 		vatFile := test_data.VatFileIlkDustModel
-		vatFile.Ilk = test_helpers.FakeIlk.Hex
-		vatErr := vatFileRepo.Create(headerOneId, []interface{}{vatFile})
+		vatFile.ForeignKeyToValue["ilk_id"] = test_helpers.FakeIlk.Hex
+		vatErr := vatFileRepo.Create(headerOneId, []shared.InsertionModel{vatFile})
 		Expect(vatErr).NotTo(HaveOccurred())
 
 		var actualFiles []test_helpers.IlkFileEvent
@@ -122,17 +121,17 @@ var _ = Describe("Ilk File Events Query", func() {
 			},
 			test_helpers.IlkFileEvent{
 				IlkIdentifier: relevantIlkIdentifier,
-				What:          vatFile.What,
-				Data:          vatFile.Data,
+				What:          vatFile.ColumnToValue["what"].(string),
+				Data:          vatFile.ColumnToValue["what"].(string),
 			},
 		))
 	})
 
 	It("includes results across blocks", func() {
 		fileBlockOne := test_data.VatFileIlkDustModel
-		fileBlockOne.Ilk = test_helpers.FakeIlk.Hex
-		fileBlockOne.Data = strconv.Itoa(rand.Int())
-		fileBlockOneErr := vatFileRepo.Create(headerOneId, []interface{}{fileBlockOne})
+		fileBlockOne.ForeignKeyToValue["ilk_id"] = test_helpers.FakeIlk.Hex
+		fileBlockOne.ColumnToValue["data"] = rand.Int()
+		fileBlockOneErr := vatFileRepo.Create(headerOneId, []shared.InsertionModel{fileBlockOne})
 		Expect(fileBlockOneErr).NotTo(HaveOccurred())
 
 		headerTwo := fakes.GetFakeHeader(2)
@@ -141,9 +140,9 @@ var _ = Describe("Ilk File Events Query", func() {
 		Expect(headerTwoErr).NotTo(HaveOccurred())
 
 		fileBlockTwo := test_data.VatFileIlkDustModel
-		fileBlockTwo.Ilk = test_helpers.FakeIlk.Hex
-		fileBlockTwo.Data = strconv.Itoa(rand.Int())
-		fileBlockTwoErr := vatFileRepo.Create(headerTwoId, []interface{}{fileBlockTwo})
+		fileBlockTwo.ForeignKeyToValue["ilk_id"] = test_helpers.FakeIlk.Hex
+		fileBlockTwo.ColumnToValue["data"] = rand.Int()
+		fileBlockTwoErr := vatFileRepo.Create(headerTwoId, []shared.InsertionModel{fileBlockTwo})
 		Expect(fileBlockTwoErr).NotTo(HaveOccurred())
 
 		var actualFiles []test_helpers.IlkFileEvent
@@ -153,28 +152,28 @@ var _ = Describe("Ilk File Events Query", func() {
 		Expect(actualFiles).To(ConsistOf(
 			test_helpers.IlkFileEvent{
 				IlkIdentifier: relevantIlkIdentifier,
-				What:          fileBlockOne.What,
-				Data:          fileBlockOne.Data,
+				What:          fileBlockOne.ColumnToValue["what"].(string),
+				Data:          fileBlockOne.ColumnToValue["data"].(string),
 			},
 			test_helpers.IlkFileEvent{
 				IlkIdentifier: relevantIlkIdentifier,
-				What:          fileBlockTwo.What,
-				Data:          fileBlockTwo.Data,
+				What:          fileBlockTwo.ColumnToValue["what"].(string),
+				Data:          fileBlockTwo.ColumnToValue["data"].(string),
 			},
 		))
 	})
 
 	It("does not include ilk file events for a different ilk", func() {
 		relevantFile := test_data.VatFileIlkDustModel
-		relevantFile.Ilk = test_helpers.FakeIlk.Hex
-		relevantFile.Data = strconv.Itoa(rand.Int())
+		relevantFile.ForeignKeyToValue["ilk_id"] = test_helpers.FakeIlk.Hex
+		relevantFile.ColumnToValue["data"] = rand.Int()
 
 		irrelevantFile := test_data.VatFileIlkDustModel
-		irrelevantFile.Ilk = test_helpers.AnotherFakeIlk.Hex
-		irrelevantFile.Data = strconv.Itoa(rand.Int())
-		irrelevantFile.TransactionIndex = test_data.VatFileIlkDustModel.TransactionIndex + 1
+		irrelevantFile.ForeignKeyToValue["ilk_id"] = test_helpers.AnotherFakeIlk.Hex
+		irrelevantFile.ColumnToValue["data"] = rand.Int()
+		irrelevantFile.ColumnToValue["tx_idx"] = test_data.VatFileIlkDustModel.ColumnToValue["tx_idx"].(uint) + 1
 
-		vatBlockOneErr := vatFileRepo.Create(headerOneId, []interface{}{relevantFile, irrelevantFile})
+		vatBlockOneErr := vatFileRepo.Create(headerOneId, []shared.InsertionModel{relevantFile, irrelevantFile})
 		Expect(vatBlockOneErr).NotTo(HaveOccurred())
 
 		var actualFiles []test_helpers.IlkFileEvent
@@ -184,8 +183,8 @@ var _ = Describe("Ilk File Events Query", func() {
 		Expect(actualFiles).To(ConsistOf(
 			test_helpers.IlkFileEvent{
 				IlkIdentifier: relevantIlkIdentifier,
-				What:          relevantFile.What,
-				Data:          relevantFile.Data,
+				What:          relevantFile.ColumnToValue["what"].(string),
+				Data:          relevantFile.ColumnToValue["data"].(string),
 			},
 		))
 	})

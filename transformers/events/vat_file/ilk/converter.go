@@ -28,9 +28,9 @@ import (
 
 type VatFileIlkConverter struct{}
 
-func (VatFileIlkConverter) ToModels(ethLogs []types.Log) ([]interface{}, error) {
+func (VatFileIlkConverter) ToModels(ethLogs []types.Log) ([]shared.InsertionModel, error) {
 	//NOTE: the vat contract defines its own custom Note event, rather than relying on DS-Note
-	var models []interface{}
+	var models []shared.InsertionModel
 	for _, ethLog := range ethLogs {
 		err := verifyLog(ethLog)
 		if err != nil {
@@ -39,21 +39,26 @@ func (VatFileIlkConverter) ToModels(ethLogs []types.Log) ([]interface{}, error) 
 		ilk := ethLog.Topics[1].Hex()
 		what := shared.DecodeHexToText(ethLog.Topics[2].Hex())
 		data := ethLog.Topics[3].Big().String()
-		if err != nil {
-			return nil, err
-		}
 
 		raw, err := json.Marshal(ethLog)
 		if err != nil {
 			return nil, err
 		}
-		model := VatFileIlkModel{
-			Ilk:              ilk,
-			What:             what,
-			Data:             data,
-			LogIndex:         ethLog.Index,
-			TransactionIndex: ethLog.TxIndex,
-			Raw:              raw,
+		model := shared.InsertionModel{
+			TableName: "vat_file_ilk",
+			OrderedColumns: []string{
+				"header_id", "ilk_id", "what", "data", "log_idx", "tx_idx", "raw_log",
+			},
+			ColumnToValue: map[string]interface{}{
+				"what":    what,
+				"data":    data,
+				"log_idx": ethLog.Index,
+				"tx_idx":  ethLog.TxIndex,
+				"raw_log": raw,
+			},
+			ForeignKeyToValue: map[string]string{
+				"ilk_id": ilk,
+			},
 		}
 		models = append(models, model)
 	}
