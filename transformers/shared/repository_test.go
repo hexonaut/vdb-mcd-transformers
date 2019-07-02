@@ -28,18 +28,20 @@ import (
 )
 
 var _ = Describe("Create function ...", func() {
-	const createTestEventTableQuery = `CREATE TABLE maker.testEvent(
-        id        SERIAL PRIMARY KEY,
-        header_id INTEGER NOT NULL REFERENCES headers (id) ON DELETE CASCADE,
-        variable1 TEXT,
-	    ilk_id    INTEGER NOT NULL REFERENCES maker.ilks (id) ON DELETE CASCADE,
-	    urn_id    INTEGER NOT NULL REFERENCES maker.urns (id) ON DELETE CASCADE,
-        log_idx   INTEGER NOT NULL,
-        tx_idx    INTEGER NOT NULL,
-        raw_log   JSONB,
-        UNIQUE (header_id, tx_idx, log_idx)
-        );`
-	const addCheckedColumnQuery = `ALTER TABLE public.checked_headers
+	const createTestEventTableQuery =
+		`CREATE TABLE maker.testEvent(
+		id        SERIAL PRIMARY KEY,
+		header_id INTEGER NOT NULL REFERENCES headers (id) ON DELETE CASCADE,
+		variable1 TEXT,
+		ilk_id    INTEGER NOT NULL REFERENCES maker.ilks (id) ON DELETE CASCADE,
+		urn_id    INTEGER NOT NULL REFERENCES maker.urns (id) ON DELETE CASCADE,
+		log_idx   INTEGER NOT NULL,
+		tx_idx    INTEGER NOT NULL,
+		raw_log   JSONB,
+		UNIQUE (header_id, tx_idx, log_idx)
+		);`
+	const addCheckedColumnQuery =
+		`ALTER TABLE public.checked_headers
 		ADD COLUMN testevent_checked INTEGER NOT NULL DEFAULT 0;`
 
 	const hexIlk = "0x464b450000000000000000000000000000000000000000000000000000000000"
@@ -103,6 +105,9 @@ var _ = Describe("Create function ...", func() {
 		Expect(dbErr).NotTo(HaveOccurred())
 		fmt.Println(res)
 	})
+
+	// TODO persist several models
+	// TODO test error handling
 
 	It("generates correct queries", func() {
 		actualQuery := generateInsertionQuery(testModel)

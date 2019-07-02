@@ -25,12 +25,6 @@ import (
 	"github.com/vulcanize/vulcanizedb/pkg/datastore/postgres"
 )
 
-type SharedRepository interface {
-	Create(headerID int64, models []InsertionModel) error
-	MarkHeaderChecked(headerID int64) error
-	SetDB(db *postgres.DB)
-}
-
 type LogNoteSharedRepoTransformer struct {
 	Config     transformer.EventTransformerConfig
 	Converter  LogNoteSharedRepoConverter

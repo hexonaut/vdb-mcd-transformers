@@ -34,6 +34,12 @@ const (
 	InsertUrnQuery = `INSERT INTO maker.urns (identifier, ilk_id) VALUES ($1, $2) RETURNING id`
 )
 
+type SharedRepository interface {
+	Create(headerID int64, models []InsertionModel) error
+	MarkHeaderChecked(headerID int64) error
+	SetDB(db *postgres.DB)
+}
+
 type InsertionModel struct {
 	TableName      string   // For MarkHeaderChecked, insert query
 	OrderedColumns []string // Defines the fields to insert, and in which order the table expects them
@@ -46,21 +52,20 @@ type InsertionModel struct {
 var modelToQuery = map[string]string{}
 
 func getMemoizedQuery(model InsertionModel) string {
-	// These two fields uniquely determines the insertion query, use that for memoization
-	key := fmt.Sprint(model.TableName, model.OrderedColumns)
-	query, queryMemoized := modelToQuery[key]
+	// The table name uniquely determines the insertion query, use that for memoization
+	query, queryMemoized := modelToQuery[model.TableName]
 	if !queryMemoized {
 		query = generateInsertionQuery(model)
-		modelToQuery[key] = query
+		modelToQuery[model.TableName] = query
 	}
 	return query
 }
 
-// Creates an insertion query from an insertion model
+// Creates an insertion query from an insertion model. This is called through getMemoizedQuery, so the query is not
+// generated on each call to Create.
 // Note: With extraction of event metadata, one would not have to supply header_id, tx_idx, etc in InsertionModel.OrderedColumns?
 // Note: I have a feeling we can actually do away with the OrderedColumns field, but the tricky part is that some fields
 //       needed aren't present in the map in the beginning
-// TODO not run this on every Create?
 func generateInsertionQuery(model InsertionModel) string {
 	var valuePlaceholders []string
 	var updateOnConflict []string
