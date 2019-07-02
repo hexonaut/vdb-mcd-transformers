@@ -18,6 +18,7 @@ package test_data
 
 import (
 	"encoding/json"
+	"github.com/vulcanize/mcd_transformers/transformers/shared"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -25,7 +26,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/vulcanize/vulcanizedb/pkg/fakes"
 
-	"github.com/vulcanize/mcd_transformers/transformers/events/jug_file/base"
 	ilk2 "github.com/vulcanize/mcd_transformers/transformers/events/jug_file/ilk"
 	"github.com/vulcanize/mcd_transformers/transformers/events/jug_file/vow"
 	"github.com/vulcanize/mcd_transformers/transformers/shared/constants"
@@ -76,12 +76,19 @@ var EthJugFileBaseLog = types.Log{
 }
 
 var rawJugFileBaseLog, _ = json.Marshal(EthJugFileBaseLog)
-var JugFileBaseModel = base.JugFileBaseModel{
-	What:             "fake what",
-	Data:             big.NewInt(123).String(),
-	LogIndex:         EthJugFileBaseLog.Index,
-	TransactionIndex: EthJugFileBaseLog.TxIndex,
-	Raw:              rawJugFileBaseLog,
+var JugFileBaseModel = shared.InsertionModel{
+	TableName: "jug_file_base",
+	OrderedColumns: []string{
+		"header_id", "what", "data", "log_idx", "tx_idx", "raw_log",
+	},
+	ColumnToValue: map[string]interface{}{
+		"what":    "fake what",
+		"data":    big.NewInt(123).String(),
+		"log_idx": EthJugFileBaseLog.Index,
+		"tx_idx":  EthJugFileBaseLog.TxIndex,
+		"raw_log": rawJugFileBaseLog,
+	},
+	ForeignKeyToValue: map[string]string{},
 }
 
 var EthJugFileVowLog = types.Log{

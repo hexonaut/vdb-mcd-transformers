@@ -39,13 +39,13 @@ func (JugDripConverter) ToModels(ethLogs []types.Log) ([]shared.InsertionModel, 
 			return nil, err
 		}
 		model := shared.InsertionModel{
-			TableName:         "jug_drip",
-			OrderedColumns:    []string{
+			TableName: "jug_drip",
+			OrderedColumns: []string{
 				"header_id", "ilk_id", "log_idx", "tx_idx", "raw_log",
 			},
-			ColumnToValue:     map[string]interface{}{
+			ColumnToValue: map[string]interface{}{
 				"log_idx": ethLog.Index,
-				"tx_idx": ethLog.TxIndex,
+				"tx_idx":  ethLog.TxIndex,
 				"raw_log": raw,
 			},
 			ForeignKeyToValue: map[string]string{
