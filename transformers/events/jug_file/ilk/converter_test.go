@@ -19,6 +19,7 @@ package ilk_test
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/vulcanize/mcd_transformers/transformers/shared"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -28,37 +29,29 @@ import (
 )
 
 var _ = Describe("Jug file ilk converter", func() {
+	var converter = ilk.JugFileIlkConverter{}
 	It("returns err if log missing topics", func() {
-		converter := ilk.JugFileIlkConverter{}
 		badLog := types.Log{
 			Topics: []common.Hash{{}},
 			Data:   []byte{1, 1, 1, 1, 1},
 		}
 
 		_, err := converter.ToModels([]types.Log{badLog})
-
 		Expect(err).To(HaveOccurred())
 	})
 
 	It("returns err if log missing data", func() {
-		converter := ilk.JugFileIlkConverter{}
 		badLog := types.Log{
 			Topics: []common.Hash{{}, {}, {}, {}},
 		}
 
 		_, err := converter.ToModels([]types.Log{badLog})
-
 		Expect(err).To(HaveOccurred())
-
 	})
 
 	It("converts a log to a model", func() {
-		converter := ilk.JugFileIlkConverter{}
-
 		models, err := converter.ToModels([]types.Log{test_data.EthJugFileIlkLog})
-
 		Expect(err).NotTo(HaveOccurred())
-		Expect(len(models)).To(Equal(1))
-		Expect(models[0].(ilk.JugFileIlkModel)).To(Equal(test_data.JugFileIlkModel))
+		Expect(models).To(Equal([]shared.InsertionModel{test_data.JugFileIlkModel}))
 	})
 })

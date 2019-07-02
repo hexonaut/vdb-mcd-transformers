@@ -26,7 +26,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/vulcanize/vulcanizedb/pkg/fakes"
 
-	ilk2 "github.com/vulcanize/mcd_transformers/transformers/events/jug_file/ilk"
 	"github.com/vulcanize/mcd_transformers/transformers/events/jug_file/vow"
 	"github.com/vulcanize/mcd_transformers/transformers/shared/constants"
 )
@@ -49,13 +48,21 @@ var EthJugFileIlkLog = types.Log{
 }
 
 var rawJugFileIlkLog, _ = json.Marshal(EthJugFileIlkLog)
-var JugFileIlkModel = ilk2.JugFileIlkModel{
-	Ilk:              "0x434f4c322d410000000000000000000000000000000000000000000000000000",
-	What:             "duty",
-	Data:             "1000000000937303470807876289",
-	LogIndex:         EthJugFileIlkLog.Index,
-	TransactionIndex: EthJugFileIlkLog.TxIndex,
-	Raw:              rawJugFileIlkLog,
+var JugFileIlkModel = shared.InsertionModel{
+	TableName:         "jug_file_ilk",
+	OrderedColumns:    []string{
+		"header_id", "ilk_id", "what", "data", "log_idx", "tx_idx", "raw_log",
+	},
+	ColumnToValue: map[string]interface{}{
+		"what": "duty",
+		"data": "1000000000937303470807876289",
+		"log_idx": EthJugFileIlkLog.Index,
+		"tx_idx": EthJugFileIlkLog.TxIndex,
+		"raw_log": rawJugFileIlkLog,
+	},
+	ForeignKeyToValue: map[string]string{
+		"ilk_id": "0x434f4c322d410000000000000000000000000000000000000000000000000000",
+	},
 }
 
 var EthJugFileBaseLog = types.Log{

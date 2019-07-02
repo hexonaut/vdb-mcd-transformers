@@ -47,7 +47,7 @@ var _ = Describe("Jug File Ilk LogNoteTransformer", func() {
 		header, err := persistHeader(db, blockNumber, blockChain)
 		Expect(err).NotTo(HaveOccurred())
 
-		initializer := shared.LogNoteTransformer{
+		initializer := shared.LogNoteSharedRepoTransformer{
 			Config:     jugFileIlkConfig,
 			Converter:  &ilk.JugFileIlkConverter{},
 			Repository: &ilk.JugFileIlkRepository{},
@@ -64,7 +64,7 @@ var _ = Describe("Jug File Ilk LogNoteTransformer", func() {
 		err = tr.Execute(logs, header)
 		Expect(err).NotTo(HaveOccurred())
 
-		var dbResult []ilk.JugFileIlkModel
+		var dbResult []jugFileIlkModel
 		err = db.Select(&dbResult, `SELECT ilk_id, what, data FROM maker.jug_file_ilk`)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -84,7 +84,7 @@ var _ = Describe("Jug File Ilk LogNoteTransformer", func() {
 		header, err := persistHeader(db, blockNumber, blockChain)
 		Expect(err).NotTo(HaveOccurred())
 
-		initializer := shared.LogNoteTransformer{
+		initializer := shared.LogNoteSharedRepoTransformer{
 			Config:     jugFileIlkConfig,
 			Converter:  &ilk.JugFileIlkConverter{},
 			Repository: &ilk.JugFileIlkRepository{},
@@ -115,3 +115,12 @@ var _ = Describe("Jug File Ilk LogNoteTransformer", func() {
 		Expect(jugFileIlkChecked[0]).To(Equal(2))
 	})
 })
+
+type jugFileIlkModel struct {
+	Ilk              string `db:"ilk_id"`
+	What             string
+	Data             string
+	LogIndex         uint   `db:"log_idx"`
+	TransactionIndex uint   `db:"tx_idx"`
+	Raw              []byte `db:"raw_log"`
+}

@@ -29,8 +29,8 @@ import (
 
 type JugFileIlkConverter struct{}
 
-func (JugFileIlkConverter) ToModels(ethLogs []types.Log) ([]interface{}, error) {
-	var models []interface{}
+func (JugFileIlkConverter) ToModels(ethLogs []types.Log) ([]shared.InsertionModel, error) {
+	var models []shared.InsertionModel
 	for _, ethLog := range ethLogs {
 		verifyErr := verifyLog(ethLog)
 		if verifyErr != nil {
@@ -49,13 +49,21 @@ func (JugFileIlkConverter) ToModels(ethLogs []types.Log) ([]interface{}, error) 
 			return nil, marshalErr
 		}
 
-		model := JugFileIlkModel{
-			Ilk:              ilk,
-			What:             what,
-			Data:             data.String(),
-			LogIndex:         ethLog.Index,
-			TransactionIndex: ethLog.TxIndex,
-			Raw:              raw,
+		model := shared.InsertionModel{
+			TableName:         "jug_file_ilk",
+			OrderedColumns:    []string{
+				"header_id", "ilk_id", "what", "data", "log_idx", "tx_idx", "raw_log",
+			},
+			ColumnToValue: map[string]interface{}{
+				"what": what,
+				"data": data.String(),
+				"log_idx": ethLog.Index,
+				"tx_idx": ethLog.TxIndex,
+				"raw_log": raw,
+			},
+			ForeignKeyToValue: map[string]string{
+				"ilk_id": ilk,
+			},
 		}
 		models = append(models, model)
 	}
