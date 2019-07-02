@@ -28,7 +28,7 @@ import (
 
 type TendConverter struct{}
 
-func (TendConverter) ToModels(ethLogs []types.Log) (results []interface{}, err error) {
+func (TendConverter) ToModels(ethLogs []types.Log) (results []shared.InsertionModel, err error) {
 	for _, ethLog := range ethLogs {
 		err := validateLog(ethLog)
 		if err != nil {
@@ -51,14 +51,21 @@ func (TendConverter) ToModels(ethLogs []types.Log) (results []interface{}, err e
 			return nil, err
 		}
 
-		model := TendModel{
-			BidId:            bidId.String(),
-			Lot:              lot,
-			Bid:              bidValue,
-			Lad:              lad.Hex(),
-			LogIndex:         logIndex,
-			TransactionIndex: transactionIndex,
-			Raw:              rawLog,
+		model := shared.InsertionModel{
+			TableName: "tend",
+			OrderedColumns: []string{
+				"header_id", "bid_id", "lot", "bid", "lad", "log_idx", "tx_idx", "raw_log",
+			},
+			ColumnToValue: map[string]interface{}{
+				"bid_id":  bidId.String(),
+				"lot":     lot,
+				"bid":     bidValue,
+				"lad":     lad.Hex(),
+				"log_idx": logIndex,
+				"tx_idx":  transactionIndex,
+				"raw_log": rawLog,
+			},
+			ForeignKeyToValue: map[string]string{},
 		}
 		results = append(results, model)
 	}

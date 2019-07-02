@@ -17,9 +17,7 @@
 package tend
 
 import (
-	"fmt"
-
-	log "github.com/sirupsen/logrus"
+	"github.com/vulcanize/mcd_transformers/transformers/shared"
 
 	repo "github.com/vulcanize/vulcanizedb/libraries/shared/repository"
 	"github.com/vulcanize/vulcanizedb/pkg/datastore/postgres"
@@ -31,47 +29,8 @@ type TendRepository struct {
 	db *postgres.DB
 }
 
-func (repository TendRepository) Create(headerID int64, models []interface{}) error {
-	tx, dBaseErr := repository.db.Beginx()
-	if dBaseErr != nil {
-		return dBaseErr
-	}
-
-	for _, model := range models {
-		tend, ok := model.(TendModel)
-		if !ok {
-			rollbackErr := tx.Rollback()
-			if rollbackErr != nil {
-				log.Error("failed to rollback ", rollbackErr)
-			}
-			return fmt.Errorf("model of type %T, not %T", model, TendModel{})
-		}
-
-		_, execErr := tx.Exec(
-			`INSERT into maker.tend (header_id, bid_id, lot, bid, lad, log_idx, tx_idx, raw_log)
-			VALUES($1, $2, $3::NUMERIC, $4::NUMERIC, $5, $6, $7, $8)
-			ON CONFLICT (header_id, tx_idx, log_idx) DO UPDATE SET bid_id = $2, lot = $3, bid = $4, lad = $5, raw_log = $8;`,
-			headerID, tend.BidId, tend.Lot, tend.Bid, tend.Lad, tend.LogIndex, tend.TransactionIndex, tend.Raw,
-		)
-
-		if execErr != nil {
-			rollbackErr := tx.Rollback()
-			if rollbackErr != nil {
-				log.Error("failed to rollback ", rollbackErr)
-			}
-			return execErr
-		}
-	}
-
-	checkHeaderErr := repo.MarkHeaderCheckedInTransaction(headerID, tx, constants.TendChecked)
-	if checkHeaderErr != nil {
-		rollbackErr := tx.Rollback()
-		if rollbackErr != nil {
-			log.Error("failed to rollback ", rollbackErr)
-		}
-		return checkHeaderErr
-	}
-	return tx.Commit()
+func (repository TendRepository) Create(headerID int64, models []shared.InsertionModel) error {
+	return shared.Create(headerID, models, repository.db)
 }
 
 func (repository TendRepository) MarkHeaderChecked(headerId int64) error {

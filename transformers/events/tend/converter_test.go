@@ -19,6 +19,7 @@ package tend_test
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/vulcanize/mcd_transformers/transformers/shared"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -28,19 +29,14 @@ import (
 )
 
 var _ = Describe("Tend TendConverter", func() {
-	var converter tend.TendConverter
-
-	BeforeEach(func() {
-		converter = tend.TendConverter{}
-	})
+	var converter = tend.TendConverter{}
 
 	Describe("ToModels", func() {
 		It("converts an eth log to a db model", func() {
 			models, err := converter.ToModels([]types.Log{test_data.TendLogNote})
 
 			Expect(err).NotTo(HaveOccurred())
-			Expect(len(models)).To(Equal(1))
-			Expect(models[0]).To(Equal(test_data.TendModel))
+			Expect(models).To(Equal([]shared.InsertionModel{test_data.TendModel}))
 		})
 
 		It("returns an error if the log data is empty", func() {

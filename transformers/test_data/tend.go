@@ -18,6 +18,7 @@ package test_data
 
 import (
 	"encoding/json"
+	"github.com/vulcanize/mcd_transformers/transformers/shared"
 	"strconv"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -25,7 +26,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/vulcanize/vulcanizedb/pkg/fakes"
 
-	"github.com/vulcanize/mcd_transformers/transformers/events/tend"
 	"github.com/vulcanize/mcd_transformers/transformers/shared/constants"
 )
 
@@ -55,12 +55,19 @@ var TendLogNote = types.Log{
 }
 
 var rawTendLog, _ = json.Marshal(TendLogNote)
-var TendModel = tend.TendModel{
-	BidId:            strconv.FormatInt(tendBidId, 10),
-	Lot:              tendLot,
-	Bid:              tendBid,
-	Lad:              constants.FlapperContractAddress(),
-	LogIndex:         TendLogNote.Index,
-	TransactionIndex: TendLogNote.TxIndex,
-	Raw:              rawTendLog,
+var TendModel = shared.InsertionModel{
+	TableName: "tend",
+	OrderedColumns: []string{
+		"header_id", "bid_id", "lot", "bid", "lad", "log_idx", "tx_idx", "raw_log",
+	},
+	ColumnToValue: map[string]interface{}{
+		"bid_id":  strconv.FormatInt(tendBidId, 10),
+		"lot":     tendLot,
+		"bid":     tendBid,
+		"lad":     constants.FlapperContractAddress(),
+		"log_idx": TendLogNote.Index,
+		"tx_idx":  TendLogNote.TxIndex,
+		"raw_log": rawTendLog,
+	},
+	ForeignKeyToValue: map[string]string{},
 }

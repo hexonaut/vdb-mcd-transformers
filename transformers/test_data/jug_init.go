@@ -51,8 +51,8 @@ var JugInitModel = shared.InsertionModel{
 		"header_id", "ilk_id", "log_idx", "tx_idx", "raw_log",
 	},
 	ColumnToValue: map[string]interface{}{
-		"log_idx": 11,
-		"tx_idx":  10,
+		"log_idx": EthJugInitLog.Index,
+		"tx_idx":  EthJugInitLog.TxIndex,
 		"raw_log": rawJugInitLog,
 	},
 	ForeignKeyToValue: map[string]string{

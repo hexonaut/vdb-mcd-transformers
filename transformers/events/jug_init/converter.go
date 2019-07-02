@@ -51,7 +51,6 @@ func (JugInitConverter) ToModels(ethLogs []types.Log) ([]shared.InsertionModel, 
 				"ilk_id": ilk,
 			},
 		}
-
 		models = append(models, model)
 	}
 	return models, nil

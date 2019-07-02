@@ -36,7 +36,7 @@ var _ = XDescribe("Tend LogNoteTransformer", func() {
 		db          *postgres.DB
 		blockChain  core.BlockChain
 		tendConfig  transformer.EventTransformerConfig
-		initializer shared.LogNoteTransformer
+		initializer shared.LogNoteSharedRepoTransformer
 		logFetcher  fetcher.ILogFetcher
 		addresses   []common.Address
 		topics      []common.Hash
@@ -61,7 +61,7 @@ var _ = XDescribe("Tend LogNoteTransformer", func() {
 		addresses = transformer.HexStringsToAddresses(tendConfig.ContractAddresses)
 		topics = []common.Hash{common.HexToHash(tendConfig.Topic)}
 
-		initializer = shared.LogNoteTransformer{
+		initializer = shared.LogNoteSharedRepoTransformer{
 			Config:     tendConfig,
 			Converter:  &tend.TendConverter{},
 			Repository: &tend.TendRepository{},
@@ -83,7 +83,7 @@ var _ = XDescribe("Tend LogNoteTransformer", func() {
 		err = transformer.Execute(logs, header)
 		Expect(err).NotTo(HaveOccurred())
 
-		var dbResult []tend.TendModel
+		var dbResult []tendModel
 		err = db.Select(&dbResult, `SELECT bid_id, lot, bid, lad FROM maker.tend`)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -116,7 +116,7 @@ var _ = XDescribe("Tend LogNoteTransformer", func() {
 		err = transformer.Execute(logs, header)
 		Expect(err).NotTo(HaveOccurred())
 
-		var dbResult []tend.TendModel
+		var dbResult []tendModel
 		err = db.Select(&dbResult, `SELECT bid_id, lot, bid, lad FROM maker.tend`)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -149,7 +149,7 @@ var _ = XDescribe("Tend LogNoteTransformer", func() {
 		err = transformer.Execute(logs, header)
 		Expect(err).NotTo(HaveOccurred())
 
-		var dbResult []tend.TendModel
+		var dbResult []tendModel
 		err = db.Select(&dbResult, `SELECT bid_id, lot, bid, lad FROM maker.tend`)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -167,3 +167,13 @@ var _ = XDescribe("Tend LogNoteTransformer", func() {
 		Expect(dbTic).To(Equal(actualTic))
 	})
 })
+
+type tendModel struct {
+	BidId            string `db:"bid_id"`
+	Lot              string
+	Bid              string
+	Lad              string
+	LogIndex         uint   `db:"log_idx"`
+	TransactionIndex uint   `db:"tx_idx"`
+	Raw              []byte `db:"raw_log"`
+}
