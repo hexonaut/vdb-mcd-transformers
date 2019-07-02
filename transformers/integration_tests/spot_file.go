@@ -113,7 +113,7 @@ var _ = Describe("SpotFile LogNoteTransformers", func() {
 			addresses   []common.Address
 			blockNumber int64
 			header      core.Header
-			initializer shared.LogNoteTransformer
+			initializer shared.LogNoteSharedRepoTransformer
 			logs        []types.Log
 			topics      []common.Hash
 			tr          transformer.EventTransformer
@@ -137,7 +137,7 @@ var _ = Describe("SpotFile LogNoteTransformers", func() {
 			addresses = transformer.HexStringsToAddresses(spotFilePipConfig.ContractAddresses)
 			topics = []common.Hash{common.HexToHash(spotFilePipConfig.Topic)}
 
-			initializer = shared.LogNoteTransformer{
+			initializer = shared.LogNoteSharedRepoTransformer{
 				Config:     spotFilePipConfig,
 				Converter:  pip.SpotFilePipConverter{},
 				Repository: &pip.SpotFilePipRepository{},
@@ -154,7 +154,7 @@ var _ = Describe("SpotFile LogNoteTransformers", func() {
 		})
 
 		It("fetches and transforms a Spot.file pip event from Kovan", func() {
-			var dbResult pip.SpotFilePipModel
+			var dbResult spotFilePipModel
 			getSpotErr := db.Get(&dbResult, `SELECT ilk_id, pip from maker.spot_file_pip`)
 			Expect(getSpotErr).NotTo(HaveOccurred())
 
@@ -170,6 +170,14 @@ type spotFileMatModel struct {
 	Ilk              string `db:"ilk_id"`
 	What             string
 	Data             string
+	LogIndex         uint   `db:"log_idx"`
+	TransactionIndex uint   `db:"tx_idx"`
+	Raw              []byte `db:"raw_log"`
+}
+
+type spotFilePipModel struct {
+	Ilk              string `db:"ilk_id"`
+	Pip              string
 	LogIndex         uint   `db:"log_idx"`
 	TransactionIndex uint   `db:"tx_idx"`
 	Raw              []byte `db:"raw_log"`

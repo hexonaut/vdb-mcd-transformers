@@ -23,7 +23,7 @@ import (
 	"github.com/vulcanize/mcd_transformers/transformers/shared"
 )
 
-var EventTransformerInitializer transformer.EventTransformerInitializer = shared.LogNoteTransformer{
+var EventTransformerInitializer transformer.EventTransformerInitializer = shared.LogNoteSharedRepoTransformer{
 	Config:     pip.GetSpotFilePipConfig(),
 	Converter:  &pip.SpotFilePipConverter{},
 	Repository: &pip.SpotFilePipRepository{},

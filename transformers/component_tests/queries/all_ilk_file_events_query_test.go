@@ -81,8 +81,8 @@ var _ = Describe("Ilk File Events Query", func() {
 		Expect(spotFileMatErr).NotTo(HaveOccurred())
 
 		spotFilePip := test_data.SpotFilePipModel
-		spotFilePip.Ilk = test_helpers.FakeIlk.Hex
-		spotFilePipErr := spotFilePipRepo.Create(headerOneId, []interface{}{spotFilePip})
+		spotFilePip.ForeignKeyToValue["ilk_id"] = test_helpers.FakeIlk.Hex
+		spotFilePipErr := spotFilePipRepo.Create(headerOneId, []shared.InsertionModel{spotFilePip})
 		Expect(spotFilePipErr).NotTo(HaveOccurred())
 
 		vatFile := test_data.VatFileIlkDustModel
@@ -118,7 +118,7 @@ var _ = Describe("Ilk File Events Query", func() {
 			test_helpers.IlkFileEvent{
 				IlkIdentifier: relevantIlkIdentifier,
 				What:          "pip",
-				Data:          spotFilePip.Pip,
+				Data:          spotFilePip.ColumnToValue["pip"].(string),
 			},
 			test_helpers.IlkFileEvent{
 				IlkIdentifier: relevantIlkIdentifier,
