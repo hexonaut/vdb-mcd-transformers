@@ -18,6 +18,7 @@ package test_data
 
 import (
 	"encoding/json"
+	"github.com/vulcanize/mcd_transformers/transformers/shared"
 	"strconv"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -25,7 +26,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/vulcanize/vulcanizedb/pkg/fakes"
 
-	"github.com/vulcanize/mcd_transformers/transformers/events/dent"
 	"github.com/vulcanize/mcd_transformers/transformers/shared/constants"
 )
 
@@ -56,12 +56,19 @@ var DentLog = types.Log{
 	Removed:     false,
 }
 
-var DentModel = dent.DentModel{
-	BidId:            strconv.FormatInt(dentBidId, 10),
-	Lot:              dentLot,
-	Bid:              dentBid,
-	Guy:              dentGuy,
-	LogIndex:         DentLog.Index,
-	TransactionIndex: DentLog.TxIndex,
-	Raw:              dentRawJson,
+var DentModel = shared.InsertionModel{
+	TableName: "dent",
+	OrderedColumns: []string{
+		"header_id", "bid_id", "lot", "bid", "guy", "tic", "log_idx", "tx_idx", "raw_log",
+	},
+	ColumnToValue: map[string]interface{}{
+		"bid_id":  strconv.FormatInt(dentBidId, 10),
+		"lot":     dentLot,
+		"bid":     dentBid,
+		"guy":     dentGuy,
+		"log_idx": DentLog.Index,
+		"tx_idx":  DentLog.TxIndex,
+		"raw_log": dentRawJson,
+	},
+	ForeignKeyToValue: map[string]string{},
 }

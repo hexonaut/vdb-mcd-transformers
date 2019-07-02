@@ -19,6 +19,7 @@ package dent
 import (
 	"encoding/json"
 	"errors"
+	"github.com/vulcanize/mcd_transformers/transformers/shared"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -31,7 +32,7 @@ func NewDentConverter() DentConverter {
 	return DentConverter{}
 }
 
-func (c DentConverter) ToModels(ethLogs []types.Log) (result []interface{}, err error) {
+func (c DentConverter) ToModels(ethLogs []types.Log) (result []shared.InsertionModel, err error) {
 	for _, log := range ethLogs {
 		err := validateLog(log)
 		if err != nil {
@@ -52,14 +53,21 @@ func (c DentConverter) ToModels(ethLogs []types.Log) (result []interface{}, err 
 			return nil, err
 		}
 
-		model := DentModel{
-			BidId:            bidId.String(),
-			Lot:              lot,
-			Bid:              bidValue,
-			Guy:              guy,
-			LogIndex:         logIndex,
-			TransactionIndex: transactionIndex,
-			Raw:              raw,
+		model := shared.InsertionModel{
+			TableName: "dent",
+			OrderedColumns: []string{
+				"header_id", "bid_id", "lot", "bid", "guy", "tic", "log_idx", "tx_idx", "raw_log",
+			},
+			ColumnToValue: map[string]interface{}{
+				"bid_id":  bidId.String(),
+				"lot":     lot,
+				"bid":     bidValue,
+				"guy":     guy,
+				"log_idx": logIndex,
+				"tx_idx":  transactionIndex,
+				"raw_log": raw,
+			},
+			ForeignKeyToValue: map[string]string{},
 		}
 		result = append(result, model)
 	}

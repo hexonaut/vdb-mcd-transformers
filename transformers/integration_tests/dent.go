@@ -24,7 +24,7 @@ var _ = XDescribe("Dent transformer", func() {
 		dentConfig  transformer.EventTransformerConfig
 		addresses   []common.Address
 		topics      []common.Hash
-		initializer shared.LogNoteTransformer
+		initializer shared.LogNoteSharedRepoTransformer
 	)
 
 	BeforeEach(func() {
@@ -46,7 +46,7 @@ var _ = XDescribe("Dent transformer", func() {
 		topics = []common.Hash{common.HexToHash(dentConfig.Topic)}
 		logFetcher = fetcher.NewLogFetcher(blockChain)
 
-		initializer = shared.LogNoteTransformer{
+		initializer = shared.LogNoteSharedRepoTransformer{
 			Config:     dentConfig,
 			Converter:  &dent.DentConverter{},
 			Repository: &dent.DentRepository{},
@@ -68,7 +68,7 @@ var _ = XDescribe("Dent transformer", func() {
 		err = tr.Execute(logs, header)
 		Expect(err).NotTo(HaveOccurred())
 
-		var dbResult []dent.DentModel
+		var dbResult []dentModel
 		err = db.Select(&dbResult, `SELECT bid, bid_id, guy, lot FROM maker.dent`)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -90,3 +90,13 @@ var _ = XDescribe("Dent transformer", func() {
 		//TODO: There are currently no Flip.dent events on Kovan
 	})
 })
+
+type dentModel struct {
+	BidId            string `db:"bid_id"`
+	Lot              string
+	Bid              string
+	Guy              string
+	LogIndex         uint   `db:"log_idx"`
+	TransactionIndex uint   `db:"tx_idx"`
+	Raw              []byte `db:"raw_log"`
+}

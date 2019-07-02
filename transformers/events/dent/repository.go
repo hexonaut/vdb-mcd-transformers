@@ -17,10 +17,8 @@
 package dent
 
 import (
-	"fmt"
+	"github.com/vulcanize/mcd_transformers/transformers/shared"
 
-	"github.com/jmoiron/sqlx"
-	log "github.com/sirupsen/logrus"
 	repo "github.com/vulcanize/vulcanizedb/libraries/shared/repository"
 	"github.com/vulcanize/vulcanizedb/pkg/datastore/postgres"
 
@@ -31,49 +29,8 @@ type DentRepository struct {
 	db *postgres.DB
 }
 
-func (repository DentRepository) Create(headerID int64, models []interface{}) error {
-	tx, dBaseErr := repository.db.Beginx()
-	if dBaseErr != nil {
-		return dBaseErr
-	}
-
-	tic, getTicErr := getTicInTx(headerID, tx)
-	if getTicErr != nil {
-		rollbackErr := tx.Rollback()
-		if rollbackErr != nil {
-			log.Error("failed to rollback ", rollbackErr)
-		}
-		return getTicErr
-	}
-
-	for _, model := range models {
-		dent, ok := model.(DentModel)
-		if !ok {
-			rollbackErr := tx.Rollback()
-			if rollbackErr != nil {
-				log.Error("failed to rollback ", rollbackErr)
-			}
-			return fmt.Errorf("model of type %T, not %T", model, DentModel{})
-		}
-
-		_, execErr := tx.Exec(
-			`INSERT into maker.dent (header_id, bid_id, lot, bid, guy, tic, log_idx, tx_idx, raw_log)
-			VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)
-			ON CONFLICT (header_id, tx_idx, log_idx) DO UPDATE SET bid_Id = $2, lot = $3, bid = $4, guy = $5, tic = $6, raw_log = $9;`,
-			headerID, dent.BidId, dent.Lot, dent.Bid, dent.Guy, tic, dent.LogIndex, dent.TransactionIndex, dent.Raw,
-		)
-		if execErr != nil {
-			tx.Rollback()
-			return execErr
-		}
-	}
-
-	err := repo.MarkHeaderCheckedInTransaction(headerID, tx, constants.DentChecked)
-	if err != nil {
-		tx.Rollback()
-		return err
-	}
-	return tx.Commit()
+func (repository DentRepository) Create(headerID int64, models []shared.InsertionModel) error {
+	return shared.Create(headerID, models, repository.db)
 }
 
 func (repository DentRepository) MarkHeaderChecked(headerId int64) error {
@@ -82,15 +39,4 @@ func (repository DentRepository) MarkHeaderChecked(headerId int64) error {
 
 func (repository *DentRepository) SetDB(db *postgres.DB) {
 	repository.db = db
-}
-
-func getTicInTx(headerID int64, tx *sqlx.Tx) (int64, error) {
-	var blockTimestamp int64
-	err := tx.Get(&blockTimestamp, `SELECT block_timestamp FROM public.headers WHERE id = $1;`, headerID)
-	if err != nil {
-		return 0, err
-	}
-
-	tic := blockTimestamp + constants.TTL
-	return tic, nil
 }
