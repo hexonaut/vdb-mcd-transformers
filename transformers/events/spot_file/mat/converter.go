@@ -29,8 +29,8 @@ import (
 
 type SpotFileMatConverter struct{}
 
-func (SpotFileMatConverter) ToModels(ethLogs []types.Log) ([]interface{}, error) {
-	var models []interface{}
+func (SpotFileMatConverter) ToModels(ethLogs []types.Log) ([]shared.InsertionModel, error) {
+	var models []shared.InsertionModel
 	for _, ethLog := range ethLogs {
 		err := verifyLog(ethLog)
 		if err != nil {
@@ -48,13 +48,21 @@ func (SpotFileMatConverter) ToModels(ethLogs []types.Log) ([]interface{}, error)
 		if err != nil {
 			return nil, err
 		}
-		model := SpotFileMatModel{
-			Ilk:              ilk,
-			What:             what,
-			Data:             data.String(),
-			LogIndex:         ethLog.Index,
-			TransactionIndex: ethLog.TxIndex,
-			Raw:              raw,
+		model := shared.InsertionModel{
+			TableName: "spot_file_mat",
+			OrderedColumns: []string{
+				"header_id", "ilk_id", "what", "data", "log_idx", "tx_idx", "raw_log",
+			},
+			ColumnToValue: map[string]interface{}{
+				"what":    what,
+				"data":    data.String(),
+				"log_idx": ethLog.Index,
+				"tx_idx":  ethLog.TxIndex,
+				"raw_log": raw,
+			},
+			ForeignKeyToValue: map[string]string{
+				"ilk_id": ilk,
+			},
 		}
 		models = append(models, model)
 	}

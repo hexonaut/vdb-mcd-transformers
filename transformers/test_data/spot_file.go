@@ -5,8 +5,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/vulcanize/mcd_transformers/transformers/events/spot_file/mat"
 	"github.com/vulcanize/mcd_transformers/transformers/events/spot_file/pip"
+	"github.com/vulcanize/mcd_transformers/transformers/shared"
 	"github.com/vulcanize/mcd_transformers/transformers/shared/constants"
 )
 
@@ -28,13 +28,21 @@ var EthSpotFileMatLog = types.Log{
 }
 
 var rawSpotFileMatLog, _ = json.Marshal(EthSpotFileMatLog)
-var SpotFileMatModel = mat.SpotFileMatModel{
-	Ilk:              "0x4554482d41000000000000000000000000000000000000000000000000000000",
-	What:             "mat",
-	Data:             "1500000000000000000000000000",
-	LogIndex:         EthSpotFileMatLog.Index,
-	TransactionIndex: EthSpotFileMatLog.TxIndex,
-	Raw:              rawSpotFileMatLog,
+var SpotFileMatModel = shared.InsertionModel{
+	TableName: "spot_file_mat",
+	OrderedColumns: []string{
+		"header_id", "ilk_id", "what", "data", "log_idx", "tx_idx", "raw_log",
+	},
+	ColumnToValue: map[string]interface{}{
+		"what":    "mat",
+		"data":    "1500000000000000000000000000",
+		"log_idx": EthSpotFileMatLog.Index,
+		"tx_idx":  EthSpotFileMatLog.TxIndex,
+		"raw_log": rawSpotFileMatLog,
+	},
+	ForeignKeyToValue: map[string]string{
+		"ilk_id": "0x4554482d41000000000000000000000000000000000000000000000000000000",
+	},
 }
 
 var EthSpotFilePipLog = types.Log{

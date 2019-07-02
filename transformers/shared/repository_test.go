@@ -106,6 +106,8 @@ var _ = Describe("Create function ...", func() {
 
 	// TODO persist several models
 	// TODO test error handling
+	// TODO test upsert functionality of generated query
+	// TODO test markHeaderChecked
 
 	It("generates correct queries", func() {
 		actualQuery := generateInsertionQuery(testModel)

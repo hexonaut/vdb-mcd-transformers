@@ -17,8 +17,6 @@
 package mat
 
 import (
-	"fmt"
-	"github.com/sirupsen/logrus"
 	"github.com/vulcanize/mcd_transformers/transformers/shared"
 	"github.com/vulcanize/mcd_transformers/transformers/shared/constants"
 	"github.com/vulcanize/vulcanizedb/libraries/shared/repository"
@@ -33,49 +31,8 @@ type SpotFileMatRepository struct {
 	db *postgres.DB
 }
 
-func (repo SpotFileMatRepository) Create(headerID int64, models []interface{}) error {
-	tx, dBaseErr := repo.db.Beginx()
-	if dBaseErr != nil {
-		return dBaseErr
-	}
-	for _, model := range models {
-		spotFileMatModel, ok := model.(SpotFileMatModel)
-		if !ok {
-			rollbackErr := tx.Rollback()
-			if rollbackErr != nil {
-				logrus.Error("failed to rollback ", rollbackErr)
-			}
-			return fmt.Errorf("model of type %T, not %T", model, SpotFileMatModel{})
-		}
-
-		ilkID, ilkErr := shared.GetOrCreateIlkInTransaction(spotFileMatModel.Ilk, tx)
-		if ilkErr != nil {
-			rollbackErr := tx.Rollback()
-			if rollbackErr != nil {
-				logrus.Error("failed to rollback ", rollbackErr)
-			}
-			return ilkErr
-		}
-
-		_, execErr := tx.Exec(InsertSpotFileMatQuery, headerID, ilkID, spotFileMatModel.What, spotFileMatModel.Data,
-			spotFileMatModel.LogIndex, spotFileMatModel.TransactionIndex, spotFileMatModel.Raw)
-		if execErr != nil {
-			rollbackErr := tx.Rollback()
-			if rollbackErr != nil {
-				logrus.Error("failed to rollback ", rollbackErr)
-			}
-			return execErr
-		}
-	}
-	checkHeaderErr := repository.MarkHeaderCheckedInTransaction(headerID, tx, constants.SpotFileMatChecked)
-	if checkHeaderErr != nil {
-		rollbackErr := tx.Rollback()
-		if rollbackErr != nil {
-			logrus.Error("failed to rollback ", rollbackErr)
-		}
-		return checkHeaderErr
-	}
-	return tx.Commit()
+func (repo SpotFileMatRepository) Create(headerID int64, models []shared.InsertionModel) error {
+	return shared.Create(headerID, models, repo.db)
 }
 
 func (repo SpotFileMatRepository) MarkHeaderChecked(headerID int64) error {

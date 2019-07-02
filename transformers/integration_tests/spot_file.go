@@ -55,7 +55,7 @@ var _ = Describe("SpotFile LogNoteTransformers", func() {
 			addresses   []common.Address
 			blockNumber int64
 			header      core.Header
-			initializer shared.LogNoteTransformer
+			initializer shared.LogNoteSharedRepoTransformer
 			logs        []types.Log
 			topics      []common.Hash
 			tr          transformer.EventTransformer
@@ -79,7 +79,7 @@ var _ = Describe("SpotFile LogNoteTransformers", func() {
 			addresses = transformer.HexStringsToAddresses(spotFileMatConfig.ContractAddresses)
 			topics = []common.Hash{common.HexToHash(spotFileMatConfig.Topic)}
 
-			initializer = shared.LogNoteTransformer{
+			initializer = shared.LogNoteSharedRepoTransformer{
 				Config:     spotFileMatConfig,
 				Converter:  mat.SpotFileMatConverter{},
 				Repository: &mat.SpotFileMatRepository{},
@@ -96,7 +96,7 @@ var _ = Describe("SpotFile LogNoteTransformers", func() {
 		})
 
 		It("fetches and transforms a Spot.file mat event from Kovan", func() {
-			var dbResult mat.SpotFileMatModel
+			var dbResult spotFileMatModel
 			getSpotErr := db.Get(&dbResult, `SELECT ilk_id, what, data FROM maker.spot_file_mat`)
 			Expect(getSpotErr).NotTo(HaveOccurred())
 
@@ -165,3 +165,12 @@ var _ = Describe("SpotFile LogNoteTransformers", func() {
 		})
 	})
 })
+
+type spotFileMatModel struct {
+	Ilk              string `db:"ilk_id"`
+	What             string
+	Data             string
+	LogIndex         uint   `db:"log_idx"`
+	TransactionIndex uint   `db:"tx_idx"`
+	Raw              []byte `db:"raw_log"`
+}
