@@ -47,14 +47,14 @@ var EthVatFoldLogWithPositiveRate = types.Log{
 
 var rawVatFoldLogWithPositiveRate, _ = json.Marshal(EthVatFoldLogWithPositiveRate)
 var VatFoldModelWithPositiveRate = shared.InsertionModel{
-	TableName:         "vat_fold",
-	OrderedColumns:    []string{
+	TableName: "vat_fold",
+	OrderedColumns: []string{
 		"header_id", "urn_id", "rate", "log_idx", "tx_idx", "raw_log",
 	},
 	ColumnToValue: map[string]interface{}{
-		"rate": "2",
+		"rate":    "2",
 		"log_idx": EthVatFoldLogWithPositiveRate.Index,
-		"tx_idx": EthVatFoldLogWithPositiveRate.TxIndex,
+		"tx_idx":  EthVatFoldLogWithPositiveRate.TxIndex,
 		"raw_log": rawVatFoldLogWithPositiveRate,
 	},
 	ForeignKeyToValue: map[string]string{
@@ -82,14 +82,14 @@ var EthVatFoldLogWithNegativeRate = types.Log{
 
 var rawVatFoldLogWithNegativeRate, _ = json.Marshal(EthVatFoldLogWithNegativeRate)
 var VatFoldModelWithNegativeRate = shared.InsertionModel{
-	TableName:         "vat_fold",
-	OrderedColumns:    []string{
+	TableName: "vat_fold",
+	OrderedColumns: []string{
 		"header_id", "urn_id", "rate", "log_idx", "tx_idx", "raw_log",
 	},
 	ColumnToValue: map[string]interface{}{
-		"rate": "-500000000000000000000",
+		"rate":    "-500000000000000000000",
 		"log_idx": EthVatFoldLogWithNegativeRate.Index,
-		"tx_idx": EthVatFoldLogWithNegativeRate.TxIndex,
+		"tx_idx":  EthVatFoldLogWithNegativeRate.TxIndex,
 		"raw_log": rawVatFoldLogWithNegativeRate,
 	},
 	ForeignKeyToValue: map[string]string{

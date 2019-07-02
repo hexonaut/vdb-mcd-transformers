@@ -34,6 +34,7 @@ const (
 	// TODO add tx for events
 )
 
+// TODO repair me after Edvard broke everything refactoring :(
 var (
 	node = core.Node{
 		GenesisBlock: "GENESIS",

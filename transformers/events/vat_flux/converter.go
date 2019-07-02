@@ -51,15 +51,15 @@ func (VatFluxConverter) ToModels(ethLogs []types.Log) ([]shared.InsertionModel, 
 		}
 
 		model := shared.InsertionModel{
-			TableName:         "vat_flux",
-			OrderedColumns:    []string{
+			TableName: "vat_flux",
+			OrderedColumns: []string{
 				"header_id", "ilk_id", "src", "dst", "wad", "tx_idx", "log_idx", "raw_log",
 			},
 			ColumnToValue: map[string]interface{}{
-				"src": src,
-				"dst": dst,
-				"wad": wad.String(),
-				"tx_idx": ethLog.TxIndex,
+				"src":     src,
+				"dst":     dst,
+				"wad":     wad.String(),
+				"tx_idx":  ethLog.TxIndex,
 				"log_idx": ethLog.Index,
 				"raw_log": rawLogJson,
 			},

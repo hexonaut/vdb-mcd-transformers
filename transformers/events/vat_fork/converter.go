@@ -19,7 +19,6 @@ package vat_fork
 import (
 	"encoding/json"
 	"errors"
-
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -30,8 +29,8 @@ import (
 
 type VatForkConverter struct{}
 
-func (VatForkConverter) ToModels(ethLogs []types.Log) ([]interface{}, error) {
-	var models []interface{}
+func (VatForkConverter) ToModels(ethLogs []types.Log) ([]shared.InsertionModel, error) {
+	var models []shared.InsertionModel
 	for _, ethLog := range ethLogs {
 		err := verifyLog(ethLog)
 		if err != nil {
@@ -59,17 +58,24 @@ func (VatForkConverter) ToModels(ethLogs []types.Log) ([]interface{}, error) {
 			return nil, jsonErr
 		}
 
-		model := VatForkModel{
-			Ilk:              ilk,
-			Src:              src,
-			Dst:              dst,
-			Dink:             dink.String(),
-			Dart:             dart.String(),
-			TransactionIndex: ethLog.TxIndex,
-			LogIndex:         ethLog.Index,
-			Raw:              rawLogJson,
+		model := shared.InsertionModel{
+			TableName: "vat_fork",
+			OrderedColumns: []string{
+				"header_id", "ilk_id", "src", "dst", "dink", "dart", "log_idx", "tx_idx", "raw_log",
+			},
+			ColumnToValue: map[string]interface{}{
+				"src":     src,
+				"dst":     dst,
+				"dink":    dink.String(),
+				"dart":    dart.String(),
+				"log_idx": ethLog.Index,
+				"tx_idx":  ethLog.TxIndex,
+				"raw_log": rawLogJson,
+			},
+			ForeignKeyToValue: map[string]string{
+				"ilk_id": ilk,
+			},
 		}
-
 		models = append(models, model)
 	}
 

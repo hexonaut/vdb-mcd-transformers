@@ -45,14 +45,14 @@ func (VatFoldConverter) ToModels(ethLogs []types.Log) ([]shared.InsertionModel, 
 		}
 
 		model := shared.InsertionModel{
-			TableName:         "vat_fold",
-			OrderedColumns:    []string{
+			TableName: "vat_fold",
+			OrderedColumns: []string{
 				"header_id", "urn_id", "rate", "log_idx", "tx_idx", "raw_log",
 			},
 			ColumnToValue: map[string]interface{}{
-				"rate": rate.String(),
+				"rate":    rate.String(),
 				"log_idx": ethLog.Index,
-				"tx_idx": ethLog.TxIndex,
+				"tx_idx":  ethLog.TxIndex,
 				"raw_log": raw,
 			},
 			ForeignKeyToValue: map[string]string{

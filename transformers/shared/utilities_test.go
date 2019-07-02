@@ -49,7 +49,7 @@ var _ = Describe("Shared utilities", func() {
 
 				Expect(err).NotTo(HaveOccurred())
 				wadInt := shared.ConvertUint256HexToBigInt(hexutil.Encode(wadBytes))
-				Expect(wadInt.String()).To(Equal(test_data.VatFluxModel.Wad))
+				Expect(wadInt.String()).To(Equal(test_data.VatFluxModel.ColumnToValue["wad"].(string)))
 			})
 
 			It("extracts fourth of five arguments", func() {
@@ -57,7 +57,7 @@ var _ = Describe("Shared utilities", func() {
 
 				Expect(err).NotTo(HaveOccurred())
 				dinkInt := shared.ConvertInt256HexToBigInt(hexutil.Encode(dinkBytes))
-				Expect(dinkInt.String()).To(Equal(test_data.VatForkModelWithNegativeDinkDart.Dink))
+				Expect(dinkInt.String()).To(Equal(test_data.VatForkModelWithNegativeDinkDart.ColumnToValue["dink"].(string)))
 			})
 
 			It("extracts fifth of five arguments", func() {
@@ -65,7 +65,7 @@ var _ = Describe("Shared utilities", func() {
 
 				Expect(err).NotTo(HaveOccurred())
 				dartInt := shared.ConvertInt256HexToBigInt(hexutil.Encode(dartBytes))
-				Expect(dartInt.String()).To(Equal(test_data.VatForkModelWithNegativeDinkDart.Dart))
+				Expect(dartInt.String()).To(Equal(test_data.VatForkModelWithNegativeDinkDart.ColumnToValue["dart"].(string)))
 			})
 
 			It("extracts the fourth of six arguments", func() {

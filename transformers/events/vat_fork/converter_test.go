@@ -19,6 +19,7 @@ package vat_fork_test
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/vulcanize/mcd_transformers/transformers/shared"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -33,16 +34,14 @@ var _ = Describe("VatFork converter", func() {
 		models, err := converter.ToModels([]types.Log{test_data.EthVatForkLogWithNegativeDinkDart})
 
 		Expect(err).NotTo(HaveOccurred())
-		Expect(len(models)).To(Equal(1))
-		Expect(models[0]).To(Equal(test_data.VatForkModelWithNegativeDinkDart))
+		Expect(models).To(Equal([]shared.InsertionModel{test_data.VatForkModelWithNegativeDinkDart}))
 	})
 
 	It("Converts a log with a positive dink and dart to a model", func() {
 		models, err := converter.ToModels([]types.Log{test_data.EthVatForkLogWithPositiveDinkDart})
 
 		Expect(err).NotTo(HaveOccurred())
-		Expect(len(models)).To(Equal(1))
-		Expect(models[0]).To(Equal(test_data.VatForkModelWithPositiveDinkDart))
+		Expect(models).To(Equal([]shared.InsertionModel{test_data.VatForkModelWithPositiveDinkDart}))
 	})
 
 	It("Returns an error there are missing topics", func() {
@@ -54,7 +53,6 @@ var _ = Describe("VatFork converter", func() {
 			},
 		}
 		_, err := converter.ToModels([]types.Log{badLog})
-
 		Expect(err).To(HaveOccurred())
 	})
 
@@ -64,7 +62,6 @@ var _ = Describe("VatFork converter", func() {
 		}
 
 		_, err := converter.ToModels([]types.Log{badLog})
-
 		Expect(err).To(HaveOccurred())
 	})
 })
