@@ -25,7 +25,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/vulcanize/vulcanizedb/pkg/fakes"
 
-	"github.com/vulcanize/mcd_transformers/transformers/events/cat_file/flip"
 	"github.com/vulcanize/mcd_transformers/transformers/events/cat_file/vow"
 	"github.com/vulcanize/mcd_transformers/transformers/shared/constants"
 )
@@ -118,13 +117,21 @@ var EthCatFileFlipLog = types.Log{
 }
 
 var rawCatFileFlipLog, _ = json.Marshal(EthCatFileFlipLog)
-var CatFileFlipModel = flip.CatFileFlipModel{
-	Ilk:              "0x434f4c312d410000000000000000000000000000000000000000000000000000",
-	What:             "flip",
-	Flip:             "0x6E8032435c84B08E30F27bfbb812Ee365A095b31",
-	TransactionIndex: EthCatFileFlipLog.TxIndex,
-	LogIndex:         EthCatFileFlipLog.Index,
-	Raw:              rawCatFileFlipLog,
+var CatFileFlipModel = shared.InsertionModel{
+	TableName: "cat_file_flip",
+	OrderedColumns: []string{
+		"header_id", "ilk_id", "what", "flip", "tx_idx", "log_idx", "raw_log",
+	},
+	ColumnToValue: map[string]interface{}{
+		"what":    "flip",
+		"flip":    "0x6E8032435c84B08E30F27bfbb812Ee365A095b31",
+		"tx_idx":  EthCatFileFlipLog.TxIndex,
+		"log_idx": EthCatFileFlipLog.Index,
+		"raw_log": rawCatFileFlipLog,
+	},
+	ForeignKeyToValue: map[string]string{
+		"ilk_id": "0x434f4c312d410000000000000000000000000000000000000000000000000000",
+	},
 }
 
 var EthCatFileVowLog = types.Log{

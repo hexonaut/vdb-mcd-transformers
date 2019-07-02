@@ -29,8 +29,8 @@ import (
 
 type CatFileFlipConverter struct{}
 
-func (CatFileFlipConverter) ToModels(ethLogs []types.Log) ([]interface{}, error) {
-	var results []interface{}
+func (CatFileFlipConverter) ToModels(ethLogs []types.Log) ([]shared.InsertionModel, error) {
+	var results []shared.InsertionModel
 	for _, ethLog := range ethLogs {
 		verifyErr := verifyLog(ethLog)
 		if verifyErr != nil {
@@ -48,14 +48,24 @@ func (CatFileFlipConverter) ToModels(ethLogs []types.Log) ([]interface{}, error)
 		if marshalErr != nil {
 			return nil, marshalErr
 		}
-		result := CatFileFlipModel{
-			Ilk:              ilk,
-			What:             what,
-			Flip:             flip,
-			TransactionIndex: ethLog.TxIndex,
-			LogIndex:         ethLog.Index,
-			Raw:              raw,
+
+		result := shared.InsertionModel{
+			TableName: "cat_file_flip",
+			OrderedColumns: []string{
+				"header_id", "ilk_id", "what", "flip", "tx_idx", "log_idx", "raw_log",
+			},
+			ColumnToValue: map[string]interface{}{
+				"what":    what,
+				"flip":    flip,
+				"tx_idx":  ethLog.TxIndex,
+				"log_idx": ethLog.Index,
+				"raw_log": raw,
+			},
+			ForeignKeyToValue: map[string]string{
+				"ilk_id": ilk,
+			},
 		}
+
 		results = append(results, result)
 	}
 	return results, nil

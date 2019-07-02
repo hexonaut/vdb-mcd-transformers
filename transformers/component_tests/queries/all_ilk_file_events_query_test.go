@@ -66,8 +66,8 @@ var _ = Describe("Ilk File Events Query", func() {
 		Expect(chopLumpErr).NotTo(HaveOccurred())
 
 		catFileFlip := test_data.CatFileFlipModel
-		catFileFlip.Ilk = test_helpers.FakeIlk.Hex
-		flipErr := catFileFlipRepo.Create(headerOneId, []interface{}{catFileFlip})
+		catFileFlip.ForeignKeyToValue["ilk_id"] = test_helpers.FakeIlk.Hex
+		flipErr := catFileFlipRepo.Create(headerOneId, []shared.InsertionModel{catFileFlip})
 		Expect(flipErr).NotTo(HaveOccurred())
 
 		jugFile := test_data.JugFileIlkModel
@@ -102,8 +102,8 @@ var _ = Describe("Ilk File Events Query", func() {
 			},
 			test_helpers.IlkFileEvent{
 				IlkIdentifier: relevantIlkIdentifier,
-				What:          catFileFlip.What,
-				Data:          catFileFlip.Flip,
+				What:          catFileFlip.ColumnToValue["what"].(string),
+				Data:          catFileFlip.ColumnToValue["flip"].(string),
 			},
 			test_helpers.IlkFileEvent{
 				IlkIdentifier: relevantIlkIdentifier,
