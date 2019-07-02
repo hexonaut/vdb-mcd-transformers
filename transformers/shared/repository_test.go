@@ -28,8 +28,7 @@ import (
 )
 
 var _ = Describe("Create function ...", func() {
-	const createTestEventTableQuery =
-		`CREATE TABLE maker.testEvent(
+	const createTestEventTableQuery = `CREATE TABLE maker.testEvent(
 		id        SERIAL PRIMARY KEY,
 		header_id INTEGER NOT NULL REFERENCES headers (id) ON DELETE CASCADE,
 		variable1 TEXT,
@@ -40,8 +39,7 @@ var _ = Describe("Create function ...", func() {
 		raw_log   JSONB,
 		UNIQUE (header_id, tx_idx, log_idx)
 		);`
-	const addCheckedColumnQuery =
-		`ALTER TABLE public.checked_headers
+	const addCheckedColumnQuery = `ALTER TABLE public.checked_headers
 		ADD COLUMN testevent_checked INTEGER NOT NULL DEFAULT 0;`
 
 	const hexIlk = "0x464b450000000000000000000000000000000000000000000000000000000000"

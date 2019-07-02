@@ -1,6 +1,7 @@
 package queries
 
 import (
+	"github.com/vulcanize/mcd_transformers/transformers/shared"
 	"math/rand"
 	"strconv"
 
@@ -60,8 +61,8 @@ var _ = Describe("Ilk File Events Query", func() {
 
 	It("returns all ilk file events for ilk", func() {
 		catFileChopLump := test_data.CatFileChopModel
-		catFileChopLump.Ilk = test_helpers.FakeIlk.Hex
-		chopLumpErr := catFileChopLumpRepo.Create(headerOneId, []interface{}{catFileChopLump})
+		catFileChopLump.ForeignKeyToValue["ilk_id"] = test_helpers.FakeIlk.Hex
+		chopLumpErr := catFileChopLumpRepo.Create(headerOneId, []shared.InsertionModel{catFileChopLump})
 		Expect(chopLumpErr).NotTo(HaveOccurred())
 
 		catFileFlip := test_data.CatFileFlipModel
@@ -96,8 +97,8 @@ var _ = Describe("Ilk File Events Query", func() {
 		Expect(actualFiles).To(ConsistOf(
 			test_helpers.IlkFileEvent{
 				IlkIdentifier: relevantIlkIdentifier,
-				What:          catFileChopLump.What,
-				Data:          catFileChopLump.Data,
+				What:          catFileChopLump.ColumnToValue["what"].(string),
+				Data:          catFileChopLump.ColumnToValue["data"].(string),
 			},
 			test_helpers.IlkFileEvent{
 				IlkIdentifier: relevantIlkIdentifier,

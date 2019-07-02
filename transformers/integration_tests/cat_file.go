@@ -73,7 +73,7 @@ var _ = Describe("Cat File transformer", func() {
 		catFileConfig.StartingBlockNumber = chopLumpBlockNumber
 		catFileConfig.EndingBlockNumber = chopLumpBlockNumber
 
-		initializer := shared.LogNoteTransformer{
+		initializer := shared.LogNoteSharedRepoTransformer{
 			Config:     catFileConfig,
 			Converter:  &chop_lump.CatFileChopLumpConverter{},
 			Repository: &chop_lump.CatFileChopLumpRepository{},
@@ -89,7 +89,7 @@ var _ = Describe("Cat File transformer", func() {
 		err = transformer.Execute(logs, header)
 		Expect(err).NotTo(HaveOccurred())
 
-		var dbResult []chop_lump.CatFileChopLumpModel
+		var dbResult []CatFileChopLumpModel
 		err = db.Select(&dbResult, `SELECT what, ilk_id, data, log_idx FROM maker.cat_file_chop_lump`)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -113,7 +113,7 @@ var _ = Describe("Cat File transformer", func() {
 		catFileConfig.StartingBlockNumber = chopLumpBlockNumber
 		catFileConfig.EndingBlockNumber = chopLumpBlockNumber
 
-		initializer := shared.LogNoteTransformer{
+		initializer := shared.LogNoteSharedRepoTransformer{
 			Config:     catFileConfig,
 			Converter:  &chop_lump.CatFileChopLumpConverter{},
 			Repository: &chop_lump.CatFileChopLumpRepository{},
@@ -129,7 +129,7 @@ var _ = Describe("Cat File transformer", func() {
 		err = transformer.Execute(logs, header)
 		Expect(err).NotTo(HaveOccurred())
 
-		var dbResult []chop_lump.CatFileChopLumpModel
+		var dbResult []CatFileChopLumpModel
 		err = db.Select(&dbResult, `SELECT what, ilk_id, data, log_idx FROM maker.cat_file_chop_lump`)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -297,7 +297,16 @@ var _ = Describe("Cat File transformer", func() {
 	})
 })
 
-type byLogIndexChopLump []chop_lump.CatFileChopLumpModel
+type CatFileChopLumpModel struct {
+	Ilk              string `db:"ilk_id"`
+	What             string
+	Data             string
+	TransactionIndex uint   `db:"tx_idx"`
+	LogIndex         uint   `db:"log_idx"`
+	Raw              []byte `db:"raw_log"`
+}
+
+type byLogIndexChopLump []CatFileChopLumpModel
 
 func (c byLogIndexChopLump) Len() int           { return len(c) }
 func (c byLogIndexChopLump) Less(i, j int) bool { return c[i].LogIndex < c[j].LogIndex }

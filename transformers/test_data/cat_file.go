@@ -18,13 +18,13 @@ package test_data
 
 import (
 	"encoding/json"
+	"github.com/vulcanize/mcd_transformers/transformers/shared"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/vulcanize/vulcanizedb/pkg/fakes"
 
-	"github.com/vulcanize/mcd_transformers/transformers/events/cat_file/chop_lump"
 	"github.com/vulcanize/mcd_transformers/transformers/events/cat_file/flip"
 	"github.com/vulcanize/mcd_transformers/transformers/events/cat_file/vow"
 	"github.com/vulcanize/mcd_transformers/transformers/shared/constants"
@@ -48,13 +48,21 @@ var EthCatFileChopLog = types.Log{
 }
 
 var rawCatFileChopLog, _ = json.Marshal(EthCatFileChopLog)
-var CatFileChopModel = chop_lump.CatFileChopLumpModel{
-	Ilk:              "0x434f4c342d410000000000000000000000000000000000000000000000000000",
-	What:             "chop",
-	Data:             "1000000000000000000000000000",
-	TransactionIndex: EthCatFileChopLog.TxIndex,
-	LogIndex:         EthCatFileChopLog.Index,
-	Raw:              rawCatFileChopLog,
+var CatFileChopModel = shared.InsertionModel{
+	TableName: "cat_file_chop_lump",
+	OrderedColumns: []string{
+		"header_id", "ilk_id", "what", "data", "tx_idx", "log_idx", "raw_log",
+	},
+	ColumnToValue: map[string]interface{}{
+		"what":    "chop",
+		"data":    "1000000000000000000000000000",
+		"tx_idx":  EthCatFileChopLog.TxIndex,
+		"log_idx": EthCatFileChopLog.Index,
+		"raw_log": rawCatFileChopLog,
+	},
+	ForeignKeyToValue: map[string]string{
+		"ilk_id": "0x434f4c342d410000000000000000000000000000000000000000000000000000",
+	},
 }
 
 var EthCatFileLumpLog = types.Log{
@@ -75,13 +83,21 @@ var EthCatFileLumpLog = types.Log{
 }
 
 var rawCatFileLumpLog, _ = json.Marshal(EthCatFileLumpLog)
-var CatFileLumpModel = chop_lump.CatFileChopLumpModel{
-	Ilk:              "0x434f4c342d410000000000000000000000000000000000000000000000000000",
-	What:             "lump",
-	Data:             "10000000000000000000000000000000000000000000000000",
-	TransactionIndex: EthCatFileLumpLog.TxIndex,
-	LogIndex:         EthCatFileLumpLog.Index,
-	Raw:              rawCatFileLumpLog,
+var CatFileLumpModel = shared.InsertionModel{
+	TableName: "cat_file_chop_lump",
+	OrderedColumns: []string{
+		"header_id", "ilk_id", "what", "data", "tx_idx", "log_idx", "raw_log",
+	},
+	ColumnToValue: map[string]interface{}{
+		"what":    "lump",
+		"data":    "10000000000000000000000000000000000000000000000000",
+		"tx_idx":  EthCatFileLumpLog.TxIndex,
+		"log_idx": EthCatFileLumpLog.Index,
+		"raw_log": rawCatFileLumpLog,
+	},
+	ForeignKeyToValue: map[string]string{
+		"ilk_id": "0x434f4c342d410000000000000000000000000000000000000000000000000000",
+	},
 }
 
 var EthCatFileFlipLog = types.Log{

@@ -21,6 +21,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/vulcanize/mcd_transformers/transformers/shared"
 	"github.com/vulcanize/vulcanizedb/pkg/fakes"
 
 	"github.com/vulcanize/mcd_transformers/transformers/shared/constants"
@@ -43,4 +44,18 @@ var EthJugInitLog = types.Log{
 	Removed:     false,
 }
 
-var RawJugInitLog, _ = json.Marshal(EthJugInitLog)
+var rawJugInitLog, _ = json.Marshal(EthJugInitLog)
+var JugInitModel = shared.InsertionModel{
+	TableName: "jug_init",
+	OrderedColumns: []string{
+		"header_id", "ilk_id", "log_idx", "tx_idx", "raw_log",
+	},
+	ColumnToValue: map[string]interface{}{
+		"log_idx": 11,
+		"tx_idx":  10,
+		"raw_log": rawJugInitLog,
+	},
+	ForeignKeyToValue: map[string]string{
+		"ilk_id": "0x434f4c352d410000000000000000000000000000000000000000000000000000",
+	},
+}
