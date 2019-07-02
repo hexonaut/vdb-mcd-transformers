@@ -21,23 +21,22 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/vulcanize/mcd_transformers/transformers/shared"
 
 	"github.com/vulcanize/mcd_transformers/transformers/events/vat_flux"
 	"github.com/vulcanize/mcd_transformers/transformers/test_data"
 )
 
 var _ = Describe("VatFlux converter", func() {
+	var converter = vat_flux.VatFluxConverter{}
 	It("Converts logs to models", func() {
-		converter := vat_flux.VatFluxConverter{}
 		models, err := converter.ToModels([]types.Log{test_data.EthVatFluxLog})
 
 		Expect(err).NotTo(HaveOccurred())
-		Expect(len(models)).To(Equal(1))
-		Expect(models[0]).To(Equal(test_data.VatFluxModel))
+		Expect(models).To(Equal([]shared.InsertionModel{test_data.VatFluxModel}))
 	})
 
 	It("Returns an error there are missing topics", func() {
-		converter := vat_flux.VatFluxConverter{}
 		badLog := types.Log{
 			Topics: []common.Hash{
 				common.HexToHash("0x"),
@@ -46,7 +45,6 @@ var _ = Describe("VatFlux converter", func() {
 			},
 		}
 		_, err := converter.ToModels([]types.Log{badLog})
-
 		Expect(err).To(HaveOccurred())
 	})
 })

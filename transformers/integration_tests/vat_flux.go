@@ -63,7 +63,7 @@ var _ = XDescribe("VatFlux LogNoteTransformer", func() {
 			header)
 		Expect(err).NotTo(HaveOccurred())
 
-		initializer := shared.LogNoteTransformer{
+		initializer := shared.LogNoteSharedRepoTransformer{
 			Config:     vatFluxConfig,
 			Converter:  &vat_flux.VatFluxConverter{},
 			Repository: &vat_flux.VatFluxRepository{},
@@ -73,7 +73,7 @@ var _ = XDescribe("VatFlux LogNoteTransformer", func() {
 		err = transformer.Execute(logs, header)
 		Expect(err).NotTo(HaveOccurred())
 
-		var dbResult []vat_flux.VatFluxModel
+		var dbResult []vatFluxModel
 		err = db.Select(&dbResult, `SELECT ilk_id, src, dst, rad from maker.vat_flux`)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -87,3 +87,13 @@ var _ = XDescribe("VatFlux LogNoteTransformer", func() {
 		Expect(dbResult[0].TransactionIndex).To(Equal(uint(0)))
 	})
 })
+
+type vatFluxModel struct {
+	Ilk              string `db:"ilk_id"`
+	Src              string
+	Dst              string
+	Wad              string
+	TransactionIndex uint   `db:"tx_idx"`
+	LogIndex         uint   `db:"log_idx"`
+	Raw              []byte `db:"raw_log"`
+}

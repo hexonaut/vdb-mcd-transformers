@@ -28,8 +28,8 @@ import (
 
 type VatFluxConverter struct{}
 
-func (VatFluxConverter) ToModels(ethLogs []types.Log) ([]interface{}, error) {
-	var models []interface{}
+func (VatFluxConverter) ToModels(ethLogs []types.Log) ([]shared.InsertionModel, error) {
+	var models []shared.InsertionModel
 	for _, ethLog := range ethLogs {
 		err := verifyLog(ethLog)
 		if err != nil {
@@ -50,16 +50,23 @@ func (VatFluxConverter) ToModels(ethLogs []types.Log) ([]interface{}, error) {
 			return nil, jsonErr
 		}
 
-		model := VatFluxModel{
-			Ilk:              ilk,
-			Src:              src,
-			Dst:              dst,
-			Wad:              wad.String(),
-			TransactionIndex: ethLog.TxIndex,
-			LogIndex:         ethLog.Index,
-			Raw:              rawLogJson,
+		model := shared.InsertionModel{
+			TableName:         "vat_flux",
+			OrderedColumns:    []string{
+				"header_id", "ilk_id", "src", "dst", "wad", "tx_idx", "log_idx", "raw_log",
+			},
+			ColumnToValue: map[string]interface{}{
+				"src": src,
+				"dst": dst,
+				"wad": wad.String(),
+				"tx_idx": ethLog.TxIndex,
+				"log_idx": ethLog.Index,
+				"raw_log": rawLogJson,
+			},
+			ForeignKeyToValue: map[string]string{
+				"ilk_id": ilk,
+			},
 		}
-
 		models = append(models, model)
 	}
 
