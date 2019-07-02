@@ -18,13 +18,13 @@ package test_data
 
 import (
 	"encoding/json"
+	"github.com/vulcanize/mcd_transformers/transformers/shared"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/vulcanize/vulcanizedb/pkg/fakes"
 
-	"github.com/vulcanize/mcd_transformers/transformers/events/deal"
 	"github.com/vulcanize/mcd_transformers/transformers/shared/constants"
 )
 
@@ -46,10 +46,17 @@ var DealLogNote = types.Log{
 }
 var dealRawJson, _ = json.Marshal(DealLogNote)
 
-var DealModel = deal.DealModel{
-	BidId:            "123",
-	ContractAddress:  constants.OldFlipperContractAddress(),
-	LogIndex:         DealLogNote.Index,
-	TransactionIndex: DealLogNote.TxIndex,
-	Raw:              dealRawJson,
+var DealModel = shared.InsertionModel{
+	TableName: "deal",
+	OrderedColumns: []string{
+		"header_id", "bid_id", "contract_address", "log_idx", "tx_idx", "raw_log",
+	},
+	ColumnToValue: map[string]interface{}{
+		"bid_id":           "123",
+		"contract_address": constants.OldFlipperContractAddress(),
+		"log_idx":          DealLogNote.Index,
+		"tx_idx":           DealLogNote.TxIndex,
+		"raw_log":          dealRawJson,
+	},
+	ForeignKeyToValue: map[string]string{},
 }

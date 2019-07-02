@@ -36,7 +36,7 @@ var _ = XDescribe("Deal transformer", func() {
 		db          *postgres.DB
 		blockChain  core.BlockChain
 		dealConfig  transformer.EventTransformerConfig
-		initializer shared.LogNoteTransformer
+		initializer shared.LogNoteSharedRepoTransformer
 		logFetcher  fetcher.ILogFetcher
 		addresses   []common.Address
 		topics      []common.Hash
@@ -60,7 +60,7 @@ var _ = XDescribe("Deal transformer", func() {
 			Topic: mcdConstants.DealSignature(),
 		}
 
-		initializer = shared.LogNoteTransformer{
+		initializer = shared.LogNoteSharedRepoTransformer{
 			Config:     dealConfig,
 			Converter:  &deal.DealConverter{},
 			Repository: &deal.DealRepository{},
