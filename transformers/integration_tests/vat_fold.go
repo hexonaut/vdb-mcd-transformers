@@ -70,7 +70,7 @@ var _ = XDescribe("VatFold Transformer", func() {
 			header)
 		Expect(err).NotTo(HaveOccurred())
 
-		transformer := shared.LogNoteTransformer{
+		transformer := shared.LogNoteSharedRepoTransformer{
 			Config:     vatFoldConfig,
 			Converter:  &vat_fold.VatFoldConverter{},
 			Repository: &vat_fold.VatFoldRepository{},
@@ -79,7 +79,7 @@ var _ = XDescribe("VatFold Transformer", func() {
 		err = transformer.Execute(logs, header)
 		Expect(err).NotTo(HaveOccurred())
 
-		var dbResults []vat_fold.VatFoldModel
+		var dbResults []vatFoldModel
 		err = db.Select(&dbResults, `SELECT urn_id, rate from maker.vat_fold`)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -92,3 +92,12 @@ var _ = XDescribe("VatFold Transformer", func() {
 		Expect(dbResult.Rate).To(Equal("479620379870463446010918"))
 	})
 })
+
+type vatFoldModel struct {
+	Ilk              string
+	Urn              string `db:"urn_id"`
+	Rate             string
+	LogIndex         uint   `db:"log_idx"`
+	TransactionIndex uint   `db:"tx_idx"`
+	Raw              []byte `db:"raw_log"`
+}

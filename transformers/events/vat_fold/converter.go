@@ -28,8 +28,8 @@ import (
 
 type VatFoldConverter struct{}
 
-func (VatFoldConverter) ToModels(ethLogs []types.Log) ([]interface{}, error) {
-	var models []interface{}
+func (VatFoldConverter) ToModels(ethLogs []types.Log) ([]shared.InsertionModel, error) {
+	var models []shared.InsertionModel
 	for _, ethLog := range ethLogs {
 		err := verifyLog(ethLog)
 		if err != nil {
@@ -44,15 +44,22 @@ func (VatFoldConverter) ToModels(ethLogs []types.Log) ([]interface{}, error) {
 			return models, err
 		}
 
-		model := VatFoldModel{
-			Ilk:              ilk,
-			Urn:              urn,
-			Rate:             rate.String(),
-			LogIndex:         ethLog.Index,
-			TransactionIndex: ethLog.TxIndex,
-			Raw:              raw,
+		model := shared.InsertionModel{
+			TableName:         "vat_fold",
+			OrderedColumns:    []string{
+				"header_id", "urn_id", "rate", "log_idx", "tx_idx", "raw_log",
+			},
+			ColumnToValue: map[string]interface{}{
+				"rate": rate.String(),
+				"log_idx": ethLog.Index,
+				"tx_idx": ethLog.TxIndex,
+				"raw_log": raw,
+			},
+			ForeignKeyToValue: map[string]string{
+				"ilk_id": ilk,
+				"urn_id": urn,
+			},
 		}
-
 		models = append(models, model)
 	}
 	return models, nil
