@@ -71,8 +71,8 @@ var _ = Describe("Ilk File Events Query", func() {
 		Expect(flipErr).NotTo(HaveOccurred())
 
 		jugFile := test_data.JugFileIlkModel
-		jugFile.Ilk = test_helpers.FakeIlk.Hex
-		jugErr := jugFileRepo.Create(headerOneId, []interface{}{jugFile})
+		jugFile.ForeignKeyToValue["ilk_id"] = test_helpers.FakeIlk.Hex
+		jugErr := jugFileRepo.Create(headerOneId, []shared.InsertionModel{jugFile})
 		Expect(jugErr).NotTo(HaveOccurred())
 
 		spotFileMat := test_data.SpotFileMatModel
@@ -107,8 +107,8 @@ var _ = Describe("Ilk File Events Query", func() {
 			},
 			test_helpers.IlkFileEvent{
 				IlkIdentifier: relevantIlkIdentifier,
-				What:          jugFile.What,
-				Data:          jugFile.Data,
+				What:          jugFile.ColumnToValue["what"].(string),
+				Data:          jugFile.ColumnToValue["data"].(string),
 			},
 			test_helpers.IlkFileEvent{
 				IlkIdentifier: relevantIlkIdentifier,

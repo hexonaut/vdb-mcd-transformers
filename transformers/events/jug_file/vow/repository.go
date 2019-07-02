@@ -17,9 +17,7 @@
 package vow
 
 import (
-	"fmt"
-
-	log "github.com/sirupsen/logrus"
+	"github.com/vulcanize/mcd_transformers/transformers/shared"
 
 	repo "github.com/vulcanize/vulcanizedb/libraries/shared/repository"
 	"github.com/vulcanize/vulcanizedb/pkg/datastore/postgres"
@@ -31,47 +29,8 @@ type JugFileVowRepository struct {
 	db *postgres.DB
 }
 
-func (repository JugFileVowRepository) Create(headerID int64, models []interface{}) error {
-	tx, dBaseErr := repository.db.Beginx()
-	if dBaseErr != nil {
-		return dBaseErr
-	}
-
-	for _, model := range models {
-		vow, ok := model.(JugFileVowModel)
-		if !ok {
-			rollbackErr := tx.Rollback()
-			if rollbackErr != nil {
-				log.Error("failed to rollback ", rollbackErr)
-			}
-			return fmt.Errorf("model of type %T, not %T", model, JugFileVowModel{})
-		}
-
-		_, execErr := tx.Exec(
-			`INSERT into maker.jug_file_vow (header_id, what, data, log_idx, tx_idx, raw_log)
-        			VALUES($1, $2, $3, $4, $5, $6)
-					ON CONFLICT (header_id, tx_idx, log_idx) DO UPDATE SET what = $2, data = $3, raw_log = $6;`,
-			headerID, vow.What, vow.Data, vow.LogIndex, vow.TransactionIndex, vow.Raw,
-		)
-		if execErr != nil {
-			rollbackErr := tx.Rollback()
-			if rollbackErr != nil {
-				log.Error("failed to rollback ", rollbackErr)
-			}
-			return execErr
-		}
-	}
-
-	checkHeaderErr := repo.MarkHeaderCheckedInTransaction(headerID, tx, constants.JugFileVowChecked)
-	if checkHeaderErr != nil {
-		rollbackErr := tx.Rollback()
-		if rollbackErr != nil {
-			log.Error("failed to rollback ", rollbackErr)
-		}
-		return checkHeaderErr
-	}
-
-	return tx.Commit()
+func (repository JugFileVowRepository) Create(headerID int64, models []shared.InsertionModel) error {
+	return shared.Create(headerID, models, repository.db)
 }
 
 func (repository JugFileVowRepository) MarkHeaderChecked(headerID int64) error {

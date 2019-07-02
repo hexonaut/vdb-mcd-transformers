@@ -26,7 +26,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/vulcanize/vulcanizedb/pkg/fakes"
 
-	"github.com/vulcanize/mcd_transformers/transformers/events/jug_file/vow"
 	"github.com/vulcanize/mcd_transformers/transformers/shared/constants"
 )
 
@@ -49,15 +48,15 @@ var EthJugFileIlkLog = types.Log{
 
 var rawJugFileIlkLog, _ = json.Marshal(EthJugFileIlkLog)
 var JugFileIlkModel = shared.InsertionModel{
-	TableName:         "jug_file_ilk",
-	OrderedColumns:    []string{
+	TableName: "jug_file_ilk",
+	OrderedColumns: []string{
 		"header_id", "ilk_id", "what", "data", "log_idx", "tx_idx", "raw_log",
 	},
 	ColumnToValue: map[string]interface{}{
-		"what": "duty",
-		"data": "1000000000937303470807876289",
+		"what":    "duty",
+		"data":    "1000000000937303470807876289",
 		"log_idx": EthJugFileIlkLog.Index,
-		"tx_idx": EthJugFileIlkLog.TxIndex,
+		"tx_idx":  EthJugFileIlkLog.TxIndex,
 		"raw_log": rawJugFileIlkLog,
 	},
 	ForeignKeyToValue: map[string]string{
@@ -116,10 +115,17 @@ var EthJugFileVowLog = types.Log{
 }
 
 var rawJugFileVowLog, _ = json.Marshal(EthJugFileVowLog)
-var JugFileVowModel = vow.JugFileVowModel{
-	What:             "vow",
-	Data:             "0x17560834075DA3Db54f737db74377E799c865821",
-	LogIndex:         EthJugFileVowLog.Index,
-	TransactionIndex: EthJugFileVowLog.TxIndex,
-	Raw:              rawJugFileVowLog,
+var JugFileVowModel = shared.InsertionModel{
+	TableName: "jug_file_vow",
+	OrderedColumns: []string{
+		"header_id", "what", "data", "log_idx", "tx_idx", "raw_log",
+	},
+	ColumnToValue: map[string]interface{}{
+		"what":    "vow",
+		"data":    "0x17560834075DA3Db54f737db74377E799c865821",
+		"log_idx": EthJugFileVowLog.Index,
+		"tx_idx":  EthJugFileVowLog.TxIndex,
+		"raw_log": rawJugFileVowLog,
+	},
+	ForeignKeyToValue: map[string]string{},
 }

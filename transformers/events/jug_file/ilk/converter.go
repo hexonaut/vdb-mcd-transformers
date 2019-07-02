@@ -50,15 +50,15 @@ func (JugFileIlkConverter) ToModels(ethLogs []types.Log) ([]shared.InsertionMode
 		}
 
 		model := shared.InsertionModel{
-			TableName:         "jug_file_ilk",
-			OrderedColumns:    []string{
+			TableName: "jug_file_ilk",
+			OrderedColumns: []string{
 				"header_id", "ilk_id", "what", "data", "log_idx", "tx_idx", "raw_log",
 			},
 			ColumnToValue: map[string]interface{}{
-				"what": what,
-				"data": data.String(),
+				"what":    what,
+				"data":    data.String(),
 				"log_idx": ethLog.Index,
-				"tx_idx": ethLog.TxIndex,
+				"tx_idx":  ethLog.TxIndex,
 				"raw_log": raw,
 			},
 			ForeignKeyToValue: map[string]string{

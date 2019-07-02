@@ -61,7 +61,7 @@ var _ = Describe("Jug File Vow LogNoteTransformer", func() {
 		header, err := persistHeader(db, blockNumber, blockChain)
 		Expect(err).NotTo(HaveOccurred())
 
-		initializer := shared.LogNoteTransformer{
+		initializer := shared.LogNoteSharedRepoTransformer{
 			Config:     jugFileVowConfig,
 			Converter:  &vow.JugFileVowConverter{},
 			Repository: &vow.JugFileVowRepository{},
@@ -78,7 +78,7 @@ var _ = Describe("Jug File Vow LogNoteTransformer", func() {
 		err = tr.Execute(logs, header)
 		Expect(err).NotTo(HaveOccurred())
 
-		var dbResult []vow.JugFileVowModel
+		var dbResult []jugFileVowModel
 		err = db.Select(&dbResult, `SELECT what, data FROM maker.jug_file_vow`)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -95,7 +95,7 @@ var _ = Describe("Jug File Vow LogNoteTransformer", func() {
 		header, err := persistHeader(db, blockNumber, blockChain)
 		Expect(err).NotTo(HaveOccurred())
 
-		initializer := shared.LogNoteTransformer{
+		initializer := shared.LogNoteSharedRepoTransformer{
 			Config:     jugFileVowConfig,
 			Converter:  &vow.JugFileVowConverter{},
 			Repository: &vow.JugFileVowRepository{},
@@ -126,3 +126,11 @@ var _ = Describe("Jug File Vow LogNoteTransformer", func() {
 		Expect(jugFileVowChecked[0]).To(Equal(2))
 	})
 })
+
+type jugFileVowModel struct {
+	What             string
+	Data             string
+	LogIndex         uint   `db:"log_idx"`
+	TransactionIndex uint   `db:"tx_idx"`
+	Raw              []byte `db:"raw_log"`
+}

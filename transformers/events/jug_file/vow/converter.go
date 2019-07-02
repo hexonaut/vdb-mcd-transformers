@@ -28,8 +28,8 @@ import (
 
 type JugFileVowConverter struct{}
 
-func (JugFileVowConverter) ToModels(ethLogs []types.Log) ([]interface{}, error) {
-	var models []interface{}
+func (JugFileVowConverter) ToModels(ethLogs []types.Log) ([]shared.InsertionModel, error) {
+	var models []shared.InsertionModel
 	for _, ethLog := range ethLogs {
 		err := verifyLog(ethLog)
 		if err != nil {
@@ -43,12 +43,19 @@ func (JugFileVowConverter) ToModels(ethLogs []types.Log) ([]interface{}, error) 
 			return nil, err
 		}
 
-		model := JugFileVowModel{
-			What:             what,
-			Data:             data,
-			LogIndex:         ethLog.Index,
-			TransactionIndex: ethLog.TxIndex,
-			Raw:              raw,
+		model := shared.InsertionModel{
+			TableName: "jug_file_vow",
+			OrderedColumns: []string{
+				"header_id", "what", "data", "log_idx", "tx_idx", "raw_log",
+			},
+			ColumnToValue: map[string]interface{}{
+				"what":    what,
+				"data":    data,
+				"log_idx": ethLog.Index,
+				"tx_idx":  ethLog.TxIndex,
+				"raw_log": raw,
+			},
+			ForeignKeyToValue: map[string]string{},
 		}
 		models = append(models, model)
 	}
