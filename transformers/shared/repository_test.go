@@ -18,7 +18,6 @@ package shared
 
 import (
 	"encoding/json"
-	"fmt"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/vulcanize/mcd_transformers/test_config"
@@ -27,7 +26,7 @@ import (
 	"github.com/vulcanize/vulcanizedb/pkg/fakes"
 )
 
-var _ = Describe("Create function ...", func() {
+var _ = Describe("Create function", func() {
 	const createTestEventTableQuery = `CREATE TABLE maker.testEvent(
 		id        SERIAL PRIMARY KEY,
 		header_id INTEGER NOT NULL REFERENCES headers (id) ON DELETE CASCADE,
@@ -48,6 +47,7 @@ var _ = Describe("Create function ...", func() {
 		headerRepository repositories.HeaderRepository
 		testModel        InsertionModel
 		db               *postgres.DB
+		fakeLog, _       = json.Marshal("fake log")
 	)
 
 	BeforeEach(func() {
@@ -57,7 +57,6 @@ var _ = Describe("Create function ...", func() {
 		_, _ = db.Exec(addCheckedColumnQuery)
 		headerRepository = repositories.NewHeaderRepository(db)
 
-		fakeLog, _ := json.Marshal("fake log")
 		testModel = InsertionModel{
 			TableName:      "testEvent",
 			OrderedColumns: []string{"header_id", "log_idx", "tx_idx", "raw_log", "ilk_id", "urn_id", "variable1"},
@@ -88,7 +87,6 @@ var _ = Describe("Create function ...", func() {
 		Expect(len(modelToQuery)).To(Equal(1))
 	})
 
-	// TODO test repository with random table, columns, and data
 	It("persists a model to postgres", func() {
 		header := fakes.GetFakeHeader(1)
 		headerID, headerErr := headerRepository.CreateOrUpdateHeader(header)
@@ -98,16 +96,109 @@ var _ = Describe("Create function ...", func() {
 		Expect(createErr).NotTo(HaveOccurred())
 
 		var res TestEvent
-		dbErr := db.Get(&res, `SELECT header_id, log_idx, tx_idx, raw_log, ilk_id, urn_id, variable1
+		dbErr := db.Get(&res, `SELECT log_idx, tx_idx, raw_log, variable1
             FROM maker.testEvent;`)
 		Expect(dbErr).NotTo(HaveOccurred())
-		fmt.Println(res)
+
+		Expect(res.LogIdx).To(Equal(testModel.ColumnToValue["log_idx"]))
+		Expect(res.TxIdx).To(Equal(testModel.ColumnToValue["tx_idx"]))
+		Expect(res.Variable1).To(Equal(testModel.ColumnToValue["variable1"]))
 	})
 
-	// TODO persist several models
-	// TODO test error handling
-	// TODO test upsert functionality of generated query
-	// TODO test markHeaderChecked
+	Describe("returns errors", func() {
+		It("for empty model slice", func() {
+			err := Create(0, []InsertionModel{}, db)
+			Expect(err).To(MatchError("repository got empty model slice"))
+		})
+
+		It("for unknown foreign keys", func() {
+			brokenModel := InsertionModel{
+				TableName:      "testEvent",
+				OrderedColumns: nil,
+				ColumnToValue:  nil,
+				ForeignKeyToValue: map[string]string{
+					"unknownFK": "value",
+				},
+			}
+			err := Create(0, []InsertionModel{brokenModel}, db)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).Should(ContainSubstring("repository got unrecognised FK"))
+			Expect(err.Error()).Should(ContainSubstring("error gettings FK ids"))
+		})
+
+		It("for failed SQL inserts", func() {
+			brokenModel := InsertionModel{
+				TableName: "testEvent",
+				// Wrong name of last column compared to DB, will generate incorrect query
+				OrderedColumns: []string{"header_id", "log_idx", "tx_idx", "raw_log", "ilk_id", "urn_id", "variable2"},
+				ColumnToValue: map[string]interface{}{
+					"log_idx":   "1",
+					"tx_idx":    "2",
+					"raw_log":   fakeLog,
+					"variable1": "value1",
+				},
+				ForeignKeyToValue: map[string]string{
+					"ilk_id": hexIlk,
+					"urn_id": "0x12345",
+				},
+			}
+
+			// Remove cached queries, or we won't generate a new (incorrect) one
+			delete(modelToQuery, "testEvent")
+			header := fakes.GetFakeHeader(1)
+			headerID, headerErr := headerRepository.CreateOrUpdateHeader(header)
+			Expect(headerErr).NotTo(HaveOccurred())
+
+			createErr := Create(headerID, []InsertionModel{brokenModel}, db)
+			Expect(createErr).To(HaveOccurred())
+			// Remove incorrect query, so other tests won't get it
+			delete(modelToQuery, "testEvent")
+		})
+	})
+
+	It("upserts queries with conflicting source", func() {
+		header := fakes.GetFakeHeader(1)
+		headerID, headerErr := headerRepository.CreateOrUpdateHeader(header)
+		Expect(headerErr).NotTo(HaveOccurred())
+
+		conflictingModel := InsertionModel{
+			TableName:      "testEvent",
+			OrderedColumns: []string{"header_id", "log_idx", "tx_idx", "raw_log", "ilk_id", "urn_id", "variable1"},
+			ColumnToValue: map[string]interface{}{
+				"log_idx":   "1",
+				"tx_idx":    "2",
+				"raw_log":   fakeLog,
+				"variable1": "conflictingValue",
+			},
+			ForeignKeyToValue: map[string]string{
+				"ilk_id": hexIlk,
+				"urn_id": "0x12345",
+			},
+		}
+
+		createErr := Create(headerID, []InsertionModel{testModel, conflictingModel}, db)
+		Expect(createErr).NotTo(HaveOccurred())
+
+		var res TestEvent
+		dbErr := db.Get(&res, `SELECT log_idx, tx_idx, raw_log, variable1
+            FROM maker.testEvent;`)
+		Expect(dbErr).NotTo(HaveOccurred())
+		Expect(res.Variable1).To(Equal(conflictingModel.ColumnToValue["variable1"]))
+	})
+
+	It("marks headers checked", func() {
+		header := fakes.GetFakeHeader(1)
+		headerID, headerErr := headerRepository.CreateOrUpdateHeader(header)
+		Expect(headerErr).NotTo(HaveOccurred())
+
+		createErr := Create(headerID, []InsertionModel{testModel}, db)
+		Expect(createErr).NotTo(HaveOccurred())
+
+		var checked int
+		dbErr := db.Get(&checked, `SELECT testevent_checked FROM public.checked_headers;`)
+		Expect(dbErr).NotTo(HaveOccurred())
+		Expect(checked).To(Equal(1))
+	})
 
 	It("generates correct queries", func() {
 		actualQuery := generateInsertionQuery(testModel)
@@ -137,11 +228,8 @@ var _ = Describe("Create function ...", func() {
 })
 
 type TestEvent struct {
-	HeaderId  string `db:"header_id"`
 	LogIdx    string `db:"log_idx"`
 	TxIdx     string `db:"tx_idx"`
 	RawLog    string `db:"raw_log"`
-	IlkId     string `db:"ilk_id"`
-	UrnId     string `db:"urn_id"`
 	Variable1 string
 }
