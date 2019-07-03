@@ -35,7 +35,7 @@ var _ = Describe("VowFile LogNoteTransforer", func() {
 	var (
 		db          *postgres.DB
 		blockChain  core.BlockChain
-		initializer shared.LogNoteTransformer
+		initializer shared.LogNoteSharedRepoTransformer
 		addresses   []common.Address
 		topics      []common.Hash
 	)
@@ -57,7 +57,7 @@ var _ = Describe("VowFile LogNoteTransforer", func() {
 		addresses = transformer.HexStringsToAddresses(vowFileConfig.ContractAddresses)
 		topics = []common.Hash{common.HexToHash(vowFileConfig.Topic)}
 
-		initializer = shared.LogNoteTransformer{
+		initializer = shared.LogNoteSharedRepoTransformer{
 			Config:     vowFileConfig,
 			Converter:  vow_file.VowFileConverter{},
 			Repository: &vow_file.VowFileRepository{},
@@ -80,7 +80,7 @@ var _ = Describe("VowFile LogNoteTransforer", func() {
 		err = tr.Execute(logs, header)
 		Expect(err).NotTo(HaveOccurred())
 
-		var dbResult []vow_file.VowFileModel
+		var dbResult []vowFileModel
 		err = db.Select(&dbResult, `SELECT what, data from maker.vow_file`)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -89,3 +89,11 @@ var _ = Describe("VowFile LogNoteTransforer", func() {
 		Expect(dbResult[0].Data).To(Equal("100000000000000000000000000000000000000000000"))
 	})
 })
+
+type vowFileModel struct {
+	What             string
+	Data             string
+	LogIndex         uint   `db:"log_idx"`
+	TransactionIndex uint   `db:"tx_idx"`
+	Raw              []byte `db:"raw_log"`
+}

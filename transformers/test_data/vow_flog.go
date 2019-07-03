@@ -21,7 +21,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/vulcanize/mcd_transformers/transformers/events/vow_flog"
+	"github.com/vulcanize/mcd_transformers/transformers/shared"
 	"github.com/vulcanize/mcd_transformers/transformers/shared/constants"
 	"github.com/vulcanize/vulcanizedb/pkg/fakes"
 )
@@ -44,9 +44,16 @@ var EthVowFlogLog = types.Log{
 }
 
 var rawVowFlogLog, _ = json.Marshal(EthVowFlogLog)
-var VowFlogModel = vow_flog.VowFlogModel{
-	Era:              "1337",
-	LogIndex:         EthVowFlogLog.Index,
-	TransactionIndex: EthVowFlogLog.TxIndex,
-	Raw:              rawVowFlogLog,
+var VowFlogModel = shared.InsertionModel{
+	TableName: "vow_flog",
+	OrderedColumns: []string{
+		"header_id", "era", "log_idx", "tx_idx", "raw_log",
+	},
+	ColumnToValue: map[string]interface{}{
+		"era":     "1337",
+		"log_idx": EthVowFlogLog.Index,
+		"tx_idx":  EthVowFlogLog.TxIndex,
+		"raw_log": rawVowFlogLog,
+	},
+	ForeignKeyToValue: map[string]string{},
 }

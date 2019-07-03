@@ -28,8 +28,8 @@ import (
 
 type VatSlipConverter struct{}
 
-func (VatSlipConverter) ToModels(ethLogs []types.Log) ([]interface{}, error) {
-	var models []interface{}
+func (VatSlipConverter) ToModels(ethLogs []types.Log) ([]shared.InsertionModel, error) {
+	var models []shared.InsertionModel
 	for _, ethLog := range ethLogs {
 		err := verifyLog(ethLog)
 		if err != nil {
@@ -43,13 +43,21 @@ func (VatSlipConverter) ToModels(ethLogs []types.Log) ([]interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
-		model := VatSlipModel{
-			Ilk:              ilk,
-			Usr:              usr,
-			Wad:              wad.String(),
-			TransactionIndex: ethLog.TxIndex,
-			LogIndex:         ethLog.Index,
-			Raw:              raw,
+		model := shared.InsertionModel{
+			TableName: "vat_slip",
+			OrderedColumns: []string{
+				"header_id", "ilk_id", "usr", "wad", "tx_idx", "log_idx", "raw_log",
+			},
+			ColumnToValue: map[string]interface{}{
+				"usr":     usr,
+				"wad":     wad.String(),
+				"tx_idx":  ethLog.TxIndex,
+				"log_idx": ethLog.Index,
+				"raw_log": raw,
+			},
+			ForeignKeyToValue: map[string]string{
+				"ilk_id": ilk,
+			},
 		}
 		models = append(models, model)
 	}

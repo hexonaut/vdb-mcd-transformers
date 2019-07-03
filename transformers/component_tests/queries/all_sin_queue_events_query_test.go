@@ -1,6 +1,7 @@
 package queries
 
 import (
+	"github.com/vulcanize/mcd_transformers/transformers/shared"
 	"math/rand"
 	"strconv"
 
@@ -45,7 +46,7 @@ var _ = Describe("Sin queue events query", func() {
 			vowFessRepo := vow_fess.VowFessRepository{}
 			vowFessRepo.SetDB(db)
 			vowFessEvent := test_data.VowFessModel
-			err = vowFessRepo.Create(headerOneId, []interface{}{vowFessEvent})
+			err = vowFessRepo.Create(headerOneId, []shared.InsertionModel{vowFessEvent})
 			Expect(err).NotTo(HaveOccurred())
 
 			var actualEvents []test_helpers.SinQueueEvent
@@ -66,8 +67,8 @@ var _ = Describe("Sin queue events query", func() {
 			vowFlogRepo := vow_flog.VowFlogRepository{}
 			vowFlogRepo.SetDB(db)
 			vowFlogEvent := test_data.VowFlogModel
-			vowFlogEvent.Era = fakeEra
-			err = vowFlogRepo.Create(headerOneId, []interface{}{vowFlogEvent})
+			vowFlogEvent.ColumnToValue["era"] = fakeEra
+			err = vowFlogRepo.Create(headerOneId, []shared.InsertionModel{vowFlogEvent})
 			Expect(err).NotTo(HaveOccurred())
 
 			var actualEvents []test_helpers.SinQueueEvent
@@ -88,8 +89,8 @@ var _ = Describe("Sin queue events query", func() {
 			vowFlogRepo.SetDB(db)
 			fakeEra := strconv.Itoa(int(rand.Int31()))
 			vowFlogEvent := test_data.VowFlogModel
-			vowFlogEvent.Era = fakeEra
-			err = vowFlogRepo.Create(headerOneId, []interface{}{vowFlogEvent})
+			vowFlogEvent.ColumnToValue["era"] = fakeEra
+			err = vowFlogRepo.Create(headerOneId, []shared.InsertionModel{vowFlogEvent})
 			Expect(err).NotTo(HaveOccurred())
 
 			// New block
@@ -102,7 +103,7 @@ var _ = Describe("Sin queue events query", func() {
 			vowFessRepo := vow_fess.VowFessRepository{}
 			vowFessRepo.SetDB(db)
 			vowFessEvent := test_data.VowFessModel
-			err = vowFessRepo.Create(headerTwoId, []interface{}{vowFessEvent})
+			err = vowFessRepo.Create(headerTwoId, []shared.InsertionModel{vowFessEvent})
 			Expect(err).NotTo(HaveOccurred())
 
 			var actualEvents []test_helpers.SinQueueEvent
@@ -127,8 +128,8 @@ var _ = Describe("Sin queue events query", func() {
 			vowFlogRepo := vow_flog.VowFlogRepository{}
 			vowFlogRepo.SetDB(db)
 			vowFlogEvent := test_data.VowFlogModel
-			vowFlogEvent.Era = fakeEra
-			err = vowFlogRepo.Create(headerOneId, []interface{}{vowFlogEvent})
+			vowFlogEvent.ColumnToValue["era"] = fakeEra
+			err = vowFlogRepo.Create(headerOneId, []shared.InsertionModel{vowFlogEvent})
 			Expect(err).NotTo(HaveOccurred())
 
 			var actualEvents []test_helpers.SinQueueEvent

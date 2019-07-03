@@ -28,8 +28,8 @@ import (
 
 type VatSuckConverter struct{}
 
-func (VatSuckConverter) ToModels(ethLogs []types.Log) ([]interface{}, error) {
-	var models []interface{}
+func (VatSuckConverter) ToModels(ethLogs []types.Log) ([]shared.InsertionModel, error) {
+	var models []shared.InsertionModel
 	for _, ethLog := range ethLogs {
 		err := verifyLog(ethLog)
 		if err != nil {
@@ -45,15 +45,21 @@ func (VatSuckConverter) ToModels(ethLogs []types.Log) ([]interface{}, error) {
 			return nil, err
 		}
 
-		model := VatSuckModel{
-			U:                u,
-			V:                v,
-			Rad:              radInt.String(),
-			LogIndex:         ethLog.Index,
-			TransactionIndex: ethLog.TxIndex,
-			Raw:              rawLogJson,
+		model := shared.InsertionModel{
+			TableName: "vat_suck",
+			OrderedColumns: []string{
+				"header_id", "u", "v", "rad", "log_idx", "tx_idx", "raw_log",
+			},
+			ColumnToValue: map[string]interface{}{
+				"u":       u,
+				"v":       v,
+				"rad":     radInt.String(),
+				"log_idx": ethLog.Index,
+				"tx_idx":  ethLog.TxIndex,
+				"raw_log": rawLogJson,
+			},
+			ForeignKeyToValue: map[string]string{},
 		}
-
 		models = append(models, model)
 	}
 

@@ -26,20 +26,17 @@ import (
 )
 
 var _ = Describe("Vat slip converter", func() {
+	var converter = vat_slip.VatSlipConverter{}
 	It("returns err if log is missing topics", func() {
-		converter := vat_slip.VatSlipConverter{}
 		badLog := types.Log{
 			Data: []byte{1, 1, 1, 1, 1},
 		}
 
 		_, err := converter.ToModels([]types.Log{badLog})
-
 		Expect(err).To(HaveOccurred())
 	})
 
 	It("converts a log with positive wad to a model", func() {
-		converter := vat_slip.VatSlipConverter{}
-
 		models, err := converter.ToModels([]types.Log{test_data.EthVatSlipLogWithPositiveWad})
 
 		Expect(err).NotTo(HaveOccurred())
@@ -48,8 +45,6 @@ var _ = Describe("Vat slip converter", func() {
 	})
 
 	It("converts a log with a negative wad to a model", func() {
-		converter := vat_slip.VatSlipConverter{}
-
 		models, err := converter.ToModels([]types.Log{test_data.EthVatSlipLogWithNegativeWad})
 
 		Expect(err).NotTo(HaveOccurred())

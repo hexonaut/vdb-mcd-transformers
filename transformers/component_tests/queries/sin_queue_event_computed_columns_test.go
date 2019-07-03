@@ -2,6 +2,7 @@ package queries
 
 import (
 	"database/sql"
+	"github.com/vulcanize/mcd_transformers/transformers/shared"
 	"math/rand"
 	"strconv"
 
@@ -24,7 +25,7 @@ var _ = Describe("Sin queue event computed columns", func() {
 		fakeBlock        int
 		fakeEra          string
 		fakeHeader       core.Header
-		vowFessEvent     vow_fess.VowFessModel
+		vowFessEvent     shared.InsertionModel
 		vowFessRepo      vow_fess.VowFessRepository
 		headerId         int64
 		headerRepository repositories.HeaderRepository
@@ -46,7 +47,7 @@ var _ = Describe("Sin queue event computed columns", func() {
 		vowFessRepo = vow_fess.VowFessRepository{}
 		vowFessRepo.SetDB(db)
 		vowFessEvent = test_data.VowFessModel
-		insertErr := vowFessRepo.Create(headerId, []interface{}{vowFessEvent})
+		insertErr := vowFessRepo.Create(headerId, []shared.InsertionModel{vowFessEvent})
 		Expect(insertErr).NotTo(HaveOccurred())
 	})
 
@@ -59,7 +60,7 @@ var _ = Describe("Sin queue event computed columns", func() {
 		It("returns transaction for a sin_queue_event", func() {
 			expectedTx := Tx{
 				TransactionHash:  test_helpers.GetValidNullString("txHash"),
-				TransactionIndex: sql.NullInt64{Int64: int64(vowFessEvent.TransactionIndex), Valid: true},
+				TransactionIndex: sql.NullInt64{Int64: int64(vowFessEvent.ColumnToValue["tx_idx"].(uint)), Valid: true},
 				BlockHeight:      sql.NullInt64{Int64: int64(fakeBlock), Valid: true},
 				BlockHash:        test_helpers.GetValidNullString(fakeHeader.Hash),
 				TxFrom:           test_helpers.GetValidNullString("fromAddress"),
@@ -85,7 +86,7 @@ var _ = Describe("Sin queue event computed columns", func() {
 			wrongTx := Tx{
 				TransactionHash: test_helpers.GetValidNullString("wrongTxHash"),
 				TransactionIndex: sql.NullInt64{
-					Int64: int64(vowFessEvent.TransactionIndex) + 1,
+					Int64: int64(vowFessEvent.ColumnToValue["tx_idx"].(uint)) + 1,
 					Valid: true,
 				},
 				BlockHeight: sql.NullInt64{Int64: int64(fakeBlock), Valid: true},

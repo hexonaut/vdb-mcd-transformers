@@ -7,6 +7,7 @@ import (
 	"github.com/vulcanize/mcd_transformers/transformers/component_tests/queries/test_helpers"
 	"github.com/vulcanize/mcd_transformers/transformers/events/vow_fess"
 	"github.com/vulcanize/mcd_transformers/transformers/events/vow_flog"
+	"github.com/vulcanize/mcd_transformers/transformers/shared"
 	"github.com/vulcanize/mcd_transformers/transformers/shared/constants"
 	"github.com/vulcanize/mcd_transformers/transformers/storage/vow"
 	"github.com/vulcanize/mcd_transformers/transformers/test_data"
@@ -54,14 +55,14 @@ var _ = Describe("Queued sin computed columns", func() {
 			vowFessRepo := vow_fess.VowFessRepository{}
 			vowFessRepo.SetDB(db)
 			vowFessEvent := test_data.VowFessModel
-			insertVowFessErr := vowFessRepo.Create(headerID, []interface{}{vowFessEvent})
+			insertVowFessErr := vowFessRepo.Create(headerID, []shared.InsertionModel{vowFessEvent})
 			Expect(insertVowFessErr).NotTo(HaveOccurred())
 
 			vowFlogRepo := vow_flog.VowFlogRepository{}
 			vowFlogRepo.SetDB(db)
 			vowFlogEvent := test_data.VowFlogModel
-			vowFlogEvent.Era = fakeEra
-			insertVowFlogErr := vowFlogRepo.Create(headerID, []interface{}{vowFlogEvent})
+			vowFlogEvent.ColumnToValue["era"] = fakeEra
+			insertVowFlogErr := vowFlogRepo.Create(headerID, []shared.InsertionModel{vowFlogEvent})
 			Expect(insertVowFlogErr).NotTo(HaveOccurred())
 		})
 

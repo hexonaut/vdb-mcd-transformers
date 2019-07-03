@@ -54,6 +54,6 @@ var _ = Describe("Vow fess converter", func() {
 
 		Expect(err).NotTo(HaveOccurred())
 		Expect(len(models)).To(Equal(1))
-		Expect(models[0].(vow_fess.VowFessModel)).To(Equal(test_data.VowFessModel))
+		Expect(models[0]).To(Equal(test_data.VowFessModel))
 	})
 })

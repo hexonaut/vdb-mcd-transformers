@@ -3,6 +3,7 @@ package queries
 import (
 	"database/sql"
 	"github.com/vulcanize/mcd_transformers/transformers/component_tests/queries/test_helpers"
+	"github.com/vulcanize/mcd_transformers/transformers/shared"
 	"math/rand"
 	"strconv"
 	"time"
@@ -80,8 +81,8 @@ var _ = Describe("QueuedSin", func() {
 			vowFlogRepository := vow_flog.VowFlogRepository{}
 			vowFlogRepository.SetDB(db)
 			vowFlogEvent := test_data.VowFlogModel
-			vowFlogEvent.Era = fakeEra
-			insertVowFlogErr := vowFlogRepository.Create(headerID, []interface{}{vowFlogEvent})
+			vowFlogEvent.ColumnToValue["era"] = fakeEra
+			insertVowFlogErr := vowFlogRepository.Create(headerID, []shared.InsertionModel{vowFlogEvent})
 			Expect(insertVowFlogErr).NotTo(HaveOccurred())
 
 			var result QueuedSin

@@ -18,12 +18,12 @@ package test_data
 
 import (
 	"encoding/json"
+	"github.com/vulcanize/mcd_transformers/transformers/shared"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 
-	"github.com/vulcanize/mcd_transformers/transformers/events/vat_suck"
 	"github.com/vulcanize/mcd_transformers/transformers/shared/constants"
 )
 
@@ -45,11 +45,18 @@ var EthVatSuckLog = types.Log{
 }
 
 var rawVatSuckLog, _ = json.Marshal(EthVatSuckLog)
-var VatSuckModel = vat_suck.VatSuckModel{
-	U:                "0x07Fa9eF6609cA7921112231F8f195138ebbA2977",
-	V:                "0x7340e006f4135BA6970D43bf43d88DCAD4e7a8CA",
-	Rad:              "1000000000000000000000",
-	LogIndex:         EthVatSuckLog.Index,
-	TransactionIndex: EthVatSuckLog.TxIndex,
-	Raw:              rawVatSuckLog,
+var VatSuckModel = shared.InsertionModel{
+	TableName: "vat_suck",
+	OrderedColumns: []string{
+		"header_id", "u", "v", "rad", "log_idx", "tx_idx", "raw_log",
+	},
+	ColumnToValue: map[string]interface{}{
+		"u":       "0x07Fa9eF6609cA7921112231F8f195138ebbA2977",
+		"v":       "0x7340e006f4135BA6970D43bf43d88DCAD4e7a8CA",
+		"rad":     "1000000000000000000000",
+		"log_idx": EthVatSuckLog.Index,
+		"tx_idx":  EthVatSuckLog.TxIndex,
+		"raw_log": rawVatSuckLog,
+	},
+	ForeignKeyToValue: map[string]string{},
 }

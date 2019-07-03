@@ -28,25 +28,22 @@ import (
 )
 
 var _ = Describe("Vow file converter", func() {
+	var converter = vow_file.VowFileConverter{}
 	It("returns err if log missing topics", func() {
-		converter := vow_file.VowFileConverter{}
 		badLog := types.Log{
 			Topics: []common.Hash{{}},
 			Data:   []byte{1, 1, 1, 1, 1},
 		}
 
 		_, err := converter.ToModels([]types.Log{badLog})
-
 		Expect(err).To(HaveOccurred())
 	})
 
 	It("converts a log to a model", func() {
-		converter := vow_file.VowFileConverter{}
-
 		models, err := converter.ToModels([]types.Log{test_data.EthVowFileLog})
 
 		Expect(err).NotTo(HaveOccurred())
 		Expect(len(models)).To(Equal(1))
-		Expect(models[0].(vow_file.VowFileModel)).To(Equal(test_data.VowFileModel))
+		Expect(models[0]).To(Equal(test_data.VowFileModel))
 	})
 })

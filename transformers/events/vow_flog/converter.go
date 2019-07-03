@@ -19,6 +19,7 @@ package vow_flog
 import (
 	"encoding/json"
 	"errors"
+	"github.com/vulcanize/mcd_transformers/transformers/shared"
 
 	"github.com/ethereum/go-ethereum/core/types"
 
@@ -27,8 +28,8 @@ import (
 
 type VowFlogConverter struct{}
 
-func (VowFlogConverter) ToModels(ethLogs []types.Log) ([]interface{}, error) {
-	var models []interface{}
+func (VowFlogConverter) ToModels(ethLogs []types.Log) ([]shared.InsertionModel, error) {
+	var models []shared.InsertionModel
 	for _, ethLog := range ethLogs {
 		err := verifyLog(ethLog)
 		if err != nil {
@@ -41,11 +42,18 @@ func (VowFlogConverter) ToModels(ethLogs []types.Log) ([]interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
-		model := VowFlogModel{
-			Era:              era.String(),
-			LogIndex:         ethLog.Index,
-			TransactionIndex: ethLog.TxIndex,
-			Raw:              raw,
+		model := shared.InsertionModel{
+			TableName: "vow_flog",
+			OrderedColumns: []string{
+				"header_id", "era", "log_idx", "tx_idx", "raw_log",
+			},
+			ColumnToValue: map[string]interface{}{
+				"era":     era.String(),
+				"log_idx": ethLog.Index,
+				"tx_idx":  ethLog.TxIndex,
+				"raw_log": raw,
+			},
+			ForeignKeyToValue: map[string]string{},
 		}
 		models = append(models, model)
 	}

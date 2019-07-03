@@ -55,6 +55,6 @@ var _ = Describe("Vow flog converter", func() {
 
 		Expect(err).NotTo(HaveOccurred())
 		Expect(len(models)).To(Equal(1))
-		Expect(models[0].(vow_flog.VowFlogModel)).To(Equal(test_data.VowFlogModel))
+		Expect(models[0]).To(Equal(test_data.VowFlogModel))
 	})
 })

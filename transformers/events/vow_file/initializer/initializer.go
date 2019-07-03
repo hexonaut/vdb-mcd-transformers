@@ -22,7 +22,7 @@ import (
 	"github.com/vulcanize/vulcanizedb/libraries/shared/transformer"
 )
 
-var EventTransformerInitializer transformer.EventTransformerInitializer = shared.LogNoteTransformer{
+var EventTransformerInitializer transformer.EventTransformerInitializer = shared.LogNoteSharedRepoTransformer{
 	Config:     vow_file.GetVowFileConfig(),
 	Converter:  &vow_file.VowFileConverter{},
 	Repository: &vow_file.VowFileRepository{},
