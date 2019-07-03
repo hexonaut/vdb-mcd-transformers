@@ -18,13 +18,13 @@ package test_data
 
 import (
 	"encoding/json"
+	"github.com/vulcanize/mcd_transformers/transformers/shared"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/vulcanize/vulcanizedb/pkg/fakes"
 
-	"github.com/vulcanize/mcd_transformers/transformers/events/vat_init"
 	"github.com/vulcanize/mcd_transformers/transformers/shared/constants"
 )
 
@@ -46,9 +46,17 @@ var EthVatInitLog = types.Log{
 }
 
 var rawVatInitLog, _ = json.Marshal(EthVatInitLog)
-var VatInitModel = vat_init.VatInitModel{
-	Ilk:              "0x66616b6520696c6b000000000000000000000000000000000000000000000000",
-	LogIndex:         EthVatInitLog.Index,
-	TransactionIndex: EthVatInitLog.TxIndex,
-	Raw:              rawVatInitLog,
+var VatInitModel = shared.InsertionModel{
+	TableName: "vat_init",
+	OrderedColumns: []string{
+		"header_id", "ilk_id", "log_idx", "tx_idx", "raw_log",
+	},
+	ColumnToValue: map[string]interface{}{
+		"log_idx": EthVatInitLog.Index,
+		"tx_idx":  EthVatInitLog.TxIndex,
+		"raw_log": rawVatInitLog,
+	},
+	ForeignKeyToValue: map[string]string{
+		"ilk_id": "0x66616b6520696c6b000000000000000000000000000000000000000000000000",
+	},
 }

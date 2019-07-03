@@ -28,12 +28,12 @@ import (
 
 type VatMoveConverter struct{}
 
-func (VatMoveConverter) ToModels(ethLogs []types.Log) ([]interface{}, error) {
-	var models []interface{}
+func (VatMoveConverter) ToModels(ethLogs []types.Log) ([]shared.InsertionModel, error) {
+	var models []shared.InsertionModel
 	for _, ethLog := range ethLogs {
 		err := verifyLog(ethLog)
 		if err != nil {
-			return []interface{}{}, err
+			return []shared.InsertionModel{}, err
 		}
 
 		src := common.BytesToAddress(ethLog.Topics[1].Bytes()).String()
@@ -41,17 +41,25 @@ func (VatMoveConverter) ToModels(ethLogs []types.Log) ([]interface{}, error) {
 		rad := shared.ConvertUint256HexToBigInt(ethLog.Topics[3].Hex())
 		raw, err := json.Marshal(ethLog)
 		if err != nil {
-			return []interface{}{}, err
+			return []shared.InsertionModel{}, err
 		}
 
-		models = append(models, VatMoveModel{
-			Src:              src,
-			Dst:              dst,
-			Rad:              rad.String(),
-			LogIndex:         ethLog.Index,
-			TransactionIndex: ethLog.TxIndex,
-			Raw:              raw,
-		})
+		model := shared.InsertionModel{
+			TableName: "vat_move",
+			OrderedColumns: []string{
+				"header_id", "src", "dst", "rad", "log_idx", "tx_idx", "raw_log",
+			},
+			ColumnToValue: map[string]interface{}{
+				"src":     src,
+				"dst":     dst,
+				"rad":     rad.String(),
+				"log_idx": ethLog.Index,
+				"tx_idx":  ethLog.TxIndex,
+				"raw_log": raw,
+			},
+			ForeignKeyToValue: map[string]string{},
+		}
+		models = append(models, model)
 	}
 
 	return models, nil

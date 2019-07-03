@@ -62,7 +62,7 @@ var _ = Describe("VatInit LogNoteTransformer", func() {
 			header)
 		Expect(err).NotTo(HaveOccurred())
 
-		transformer := shared.LogNoteTransformer{
+		transformer := shared.LogNoteSharedRepoTransformer{
 			Config:     vatInitConfig,
 			Converter:  &vat_init.VatInitConverter{},
 			Repository: &vat_init.VatInitRepository{},
@@ -71,7 +71,7 @@ var _ = Describe("VatInit LogNoteTransformer", func() {
 		err = transformer.Execute(logs, header)
 		Expect(err).NotTo(HaveOccurred())
 
-		var dbResults []vat_init.VatInitModel
+		var dbResults []vatInitModel
 		err = db.Select(&dbResults, `SELECT ilk_id from maker.vat_init`)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -82,3 +82,10 @@ var _ = Describe("VatInit LogNoteTransformer", func() {
 		Expect(dbResult.Ilk).To(Equal(strconv.Itoa(ilkID)))
 	})
 })
+
+type vatInitModel struct {
+	Ilk              string `db:"ilk_id"`
+	LogIndex         uint   `db:"log_idx"`
+	TransactionIndex uint   `db:"tx_idx"`
+	Raw              []byte `db:"raw_log"`
+}

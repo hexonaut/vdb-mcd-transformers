@@ -60,7 +60,7 @@ var _ = Describe("VatMove LogNoteTransformer", func() {
 			header)
 		Expect(err).NotTo(HaveOccurred())
 
-		tr := shared.LogNoteTransformer{
+		tr := shared.LogNoteSharedRepoTransformer{
 			Config:     vatMoveConfig,
 			Converter:  &vat_move.VatMoveConverter{},
 			Repository: &vat_move.VatMoveRepository{},
@@ -69,7 +69,7 @@ var _ = Describe("VatMove LogNoteTransformer", func() {
 		err = tr.Execute(logs, header)
 		Expect(err).NotTo(HaveOccurred())
 
-		var dbResults []vat_move.VatMoveModel
+		var dbResults []vatMoveModel
 		err = db.Select(&dbResults, `SELECT src, dst, rad from maker.vat_move`)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -80,3 +80,12 @@ var _ = Describe("VatMove LogNoteTransformer", func() {
 		Expect(dbResult.Rad).To(Equal("500000000000000000000000000000000000000000000"))
 	})
 })
+
+type vatMoveModel struct {
+	Src              string
+	Dst              string
+	Rad              string
+	LogIndex         uint   `db:"log_idx"`
+	TransactionIndex uint   `db:"tx_idx"`
+	Raw              []byte `db:"raw_log"`
+}
