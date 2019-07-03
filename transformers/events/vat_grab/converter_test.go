@@ -23,7 +23,6 @@ var _ = Describe("Vat grab converter", func() {
 		}
 
 		_, err := converter.ToModels([]types.Log{badLog})
-
 		Expect(err).To(HaveOccurred())
 	})
 
@@ -33,7 +32,6 @@ var _ = Describe("Vat grab converter", func() {
 		}
 
 		_, err := converter.ToModels([]types.Log{badLog})
-
 		Expect(err).To(HaveOccurred())
 	})
 

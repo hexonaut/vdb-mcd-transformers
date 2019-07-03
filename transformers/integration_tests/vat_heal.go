@@ -61,7 +61,7 @@ var _ = XDescribe("VatHeal Transformer", func() {
 			header)
 		Expect(err).NotTo(HaveOccurred())
 
-		tr := shared.LogNoteTransformer{
+		tr := shared.LogNoteSharedRepoTransformer{
 			Config:     vatHealConfig,
 			Converter:  &vat_heal.VatHealConverter{},
 			Repository: &vat_heal.VatHealRepository{},
@@ -70,7 +70,7 @@ var _ = XDescribe("VatHeal Transformer", func() {
 		err = tr.Execute(logs, header)
 		Expect(err).NotTo(HaveOccurred())
 
-		var dbResults []vat_heal.VatHealModel
+		var dbResults []vatHealModel
 		err = db.Select(&dbResults, `SELECT urn, v, rad from maker.vat_heal`)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -79,3 +79,10 @@ var _ = XDescribe("VatHeal Transformer", func() {
 		Expect(dbResult.Rad).To(Equal("0"))
 	})
 })
+
+type vatHealModel struct {
+	Rad              string
+	LogIndex         uint   `db:"log_idx"`
+	TransactionIndex uint   `db:"tx_idx"`
+	Raw              []byte `db:"raw_log"`
+}

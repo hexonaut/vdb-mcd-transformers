@@ -26,8 +26,8 @@ import (
 
 type VatHealConverter struct{}
 
-func (VatHealConverter) ToModels(ethLogs []types.Log) ([]interface{}, error) {
-	var models []interface{}
+func (VatHealConverter) ToModels(ethLogs []types.Log) ([]shared.InsertionModel, error) {
+	var models []shared.InsertionModel
 	for _, ethLog := range ethLogs {
 		err := verifyLog(ethLog)
 		if err != nil {
@@ -41,13 +41,19 @@ func (VatHealConverter) ToModels(ethLogs []types.Log) ([]interface{}, error) {
 			return nil, err
 		}
 
-		model := VatHealModel{
-			Rad:              radInt.String(),
-			LogIndex:         ethLog.Index,
-			TransactionIndex: ethLog.TxIndex,
-			Raw:              rawLogJson,
+		model := shared.InsertionModel{
+			TableName: "vat_heal",
+			OrderedColumns: []string{
+				"header_id", "rad", "log_idx", "tx_idx", "raw_log",
+			},
+			ColumnToValue: map[string]interface{}{
+				"rad":     radInt.String(),
+				"log_idx": ethLog.Index,
+				"tx_idx":  ethLog.TxIndex,
+				"raw_log": rawLogJson,
+			},
+			ForeignKeyToValue: map[string]string{},
 		}
-
 		models = append(models, model)
 	}
 

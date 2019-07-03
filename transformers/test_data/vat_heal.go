@@ -18,12 +18,12 @@ package test_data
 
 import (
 	"encoding/json"
+	"github.com/vulcanize/mcd_transformers/transformers/shared"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 
-	"github.com/vulcanize/mcd_transformers/transformers/events/vat_heal"
 	"github.com/vulcanize/mcd_transformers/transformers/shared/constants"
 )
 
@@ -45,9 +45,16 @@ var EthVatHealLogWithPositiveRad = types.Log{
 }
 
 var rawVatHealLogWithPositiveRad, _ = json.Marshal(EthVatHealLogWithPositiveRad)
-var VatHealModelWithPositiveRad = vat_heal.VatHealModel{
-	Rad:              "10001",
-	LogIndex:         EthVatHealLogWithPositiveRad.Index,
-	TransactionIndex: EthVatHealLogWithPositiveRad.TxIndex,
-	Raw:              rawVatHealLogWithPositiveRad,
+var VatHealModelWithPositiveRad = shared.InsertionModel{
+	TableName: "vat_heal",
+	OrderedColumns: []string{
+		"header_id", "rad", "log_idx", "tx_idx", "raw_log",
+	},
+	ColumnToValue: map[string]interface{}{
+		"rad":     "10001",
+		"log_idx": EthVatHealLogWithPositiveRad.Index,
+		"tx_idx":  EthVatHealLogWithPositiveRad.TxIndex,
+		"raw_log": rawVatHealLogWithPositiveRad,
+	},
+	ForeignKeyToValue: map[string]string{},
 }
