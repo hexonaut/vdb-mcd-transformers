@@ -6,6 +6,7 @@ import (
 	"github.com/vulcanize/mcd_transformers/test_config"
 	"github.com/vulcanize/mcd_transformers/transformers/component_tests/queries/test_helpers"
 	"github.com/vulcanize/mcd_transformers/transformers/events/vat_frob"
+	"github.com/vulcanize/mcd_transformers/transformers/shared"
 	"github.com/vulcanize/mcd_transformers/transformers/test_data"
 	"github.com/vulcanize/vulcanizedb/pkg/datastore/postgres"
 	"github.com/vulcanize/vulcanizedb/pkg/datastore/postgres/repositories"
@@ -42,20 +43,20 @@ var _ = Describe("Frobs query", func() {
 			headerOneId, err := headerRepo.CreateOrUpdateHeader(headerOne)
 			Expect(err).NotTo(HaveOccurred())
 
-			frobBlockOne := test_data.VatFrobModelWithPositiveDart
-			frobBlockOne.Ilk = test_helpers.FakeIlk.Hex
-			frobBlockOne.Urn = fakeUrn
-			frobBlockOne.Dink = strconv.Itoa(rand.Int())
-			frobBlockOne.Dart = strconv.Itoa(rand.Int())
+			frobBlockOne := test_helpers.CopyModel(test_data.VatFrobModelWithPositiveDart)
+			frobBlockOne.ForeignKeyToValue["ilk_id"] = test_helpers.FakeIlk.Hex
+			frobBlockOne.ForeignKeyToValue["urn_id"] = fakeUrn
+			frobBlockOne.ColumnToValue["dink"] = strconv.Itoa(rand.Int())
+			frobBlockOne.ColumnToValue["dart"] = strconv.Itoa(rand.Int())
 
-			irrelevantFrob := test_data.VatFrobModelWithPositiveDart
-			irrelevantFrob.Ilk = test_helpers.AnotherFakeIlk.Hex
-			irrelevantFrob.Urn = fakeUrn
-			irrelevantFrob.Dink = strconv.Itoa(rand.Int())
-			irrelevantFrob.Dart = strconv.Itoa(rand.Int())
-			irrelevantFrob.TransactionIndex = frobBlockOne.TransactionIndex + 1
+			irrelevantFrob := test_helpers.CopyModel(test_data.VatFrobModelWithPositiveDart)
+			irrelevantFrob.ForeignKeyToValue["ilk_id"] = test_helpers.AnotherFakeIlk.Hex
+			irrelevantFrob.ForeignKeyToValue["urn_id"] = fakeUrn
+			irrelevantFrob.ColumnToValue["dink"] = strconv.Itoa(rand.Int())
+			irrelevantFrob.ColumnToValue["dart"] = strconv.Itoa(rand.Int())
+			irrelevantFrob.ColumnToValue["tx_idx"] = frobBlockOne.ColumnToValue["tx_idx"].(uint) + 1
 
-			err = frobRepo.Create(headerOneId, []interface{}{frobBlockOne, irrelevantFrob})
+			err = frobRepo.Create(headerOneId, []shared.InsertionModel{frobBlockOne, irrelevantFrob})
 			Expect(err).NotTo(HaveOccurred())
 
 			// New block
@@ -64,13 +65,13 @@ var _ = Describe("Frobs query", func() {
 			headerTwoId, err := headerRepo.CreateOrUpdateHeader(headerTwo)
 			Expect(err).NotTo(HaveOccurred())
 
-			frobBlockTwo := test_data.VatFrobModelWithPositiveDart
-			frobBlockTwo.Ilk = test_helpers.FakeIlk.Hex
-			frobBlockTwo.Urn = fakeUrn
-			frobBlockTwo.Dink = strconv.Itoa(rand.Int())
-			frobBlockTwo.Dart = strconv.Itoa(rand.Int())
+			frobBlockTwo := test_helpers.CopyModel(test_data.VatFrobModelWithPositiveDart)
+			frobBlockTwo.ForeignKeyToValue["ilk_id"] = test_helpers.FakeIlk.Hex
+			frobBlockTwo.ForeignKeyToValue["urn_id"] = fakeUrn
+			frobBlockTwo.ColumnToValue["dink"] = strconv.Itoa(rand.Int())
+			frobBlockTwo.ColumnToValue["dart"] = strconv.Itoa(rand.Int())
 
-			err = frobRepo.Create(headerTwoId, []interface{}{frobBlockTwo})
+			err = frobRepo.Create(headerTwoId, []shared.InsertionModel{frobBlockTwo})
 			Expect(err).NotTo(HaveOccurred())
 
 			var actualFrobs []test_helpers.FrobEvent
@@ -78,8 +79,10 @@ var _ = Describe("Frobs query", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(actualFrobs).To(ConsistOf(
-				test_helpers.FrobEvent{IlkIdentifier: test_helpers.FakeIlk.Identifier, UrnIdentifier: fakeUrn, Dink: frobBlockOne.Dink, Dart: frobBlockOne.Dart},
-				test_helpers.FrobEvent{IlkIdentifier: test_helpers.FakeIlk.Identifier, UrnIdentifier: fakeUrn, Dink: frobBlockTwo.Dink, Dart: frobBlockTwo.Dart},
+				test_helpers.FrobEvent{IlkIdentifier: test_helpers.FakeIlk.Identifier, UrnIdentifier: fakeUrn,
+					Dink: frobBlockOne.ColumnToValue["dink"].(string), Dart: frobBlockOne.ColumnToValue["dart"].(string)},
+				test_helpers.FrobEvent{IlkIdentifier: test_helpers.FakeIlk.Identifier, UrnIdentifier: fakeUrn,
+					Dink: frobBlockTwo.ColumnToValue["dink"].(string), Dart: frobBlockTwo.ColumnToValue["dart"].(string)},
 			))
 		})
 
@@ -103,21 +106,21 @@ var _ = Describe("Frobs query", func() {
 			headerOneId, err := headerRepo.CreateOrUpdateHeader(headerOne)
 			Expect(err).NotTo(HaveOccurred())
 
-			frobOne := test_data.VatFrobModelWithPositiveDart
-			frobOne.Ilk = test_helpers.FakeIlk.Hex
-			frobOne.Urn = fakeUrn
-			frobOne.Dink = strconv.Itoa(rand.Int())
-			frobOne.Dart = strconv.Itoa(rand.Int())
+			frobOne := test_helpers.CopyModel(test_data.VatFrobModelWithPositiveDart)
+			frobOne.ForeignKeyToValue["ilk_id"] = test_helpers.FakeIlk.Hex
+			frobOne.ForeignKeyToValue["urn_id"] = fakeUrn
+			frobOne.ColumnToValue["dink"] = strconv.Itoa(rand.Int())
+			frobOne.ColumnToValue["dart"] = strconv.Itoa(rand.Int())
 
 			anotherUrn := "anotherUrn"
-			frobTwo := test_data.VatFrobModelWithPositiveDart
-			frobTwo.Ilk = test_helpers.FakeIlk.Hex
-			frobTwo.Urn = anotherUrn
-			frobTwo.Dink = strconv.Itoa(rand.Int())
-			frobTwo.Dart = strconv.Itoa(rand.Int())
-			frobTwo.TransactionIndex = frobOne.TransactionIndex + 1
+			frobTwo := test_helpers.CopyModel(test_data.VatFrobModelWithPositiveDart)
+			frobTwo.ForeignKeyToValue["ilk_id"] = test_helpers.FakeIlk.Hex
+			frobTwo.ForeignKeyToValue["urn_id"] = anotherUrn
+			frobTwo.ColumnToValue["dink"] = strconv.Itoa(rand.Int())
+			frobTwo.ColumnToValue["dart"] = strconv.Itoa(rand.Int())
+			frobTwo.ColumnToValue["tx_idx"] = frobOne.ColumnToValue["tx_idx"].(uint) + 1
 
-			err = frobRepo.Create(headerOneId, []interface{}{frobOne, frobTwo})
+			err = frobRepo.Create(headerOneId, []shared.InsertionModel{frobOne, frobTwo})
 			Expect(err).NotTo(HaveOccurred())
 
 			var actualFrobs []test_helpers.FrobEvent
@@ -125,8 +128,10 @@ var _ = Describe("Frobs query", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(actualFrobs).To(ConsistOf(
-				test_helpers.FrobEvent{IlkIdentifier: test_helpers.FakeIlk.Identifier, UrnIdentifier: fakeUrn, Dink: frobOne.Dink, Dart: frobOne.Dart},
-				test_helpers.FrobEvent{IlkIdentifier: test_helpers.FakeIlk.Identifier, UrnIdentifier: anotherUrn, Dink: frobTwo.Dink, Dart: frobTwo.Dart},
+				test_helpers.FrobEvent{IlkIdentifier: test_helpers.FakeIlk.Identifier, UrnIdentifier: fakeUrn,
+					Dink: frobOne.ColumnToValue["dink"].(string), Dart: frobOne.ColumnToValue["dart"].(string)},
+				test_helpers.FrobEvent{IlkIdentifier: test_helpers.FakeIlk.Identifier, UrnIdentifier: anotherUrn,
+					Dink: frobTwo.ColumnToValue["dink"].(string), Dart: frobTwo.ColumnToValue["dart"].(string)},
 			))
 		})
 

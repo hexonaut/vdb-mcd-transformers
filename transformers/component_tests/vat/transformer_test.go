@@ -1,6 +1,7 @@
 package vat
 
 import (
+	test_helpers2 "github.com/vulcanize/mcd_transformers/transformers/component_tests/queries/test_helpers"
 	"strconv"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -249,10 +250,10 @@ var _ = Describe("Executing the transformer", func() {
 			Expect(err).NotTo(HaveOccurred())
 			vatFrobRepository := vat_frob.VatFrobRepository{}
 			vatFrobRepository.SetDB(db)
-			vatFrob := test_data.VatFrobModelWithPositiveDart
-			vatFrob.Ilk = ilk
-			vatFrob.V = guy
-			insertErr := vatFrobRepository.Create(headerID, []interface{}{vatFrob})
+			vatFrob := test_helpers2.CopyModel(test_data.VatFrobModelWithPositiveDart)
+			vatFrob.ForeignKeyToValue["ilk_id"] = ilk
+			vatFrob.ColumnToValue["v"] = guy
+			insertErr := vatFrobRepository.Create(headerID, []shared.InsertionModel{vatFrob})
 			Expect(insertErr).NotTo(HaveOccurred())
 		})
 
@@ -289,9 +290,9 @@ var _ = Describe("Executing the transformer", func() {
 			Expect(err).NotTo(HaveOccurred())
 			vatFrobRepository := vat_frob.VatFrobRepository{}
 			vatFrobRepository.SetDB(db)
-			vatFrob := test_data.VatFrobModelWithPositiveDart
-			vatFrob.W = guy
-			insertErr := vatFrobRepository.Create(headerID, []interface{}{vatFrob})
+			vatFrob := test_helpers2.CopyModel(test_data.VatFrobModelWithPositiveDart)
+			vatFrob.ColumnToValue["w"] = guy
+			insertErr := vatFrobRepository.Create(headerID, []shared.InsertionModel{vatFrob})
 			Expect(insertErr).NotTo(HaveOccurred())
 		})
 

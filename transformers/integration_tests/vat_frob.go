@@ -39,7 +39,7 @@ var _ = Describe("Vat frob Transformer", func() {
 		blockChain    core.BlockChain
 		logFetcher    fetcher.ILogFetcher
 		vatFrobConfig transformer.EventTransformerConfig
-		initializer   shared.LogNoteTransformer
+		initializer   shared.LogNoteSharedRepoTransformer
 	)
 
 	BeforeEach(func() {
@@ -58,7 +58,7 @@ var _ = Describe("Vat frob Transformer", func() {
 			Topic:             mcdConstants.VatFrobSignature(),
 		}
 
-		initializer = shared.LogNoteTransformer{
+		initializer = shared.LogNoteSharedRepoTransformer{
 			Config:     vatFrobConfig,
 			Converter:  &vat_frob.VatFrobConverter{},
 			Repository: &vat_frob.VatFrobRepository{},
@@ -83,7 +83,7 @@ var _ = Describe("Vat frob Transformer", func() {
 		err = transformer.Execute(logs, header)
 		Expect(err).NotTo(HaveOccurred())
 
-		var dbResult []vat_frob.VatFrobModel
+		var dbResult []vatFrobModel
 		err = db.Select(&dbResult, `SELECT urn_id, v, w, dink, dart from maker.vat_frob`)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -99,3 +99,15 @@ var _ = Describe("Vat frob Transformer", func() {
 		Expect(dbResult[0].Dart).To(Equal("500000000000000000"))
 	})
 })
+
+type vatFrobModel struct {
+	Ilk              string
+	Urn              string `db:"urn_id"`
+	V                string
+	W                string
+	Dink             string
+	Dart             string
+	LogIndex         uint   `db:"log_idx"`
+	TransactionIndex uint   `db:"tx_idx"`
+	Raw              []byte `db:"raw_log"`
+}

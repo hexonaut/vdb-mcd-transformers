@@ -54,10 +54,10 @@ var _ = Describe("Ilk state computed columns", func() {
 		It("returns relevant frobs for an ilk_state", func() {
 			frobRepo := vat_frob.VatFrobRepository{}
 			frobRepo.SetDB(db)
-			frobEvent := test_data.VatFrobModelWithPositiveDart
-			frobEvent.Urn = fakeGuy
-			frobEvent.Ilk = test_helpers.FakeIlk.Hex
-			insertFrobErr := frobRepo.Create(headerId, []interface{}{frobEvent})
+			frobEvent := test_helpers.CopyModel(test_data.VatFrobModelWithPositiveDart)
+			frobEvent.ForeignKeyToValue["urn_id"] = fakeGuy
+			frobEvent.ForeignKeyToValue["ilk_id"] = test_helpers.FakeIlk.Hex
+			insertFrobErr := frobRepo.Create(headerId, []shared.InsertionModel{frobEvent})
 			Expect(insertFrobErr).NotTo(HaveOccurred())
 
 			var actualFrobs []test_helpers.FrobEvent
@@ -70,9 +70,9 @@ var _ = Describe("Ilk state computed columns", func() {
 
 			expectedFrobs := []test_helpers.FrobEvent{{
 				IlkIdentifier: test_helpers.FakeIlk.Identifier,
-				UrnIdentifier: frobEvent.Urn,
-				Dink:          frobEvent.Dink,
-				Dart:          frobEvent.Dart,
+				UrnIdentifier: fakeGuy,
+				Dink:          frobEvent.ColumnToValue["dink"].(string),
+				Dart:          frobEvent.ColumnToValue["dart"].(string),
 			}}
 
 			Expect(actualFrobs).To(Equal(expectedFrobs))
