@@ -3,6 +3,7 @@ package queries
 import (
 	"github.com/vulcanize/mcd_transformers/transformers/shared"
 	"math/rand"
+	"strconv"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -59,7 +60,7 @@ var _ = Describe("Ilk File Events Query", func() {
 	})
 
 	It("returns all ilk file events for ilk", func() {
-		catFileChopLump := test_data.CatFileChopModel
+		catFileChopLump := test_helpers.CopyModel(test_data.CatFileChopModel)
 		catFileChopLump.ForeignKeyToValue["ilk_id"] = test_helpers.FakeIlk.Hex
 		chopLumpErr := catFileChopLumpRepo.Create(headerOneId, []shared.InsertionModel{catFileChopLump})
 		Expect(chopLumpErr).NotTo(HaveOccurred())
@@ -69,22 +70,22 @@ var _ = Describe("Ilk File Events Query", func() {
 		flipErr := catFileFlipRepo.Create(headerOneId, []shared.InsertionModel{catFileFlip})
 		Expect(flipErr).NotTo(HaveOccurred())
 
-		jugFile := test_data.JugFileIlkModel
+		jugFile := test_helpers.CopyModel(test_data.JugFileIlkModel)
 		jugFile.ForeignKeyToValue["ilk_id"] = test_helpers.FakeIlk.Hex
 		jugErr := jugFileRepo.Create(headerOneId, []shared.InsertionModel{jugFile})
 		Expect(jugErr).NotTo(HaveOccurred())
 
-		spotFileMat := test_data.SpotFileMatModel
+		spotFileMat := test_helpers.CopyModel(test_data.SpotFileMatModel)
 		spotFileMat.ForeignKeyToValue["ilk_id"] = test_helpers.FakeIlk.Hex
 		spotFileMatErr := spotFileMatRepo.Create(headerOneId, []shared.InsertionModel{spotFileMat})
 		Expect(spotFileMatErr).NotTo(HaveOccurred())
 
-		spotFilePip := test_data.SpotFilePipModel
+		spotFilePip := test_helpers.CopyModel(test_data.SpotFilePipModel)
 		spotFilePip.ForeignKeyToValue["ilk_id"] = test_helpers.FakeIlk.Hex
 		spotFilePipErr := spotFilePipRepo.Create(headerOneId, []shared.InsertionModel{spotFilePip})
 		Expect(spotFilePipErr).NotTo(HaveOccurred())
 
-		vatFile := test_data.VatFileIlkDustModel
+		vatFile := test_helpers.CopyModel(test_data.VatFileIlkDustModel)
 		vatFile.ForeignKeyToValue["ilk_id"] = test_helpers.FakeIlk.Hex
 		vatErr := vatFileRepo.Create(headerOneId, []shared.InsertionModel{vatFile})
 		Expect(vatErr).NotTo(HaveOccurred())
@@ -122,15 +123,15 @@ var _ = Describe("Ilk File Events Query", func() {
 			test_helpers.IlkFileEvent{
 				IlkIdentifier: relevantIlkIdentifier,
 				What:          vatFile.ColumnToValue["what"].(string),
-				Data:          vatFile.ColumnToValue["what"].(string),
+				Data:          vatFile.ColumnToValue["data"].(string),
 			},
 		))
 	})
 
 	It("includes results across blocks", func() {
-		fileBlockOne := test_data.VatFileIlkDustModel
+		fileBlockOne := test_helpers.CopyModel(test_data.VatFileIlkDustModel)
 		fileBlockOne.ForeignKeyToValue["ilk_id"] = test_helpers.FakeIlk.Hex
-		fileBlockOne.ColumnToValue["data"] = rand.Int()
+		fileBlockOne.ColumnToValue["data"] = strconv.Itoa(rand.Int())
 		fileBlockOneErr := vatFileRepo.Create(headerOneId, []shared.InsertionModel{fileBlockOne})
 		Expect(fileBlockOneErr).NotTo(HaveOccurred())
 
@@ -139,9 +140,10 @@ var _ = Describe("Ilk File Events Query", func() {
 		headerTwoId, headerTwoErr := headerRepo.CreateOrUpdateHeader(headerTwo)
 		Expect(headerTwoErr).NotTo(HaveOccurred())
 
-		fileBlockTwo := test_data.VatFileIlkDustModel
+		fileBlockTwo := test_helpers.CopyModel(test_data.VatFileIlkDustModel)
 		fileBlockTwo.ForeignKeyToValue["ilk_id"] = test_helpers.FakeIlk.Hex
-		fileBlockTwo.ColumnToValue["data"] = rand.Int()
+
+		fileBlockTwo.ColumnToValue["data"] = strconv.Itoa(rand.Int())
 		fileBlockTwoErr := vatFileRepo.Create(headerTwoId, []shared.InsertionModel{fileBlockTwo})
 		Expect(fileBlockTwoErr).NotTo(HaveOccurred())
 
@@ -164,16 +166,17 @@ var _ = Describe("Ilk File Events Query", func() {
 	})
 
 	It("does not include ilk file events for a different ilk", func() {
-		relevantFile := test_data.VatFileIlkDustModel
+		relevantFile := test_helpers.CopyModel(test_data.VatFileIlkDustModel)
 		relevantFile.ForeignKeyToValue["ilk_id"] = test_helpers.FakeIlk.Hex
-		relevantFile.ColumnToValue["data"] = rand.Int()
+		relevantFile.ColumnToValue["data"] = strconv.Itoa(rand.Int())
 
-		irrelevantFile := test_data.VatFileIlkDustModel
+		irrelevantFile := test_helpers.CopyModel(test_data.VatFileIlkDustModel)
 		irrelevantFile.ForeignKeyToValue["ilk_id"] = test_helpers.AnotherFakeIlk.Hex
-		irrelevantFile.ColumnToValue["data"] = rand.Int()
+		irrelevantFile.ColumnToValue["data"] = strconv.Itoa(rand.Int())
 		irrelevantFile.ColumnToValue["tx_idx"] = test_data.VatFileIlkDustModel.ColumnToValue["tx_idx"].(uint) + 1
 
-		vatBlockOneErr := vatFileRepo.Create(headerOneId, []shared.InsertionModel{relevantFile, irrelevantFile})
+		models := []shared.InsertionModel{relevantFile, irrelevantFile}
+		vatBlockOneErr := vatFileRepo.Create(headerOneId, models)
 		Expect(vatBlockOneErr).NotTo(HaveOccurred())
 
 		var actualFiles []test_helpers.IlkFileEvent
