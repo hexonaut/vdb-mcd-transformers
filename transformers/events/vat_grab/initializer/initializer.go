@@ -23,7 +23,7 @@ import (
 	"github.com/vulcanize/mcd_transformers/transformers/shared"
 )
 
-var EventTransformerInitializer transformer.EventTransformerInitializer = shared.LogNoteTransformer{
+var EventTransformerInitializer transformer.EventTransformerInitializer = shared.LogNoteSharedRepoTransformer{
 	Config:     vat_grab.GetVatGrabConfig(),
 	Converter:  &vat_grab.VatGrabConverter{},
 	Repository: &vat_grab.VatGrabRepository{},

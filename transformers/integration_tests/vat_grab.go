@@ -64,7 +64,7 @@ var _ = XDescribe("Vat Grab Transformer", func() {
 			header)
 		Expect(err).NotTo(HaveOccurred())
 
-		tr := shared.LogNoteTransformer{
+		tr := shared.LogNoteSharedRepoTransformer{
 			Config:     vatGrabConfig,
 			Converter:  &vat_grab.VatGrabConverter{},
 			Repository: &vat_grab.VatGrabRepository{},
@@ -73,7 +73,7 @@ var _ = XDescribe("Vat Grab Transformer", func() {
 		err = tr.Execute(logs, header)
 		Expect(err).NotTo(HaveOccurred())
 
-		var dbResult []vat_grab.VatGrabModel
+		var dbResult []vatGrabModel
 		err = db.Select(&dbResult, `SELECT urn_id, v, w, dink, dart from maker.vat_grab`)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -93,3 +93,15 @@ var _ = XDescribe("Vat Grab Transformer", func() {
 		Expect(dbResult[0].TransactionIndex).To(Equal(uint(0)))
 	})
 })
+
+type vatGrabModel struct {
+	Ilk              string
+	Urn              string `db:"urn_id"`
+	V                string
+	W                string
+	Dink             string
+	Dart             string
+	LogIndex         uint   `db:"log_idx"`
+	TransactionIndex uint   `db:"tx_idx"`
+	Raw              []byte `db:"raw_log"`
+}

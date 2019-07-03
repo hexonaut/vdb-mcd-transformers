@@ -14,8 +14,8 @@ import (
 
 type VatGrabConverter struct{}
 
-func (VatGrabConverter) ToModels(ethLogs []types.Log) ([]interface{}, error) {
-	var models []interface{}
+func (VatGrabConverter) ToModels(ethLogs []types.Log) ([]shared.InsertionModel, error) {
+	var models []shared.InsertionModel
 	for _, ethLog := range ethLogs {
 		err := verifyLog(ethLog)
 		if err != nil {
@@ -44,16 +44,24 @@ func (VatGrabConverter) ToModels(ethLogs []types.Log) ([]interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
-		model := VatGrabModel{
-			Ilk:              ilk,
-			Urn:              urn,
-			V:                v,
-			W:                w,
-			Dink:             dink.String(),
-			Dart:             dart.String(),
-			LogIndex:         ethLog.Index,
-			TransactionIndex: ethLog.TxIndex,
-			Raw:              raw,
+		model := shared.InsertionModel{
+			TableName: "vat_grab",
+			OrderedColumns: []string{
+				"header_id", "urn_id", "v", "w", "dink", "dart", "log_idx", "tx_idx", "raw_log",
+			},
+			ColumnToValue: map[string]interface{}{
+				"v":       v,
+				"w":       w,
+				"dink":    dink.String(),
+				"dart":    dart.String(),
+				"log_idx": ethLog.Index,
+				"tx_idx":  ethLog.TxIndex,
+				"raw_log": raw,
+			},
+			ForeignKeyToValue: map[string]string{
+				"ilk_id": ilk,
+				"urn_id": urn,
+			},
 		}
 		models = append(models, model)
 	}

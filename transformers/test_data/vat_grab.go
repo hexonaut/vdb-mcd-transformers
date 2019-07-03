@@ -2,12 +2,12 @@ package test_data
 
 import (
 	"encoding/json"
+	"github.com/vulcanize/mcd_transformers/transformers/shared"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 
-	"github.com/vulcanize/mcd_transformers/transformers/events/vat_grab"
 	"github.com/vulcanize/mcd_transformers/transformers/shared/constants"
 )
 
@@ -29,16 +29,24 @@ var EthVatGrabLogWithPositiveDink = types.Log{
 }
 
 var rawVatGrabLogWithPositiveDink, _ = json.Marshal(EthVatGrabLogWithPositiveDink)
-var VatGrabModelWithPositiveDink = vat_grab.VatGrabModel{
-	Ilk:              "0x66616b6520696c6b000000000000000000000000000000000000000000000000",
-	Urn:              "0x07Fa9eF6609cA7921112231F8f195138ebbA2977",
-	V:                "0x7340e006f4135BA6970D43bf43d88DCAD4e7a8CA",
-	W:                "0x7526EB4f95e2a1394797Cb38a921Fb1EbA09291B",
-	Dink:             "1000000000000000000000",
-	Dart:             "2000000000000000000000",
-	LogIndex:         EthVatGrabLogWithPositiveDink.Index,
-	TransactionIndex: EthVatGrabLogWithPositiveDink.TxIndex,
-	Raw:              rawVatGrabLogWithPositiveDink,
+var VatGrabModelWithPositiveDink = shared.InsertionModel{
+	TableName: "vat_grab",
+	OrderedColumns: []string{
+		"header_id", "urn_id", "v", "w", "dink", "dart", "log_idx", "tx_idx", "raw_log",
+	},
+	ColumnToValue: map[string]interface{}{
+		"v":       "0x7340e006f4135BA6970D43bf43d88DCAD4e7a8CA",
+		"w":       "0x7526EB4f95e2a1394797Cb38a921Fb1EbA09291B",
+		"dink":    "1000000000000000000000",
+		"dart":    "2000000000000000000000",
+		"log_idx": EthVatGrabLogWithPositiveDink.Index,
+		"tx_idx":  EthVatGrabLogWithPositiveDink.TxIndex,
+		"raw_log": rawVatGrabLogWithPositiveDink,
+	},
+	ForeignKeyToValue: map[string]string{
+		"ilk_id": "0x66616b6520696c6b000000000000000000000000000000000000000000000000",
+		"urn_id": "0x07Fa9eF6609cA7921112231F8f195138ebbA2977",
+	},
 }
 
 var EthVatGrabLogWithNegativeDink = types.Log{
@@ -59,14 +67,22 @@ var EthVatGrabLogWithNegativeDink = types.Log{
 }
 
 var rawVatGrabLogWithNegativeDink, _ = json.Marshal(EthVatGrabLogWithNegativeDink)
-var VatGrabModelWithNegativeDink = vat_grab.VatGrabModel{
-	Ilk:              "0x66616b6520696c6b000000000000000000000000000000000000000000000000",
-	Urn:              "0x07Fa9eF6609cA7921112231F8f195138ebbA2977",
-	V:                "0x7340e006f4135BA6970D43bf43d88DCAD4e7a8CA",
-	W:                "0x7526EB4f95e2a1394797Cb38a921Fb1EbA09291B",
-	Dink:             "-1000000000000000000000",
-	Dart:             "-2000000000000000000000",
-	LogIndex:         0,
-	TransactionIndex: 0,
-	Raw:              rawVatGrabLogWithNegativeDink,
+var VatGrabModelWithNegativeDink = shared.InsertionModel{
+	TableName: "vat_grab",
+	OrderedColumns: []string{
+		"header_id", "urn_id", "v", "w", "dink", "dart", "log_idx", "tx_idx", "raw_log",
+	},
+	ColumnToValue: map[string]interface{}{
+		"v":       "0x7340e006f4135BA6970D43bf43d88DCAD4e7a8CA",
+		"w":       "0x7526EB4f95e2a1394797Cb38a921Fb1EbA09291B",
+		"dink":    "-1000000000000000000000",
+		"dart":    "-2000000000000000000000",
+		"log_idx": EthVatGrabLogWithNegativeDink.Index,
+		"tx_idx":  EthVatGrabLogWithNegativeDink.TxIndex,
+		"raw_log": rawVatGrabLogWithNegativeDink,
+	},
+	ForeignKeyToValue: map[string]string{
+		"ilk_id": "0x66616b6520696c6b000000000000000000000000000000000000000000000000",
+		"urn_id": "0x07Fa9eF6609cA7921112231F8f195138ebbA2977",
+	},
 }
