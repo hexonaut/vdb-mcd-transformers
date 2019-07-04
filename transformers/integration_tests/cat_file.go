@@ -286,7 +286,7 @@ var _ = Describe("Cat File transformer", func() {
 		err = t.Execute(logs, header)
 		Expect(err).NotTo(HaveOccurred())
 
-		var dbResult []vow.CatFileVowModel
+		var dbResult []catFileVowModel
 		err = db.Select(&dbResult, `SELECT what, data, log_idx FROM maker.cat_file_vow`)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -310,6 +310,14 @@ type catFileFlipModel struct {
 	Ilk              string `db:"ilk_id"`
 	What             string
 	Flip             string
+	TransactionIndex uint   `db:"tx_idx"`
+	LogIndex         uint   `db:"log_idx"`
+	Raw              []byte `db:"raw_log"`
+}
+
+type catFileVowModel struct {
+	What             string
+	Data             string
 	TransactionIndex uint   `db:"tx_idx"`
 	LogIndex         uint   `db:"log_idx"`
 	Raw              []byte `db:"raw_log"`
