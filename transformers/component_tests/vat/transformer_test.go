@@ -1,6 +1,7 @@
 package vat
 
 import (
+	"github.com/vulcanize/mcd_transformers/transformers/shared/constants"
 	"strconv"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -250,8 +251,8 @@ var _ = Describe("Executing the transformer", func() {
 			vatFrobRepository := vat_frob.VatFrobRepository{}
 			vatFrobRepository.SetDB(db)
 			vatFrob := test_data.CopyModel(test_data.VatFrobModelWithPositiveDart)
-			vatFrob.ForeignKeyToValue["ilk_id"] = ilk
-			vatFrob.ColumnToValue["v"] = guy
+			vatFrob.ForeignKeyValues[constants.IlkFK] = ilk
+			vatFrob.ColumnValues["v"] = guy
 			insertErr := vatFrobRepository.Create(headerID, []shared.InsertionModel{vatFrob})
 			Expect(insertErr).NotTo(HaveOccurred())
 		})
@@ -290,7 +291,7 @@ var _ = Describe("Executing the transformer", func() {
 			vatFrobRepository := vat_frob.VatFrobRepository{}
 			vatFrobRepository.SetDB(db)
 			vatFrob := test_data.CopyModel(test_data.VatFrobModelWithPositiveDart)
-			vatFrob.ColumnToValue["w"] = guy
+			vatFrob.ColumnValues["w"] = guy
 			insertErr := vatFrobRepository.Create(headerID, []shared.InsertionModel{vatFrob})
 			Expect(insertErr).NotTo(HaveOccurred())
 		})

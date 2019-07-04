@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"github.com/jmoiron/sqlx"
 	log "github.com/sirupsen/logrus"
+	"github.com/vulcanize/mcd_transformers/transformers/shared/constants"
 	"github.com/vulcanize/vulcanizedb/libraries/shared/repository"
 	"github.com/vulcanize/vulcanizedb/pkg/datastore/postgres"
 	"strconv"
@@ -40,15 +41,16 @@ type SharedRepository interface {
 	SetDB(db *postgres.DB)
 }
 
+type ForeignKeyValues map[constants.ForeignKeyField]string
+type ColumnValues map[string]interface{}
 type InsertionModel struct {
 	TableName      string   // For MarkHeaderChecked, insert query
 	OrderedColumns []string // Defines the fields to insert, and in which order the table expects them
-	// ColumnToValue needs to be typed interface{}, since `raw_log` is a slice of bytes and not a string
-	ColumnToValue     map[string]interface{} // Associated values for columns, headerID, FKs and event metadata populated automatically
-	ForeignKeyToValue map[string]string      // FK name and value to get/create ID for
+	// ColumnValues needs to be typed interface{}, since `raw_log` is a slice of bytes and not a string
+	ColumnValues     ColumnValues     // Associated values for columns, headerID, FKs and event metadata populated automatically
+	ForeignKeyValues ForeignKeyValues // FK name and value to get/create ID for
 }
 
-// TODO Can I use a top-level variable for persistent memoization?
 var modelToQuery = map[string]string{}
 
 func getMemoizedQuery(model InsertionModel) string {
@@ -91,16 +93,16 @@ columnToValue mapping, and are treated like any other in the insertion.
 
 testModel = shared.InsertionModel{
 			TableName:      "testEvent",
-			OrderedColumns: []string{"header_id", "log_idx", "tx_idx", "raw_log", "ilk_id", "urn_id", "variable1"},
-			ColumnToValue: map[string]interface{}{
+			OrderedColumns: []string{"header_id", "log_idx", "tx_idx", "raw_log", constants.IlkFK, constants.UrnFK, "variable1"},
+			ColumnValues: ColumnValues{
 				"log_idx":   "1",
 				"tx_idx":    "2",
 				"raw_log":   fakeLog,
 				"variable1": "value1",
 			},
-			ForeignKeyToValue: map[string]string{
-				"ilk_id": test_helpers.FakeIlk.Hex,
-				"urn_id": "0x12345",
+			ForeignKeyValues: shared.ForeignKeyValues{
+				constants.IlkFK: test_helpers.FakeIlk.Hex,
+				constants.UrnFK: "0x12345",
 			},
 		}
 */
@@ -120,19 +122,19 @@ func Create(headerID int64, models []InsertionModel, db *postgres.DB) error {
 	}
 
 	for _, model := range models {
-		fkErr := populateForeignKeyIDs(model.ForeignKeyToValue, model.ColumnToValue, tx)
+		fkErr := populateForeignKeyIDs(model.ForeignKeyValues, model.ColumnValues, tx)
 		if fkErr != nil {
 			return fmt.Errorf("error gettings FK ids: %s", fkErr.Error())
 		}
 
 		// Save headerId in mapping for insertion query
-		model.ColumnToValue["header_id"] = strconv.FormatInt(headerID, 10)
+		model.ColumnValues["header_id"] = strconv.FormatInt(headerID, 10)
 
 		// Maps can't be iterated over in a reliable manner, so we rely on OrderedColumns to define the order to insert
 		// tx.Exec is variadically typed in the args, so if we wrap in []interface{} we can apply them all automatically
 		var args []interface{}
 		for _, col := range model.OrderedColumns {
-			args = append(args, model.ColumnToValue[col])
+			args = append(args, model.ColumnValues[col])
 		}
 
 		insertionQuery := getMemoizedQuery(model)
@@ -159,15 +161,15 @@ func Create(headerID int64, models []InsertionModel, db *postgres.DB) error {
 }
 
 // Gets or creates the FK for the key/values supplied, and inserts the resulting ID into the columnToValue mapping
-func populateForeignKeyIDs(fkToValue map[string]string, columnToValue map[string]interface{}, tx *sqlx.Tx) error {
+func populateForeignKeyIDs(fkToValue ForeignKeyValues, columnToValue ColumnValues, tx *sqlx.Tx) error {
 	var dbErr error
 	var fkID int
 	for fk, value := range fkToValue {
 		switch fk {
-		case "ilk_id":
+		case constants.IlkFK:
 			fkID, dbErr = GetOrCreateIlkInTransaction(value, tx)
-		case "urn_id":
-			fkID, dbErr = GetOrCreateUrnInTransaction(value, fkToValue["ilk_id"], tx)
+		case constants.UrnFK:
+			fkID, dbErr = GetOrCreateUrnInTransaction(value, fkToValue[constants.IlkFK], tx)
 		default:
 			return fmt.Errorf("repository got unrecognised FK: %s", fk)
 		}
@@ -179,7 +181,8 @@ func populateForeignKeyIDs(fkToValue map[string]string, columnToValue map[string
 			}
 			return fmt.Errorf("couldn't get or create FK (%s, %s): %s", fk, value, dbErr.Error())
 		} else {
-			columnToValue[fk] = fkID
+			columnName := string(fk)
+			columnToValue[columnName] = fkID
 		}
 	}
 

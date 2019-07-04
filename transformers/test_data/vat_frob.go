@@ -53,9 +53,9 @@ var rawVatFrobLogWithPositiveDart, _ = json.Marshal(EthVatFrobLogWithPositiveDar
 var VatFrobModelWithPositiveDart = shared.InsertionModel{
 	TableName: "vat_frob",
 	OrderedColumns: []string{
-		"header_id", "urn_id", "v", "w", "dink", "dart", "log_idx", "tx_idx", "raw_log",
+		"header_id", string(constants.UrnFK), "v", "w", "dink", "dart", "log_idx", "tx_idx", "raw_log",
 	},
-	ColumnToValue: map[string]interface{}{
+	ColumnValues: shared.ColumnValues{
 		"v":       "0xFc7440E2Ed4A3AEb14d40c00f02a14221Be0474d",
 		"w":       "0xEEec867B3F51ab5b619d582481BF53eea930b074",
 		"dink":    "0",
@@ -64,9 +64,9 @@ var VatFrobModelWithPositiveDart = shared.InsertionModel{
 		"tx_idx":  EthVatFrobLogWithPositiveDart.TxIndex,
 		"raw_log": rawVatFrobLogWithPositiveDart,
 	},
-	ForeignKeyToValue: map[string]string{
-		"ilk_id": "0x4554480000000000000000000000000000000000000000000000000000000000",
-		"urn_id": "0xEEec867B3F51ab5b619d582481BF53eea930b074",
+	ForeignKeyValues: shared.ForeignKeyValues{
+		constants.IlkFK: "0x4554480000000000000000000000000000000000000000000000000000000000",
+		constants.UrnFK: "0xEEec867B3F51ab5b619d582481BF53eea930b074",
 	},
 }
 
@@ -91,9 +91,9 @@ var rawVatFrobLogWithNegativeDink, _ = json.Marshal(EthVatFrobLogWithNegativeDin
 var VatFrobModelWithNegativeDink = shared.InsertionModel{
 	TableName: "vat_frob",
 	OrderedColumns: []string{
-		"header_id", "urn_id", "v", "w", "dink", "dart", "log_idx", "tx_idx", "raw_log",
+		"header_id", string(constants.UrnFK), "v", "w", "dink", "dart", "log_idx", "tx_idx", "raw_log",
 	},
-	ColumnToValue: map[string]interface{}{
+	ColumnValues: shared.ColumnValues{
 		"v":       "0xFc7440E2Ed4A3AEb14d40c00f02a14221Be0474d",
 		"w":       "0x5c8c8e5895B9cCf34ACF391C99E13C79EE2eFb46",
 		"dink":    "-8000000000000000",
@@ -102,8 +102,8 @@ var VatFrobModelWithNegativeDink = shared.InsertionModel{
 		"tx_idx":  EthVatFrobLogWithNegativeDink.TxIndex,
 		"raw_log": rawVatFrobLogWithNegativeDink,
 	},
-	ForeignKeyToValue: map[string]string{
-		"ilk_id": "0x4554482d41000000000000000000000000000000000000000000000000000000",
-		"urn_id": "0x5c8c8e5895B9cCf34ACF391C99E13C79EE2eFb46",
+	ForeignKeyValues: shared.ForeignKeyValues{
+		constants.IlkFK: "0x4554482d41000000000000000000000000000000000000000000000000000000",
+		constants.UrnFK: "0x5c8c8e5895B9cCf34ACF391C99E13C79EE2eFb46",
 	},
 }

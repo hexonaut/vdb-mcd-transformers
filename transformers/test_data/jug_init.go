@@ -48,14 +48,14 @@ var rawJugInitLog, _ = json.Marshal(EthJugInitLog)
 var JugInitModel = shared.InsertionModel{
 	TableName: "jug_init",
 	OrderedColumns: []string{
-		"header_id", "ilk_id", "log_idx", "tx_idx", "raw_log",
+		"header_id", string(constants.IlkFK), "log_idx", "tx_idx", "raw_log",
 	},
-	ColumnToValue: map[string]interface{}{
+	ColumnValues: shared.ColumnValues{
 		"log_idx": EthJugInitLog.Index,
 		"tx_idx":  EthJugInitLog.TxIndex,
 		"raw_log": rawJugInitLog,
 	},
-	ForeignKeyToValue: map[string]string{
-		"ilk_id": "0x434f4c352d410000000000000000000000000000000000000000000000000000",
+	ForeignKeyValues: shared.ForeignKeyValues{
+		constants.IlkFK: "0x434f4c352d410000000000000000000000000000000000000000000000000000",
 	},
 }

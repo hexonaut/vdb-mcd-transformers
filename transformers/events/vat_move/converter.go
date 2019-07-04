@@ -49,7 +49,7 @@ func (VatMoveConverter) ToModels(ethLogs []types.Log) ([]shared.InsertionModel, 
 			OrderedColumns: []string{
 				"header_id", "src", "dst", "rad", "log_idx", "tx_idx", "raw_log",
 			},
-			ColumnToValue: map[string]interface{}{
+			ColumnValues: shared.ColumnValues{
 				"src":     src,
 				"dst":     dst,
 				"rad":     rad.String(),
@@ -57,7 +57,7 @@ func (VatMoveConverter) ToModels(ethLogs []types.Log) ([]shared.InsertionModel, 
 				"tx_idx":  ethLog.TxIndex,
 				"raw_log": raw,
 			},
-			ForeignKeyToValue: map[string]string{},
+			ForeignKeyValues: shared.ForeignKeyValues{},
 		}
 		models = append(models, model)
 	}

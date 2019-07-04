@@ -30,17 +30,17 @@ var rawSpotFileMatLog, _ = json.Marshal(EthSpotFileMatLog)
 var SpotFileMatModel = shared.InsertionModel{
 	TableName: "spot_file_mat",
 	OrderedColumns: []string{
-		"header_id", "ilk_id", "what", "data", "log_idx", "tx_idx", "raw_log",
+		"header_id", string(constants.IlkFK), "what", "data", "log_idx", "tx_idx", "raw_log",
 	},
-	ColumnToValue: map[string]interface{}{
+	ColumnValues: shared.ColumnValues{
 		"what":    "mat",
 		"data":    "1500000000000000000000000000",
 		"log_idx": EthSpotFileMatLog.Index,
 		"tx_idx":  EthSpotFileMatLog.TxIndex,
 		"raw_log": rawSpotFileMatLog,
 	},
-	ForeignKeyToValue: map[string]string{
-		"ilk_id": "0x4554482d41000000000000000000000000000000000000000000000000000000",
+	ForeignKeyValues: shared.ForeignKeyValues{
+		constants.IlkFK: "0x4554482d41000000000000000000000000000000000000000000000000000000",
 	},
 }
 
@@ -65,15 +65,15 @@ var rawSpotFilePipLog, _ = json.Marshal(EthSpotFilePipLog)
 var SpotFilePipModel = shared.InsertionModel{
 	TableName: "spot_file_pip",
 	OrderedColumns: []string{
-		"header_id", "ilk_id", "pip", "log_idx", "tx_idx", "raw_log",
+		"header_id", string(constants.IlkFK), "pip", "log_idx", "tx_idx", "raw_log",
 	},
-	ColumnToValue: map[string]interface{}{
+	ColumnValues: shared.ColumnValues{
 		"pip":     "0x8C73Ec0fBCdEC6b8C060BC224D94740FD41f3774",
 		"log_idx": EthSpotFilePipLog.Index,
 		"tx_idx":  EthSpotFilePipLog.TxIndex,
 		"raw_log": rawSpotFilePipLog,
 	},
-	ForeignKeyToValue: map[string]string{
-		"ilk_id": "0x4554482d41000000000000000000000000000000000000000000000000000000",
+	ForeignKeyValues: shared.ForeignKeyValues{
+		constants.IlkFK: "0x4554482d41000000000000000000000000000000000000000000000000000000",
 	},
 }

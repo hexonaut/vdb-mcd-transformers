@@ -19,6 +19,7 @@ package flip
 import (
 	"encoding/json"
 	"errors"
+	constants2 "github.com/vulcanize/mcd_transformers/transformers/shared/constants"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -52,17 +53,17 @@ func (CatFileFlipConverter) ToModels(ethLogs []types.Log) ([]shared.InsertionMod
 		result := shared.InsertionModel{
 			TableName: "cat_file_flip",
 			OrderedColumns: []string{
-				"header_id", "ilk_id", "what", "flip", "tx_idx", "log_idx", "raw_log",
+				"header_id", string(constants2.IlkFK), "what", "flip", "tx_idx", "log_idx", "raw_log",
 			},
-			ColumnToValue: map[string]interface{}{
+			ColumnValues: shared.ColumnValues{
 				"what":    what,
 				"flip":    flip,
 				"tx_idx":  ethLog.TxIndex,
 				"log_idx": ethLog.Index,
 				"raw_log": raw,
 			},
-			ForeignKeyToValue: map[string]string{
-				"ilk_id": ilk,
+			ForeignKeyValues: shared.ForeignKeyValues{
+				constants2.IlkFK: ilk,
 			},
 		}
 

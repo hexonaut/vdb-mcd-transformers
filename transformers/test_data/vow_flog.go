@@ -49,11 +49,11 @@ var VowFlogModel = shared.InsertionModel{
 	OrderedColumns: []string{
 		"header_id", "era", "log_idx", "tx_idx", "raw_log",
 	},
-	ColumnToValue: map[string]interface{}{
+	ColumnValues: shared.ColumnValues{
 		"era":     "1337",
 		"log_idx": EthVowFlogLog.Index,
 		"tx_idx":  EthVowFlogLog.TxIndex,
 		"raw_log": rawVowFlogLog,
 	},
-	ForeignKeyToValue: map[string]string{},
+	ForeignKeyValues: shared.ForeignKeyValues{},
 }

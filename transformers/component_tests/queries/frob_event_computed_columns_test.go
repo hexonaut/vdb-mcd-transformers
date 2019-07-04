@@ -3,6 +3,7 @@ package queries
 import (
 	"database/sql"
 	"github.com/vulcanize/mcd_transformers/transformers/shared"
+	"github.com/vulcanize/mcd_transformers/transformers/shared/constants"
 	"math/rand"
 
 	. "github.com/onsi/ginkgo"
@@ -46,8 +47,8 @@ var _ = Describe("Frob event computed columns", func() {
 		frobRepo = vat_frob.VatFrobRepository{}
 		frobRepo.SetDB(db)
 		frobEvent = test_data.CopyModel(test_data.VatFrobModelWithPositiveDart)
-		frobEvent.ForeignKeyToValue["urn_id"] = fakeGuy
-		frobEvent.ForeignKeyToValue["ilk_id"] = test_helpers.FakeIlk.Hex
+		frobEvent.ForeignKeyValues[constants.UrnFK] = fakeGuy
+		frobEvent.ForeignKeyValues[constants.IlkFK] = test_helpers.FakeIlk.Hex
 		insertFrobErr := frobRepo.Create(headerId, []shared.InsertionModel{frobEvent})
 		Expect(insertFrobErr).NotTo(HaveOccurred())
 	})
@@ -106,7 +107,7 @@ var _ = Describe("Frob event computed columns", func() {
 			expectedTx := Tx{
 				TransactionHash: test_helpers.GetValidNullString("txHash"),
 				TransactionIndex: sql.NullInt64{
-					Int64: int64(frobEvent.ColumnToValue["tx_idx"].(uint)),
+					Int64: int64(frobEvent.ColumnValues["tx_idx"].(uint)),
 					Valid: true,
 				},
 				BlockHeight: sql.NullInt64{Int64: int64(fakeBlock), Valid: true},
@@ -133,7 +134,7 @@ var _ = Describe("Frob event computed columns", func() {
 			wrongTx := Tx{
 				TransactionHash: test_helpers.GetValidNullString("wrongTxHash"),
 				TransactionIndex: sql.NullInt64{
-					Int64: int64(frobEvent.ColumnToValue["tx_idx"].(uint)) + 1,
+					Int64: int64(frobEvent.ColumnValues["tx_idx"].(uint)) + 1,
 					Valid: true,
 				},
 				BlockHeight: sql.NullInt64{Int64: int64(fakeBlock), Valid: true},

@@ -2,6 +2,7 @@ package queries
 
 import (
 	"github.com/vulcanize/mcd_transformers/transformers/shared"
+	"github.com/vulcanize/mcd_transformers/transformers/shared/constants"
 	"math/rand"
 	"strconv"
 
@@ -98,8 +99,8 @@ var _ = Describe("Urn state computed columns", func() {
 			frobRepo := vat_frob.VatFrobRepository{}
 			frobRepo.SetDB(db)
 			frobEvent := test_data.CopyModel(test_data.VatFrobModelWithPositiveDart)
-			frobEvent.ForeignKeyToValue["urn_id"] = fakeGuy
-			frobEvent.ForeignKeyToValue["ilk_id"] = test_helpers.FakeIlk.Hex
+			frobEvent.ForeignKeyValues[constants.UrnFK] = fakeGuy
+			frobEvent.ForeignKeyValues[constants.IlkFK] = test_helpers.FakeIlk.Hex
 			insertFrobErr := frobRepo.Create(headerId, []shared.InsertionModel{frobEvent})
 			Expect(insertFrobErr).NotTo(HaveOccurred())
 
@@ -114,8 +115,8 @@ var _ = Describe("Urn state computed columns", func() {
 			expectedFrobs := test_helpers.FrobEvent{
 				IlkIdentifier: test_helpers.FakeIlk.Identifier,
 				UrnIdentifier: fakeGuy,
-				Dink:          frobEvent.ColumnToValue["dink"].(string),
-				Dart:          frobEvent.ColumnToValue["dart"].(string),
+				Dink:          frobEvent.ColumnValues["dink"].(string),
+				Dart:          frobEvent.ColumnValues["dart"].(string),
 			}
 
 			Expect(actualFrobs).To(Equal(expectedFrobs))

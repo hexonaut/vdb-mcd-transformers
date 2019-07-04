@@ -58,7 +58,7 @@ var DentModel = shared.InsertionModel{
 	OrderedColumns: []string{
 		"header_id", "bid_id", "lot", "bid", "contract_address", "tic", "log_idx", "tx_idx", "raw_log",
 	},
-	ColumnToValue: map[string]interface{}{
+	ColumnValues: shared.ColumnValues{
 		"bid_id":           dentBidId,
 		"lot":              dentLot,
 		"bid":              dentBid,
@@ -67,5 +67,5 @@ var DentModel = shared.InsertionModel{
 		"tx_idx":           EthDentLog.TxIndex,
 		"raw_log":          dentRawJson,
 	},
-	ForeignKeyToValue: map[string]string{},
+	ForeignKeyValues: shared.ForeignKeyValues{},
 }

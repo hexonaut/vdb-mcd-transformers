@@ -49,17 +49,17 @@ var rawCatFileChopLog, _ = json.Marshal(EthCatFileChopLog)
 var CatFileChopModel = shared.InsertionModel{
 	TableName: "cat_file_chop_lump",
 	OrderedColumns: []string{
-		"header_id", "ilk_id", "what", "data", "tx_idx", "log_idx", "raw_log",
+		"header_id", string(constants.IlkFK), "what", "data", "tx_idx", "log_idx", "raw_log",
 	},
-	ColumnToValue: map[string]interface{}{
+	ColumnValues: shared.ColumnValues{
 		"what":    "chop",
 		"data":    "1000000000000000000000000000",
 		"tx_idx":  EthCatFileChopLog.TxIndex,
 		"log_idx": EthCatFileChopLog.Index,
 		"raw_log": rawCatFileChopLog,
 	},
-	ForeignKeyToValue: map[string]string{
-		"ilk_id": "0x434f4c342d410000000000000000000000000000000000000000000000000000",
+	ForeignKeyValues: shared.ForeignKeyValues{
+		constants.IlkFK: "0x434f4c342d410000000000000000000000000000000000000000000000000000",
 	},
 }
 
@@ -84,17 +84,17 @@ var rawCatFileLumpLog, _ = json.Marshal(EthCatFileLumpLog)
 var CatFileLumpModel = shared.InsertionModel{
 	TableName: "cat_file_chop_lump",
 	OrderedColumns: []string{
-		"header_id", "ilk_id", "what", "data", "tx_idx", "log_idx", "raw_log",
+		"header_id", string(constants.IlkFK), "what", "data", "tx_idx", "log_idx", "raw_log",
 	},
-	ColumnToValue: map[string]interface{}{
+	ColumnValues: shared.ColumnValues{
 		"what":    "lump",
 		"data":    "10000000000000000000000000000000000000000000000000",
 		"tx_idx":  EthCatFileLumpLog.TxIndex,
 		"log_idx": EthCatFileLumpLog.Index,
 		"raw_log": rawCatFileLumpLog,
 	},
-	ForeignKeyToValue: map[string]string{
-		"ilk_id": "0x434f4c342d410000000000000000000000000000000000000000000000000000",
+	ForeignKeyValues: shared.ForeignKeyValues{
+		constants.IlkFK: "0x434f4c342d410000000000000000000000000000000000000000000000000000",
 	},
 }
 
@@ -119,17 +119,17 @@ var rawCatFileFlipLog, _ = json.Marshal(EthCatFileFlipLog)
 var CatFileFlipModel = shared.InsertionModel{
 	TableName: "cat_file_flip",
 	OrderedColumns: []string{
-		"header_id", "ilk_id", "what", "flip", "tx_idx", "log_idx", "raw_log",
+		"header_id", string(constants.IlkFK), "what", "flip", "tx_idx", "log_idx", "raw_log",
 	},
-	ColumnToValue: map[string]interface{}{
+	ColumnValues: shared.ColumnValues{
 		"what":    "flip",
 		"flip":    "0x6E8032435c84B08E30F27bfbb812Ee365A095b31",
 		"tx_idx":  EthCatFileFlipLog.TxIndex,
 		"log_idx": EthCatFileFlipLog.Index,
 		"raw_log": rawCatFileFlipLog,
 	},
-	ForeignKeyToValue: map[string]string{
-		"ilk_id": "0x434f4c312d410000000000000000000000000000000000000000000000000000",
+	ForeignKeyValues: shared.ForeignKeyValues{
+		constants.IlkFK: "0x434f4c312d410000000000000000000000000000000000000000000000000000",
 	},
 }
 
@@ -156,12 +156,12 @@ var CatFileVowModel = shared.InsertionModel{
 	OrderedColumns: []string{
 		"header_id", "what", "data", "tx_idx", "log_idx", "raw_log",
 	},
-	ColumnToValue: map[string]interface{}{
+	ColumnValues: shared.ColumnValues{
 		"what":    "vow",
 		"data":    "0x17560834075DA3Db54f737db74377E799c865821",
 		"tx_idx":  EthCatFileVowLog.TxIndex,
 		"log_idx": EthCatFileVowLog.Index,
 		"raw_log": rawCatFileVowLog,
 	},
-	ForeignKeyToValue: map[string]string{},
+	ForeignKeyValues: shared.ForeignKeyValues{},
 }

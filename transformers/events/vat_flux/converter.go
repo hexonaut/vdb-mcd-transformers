@@ -21,6 +21,7 @@ import (
 	"errors"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/vulcanize/mcd_transformers/transformers/shared/constants"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/vulcanize/mcd_transformers/transformers/shared"
@@ -53,9 +54,9 @@ func (VatFluxConverter) ToModels(ethLogs []types.Log) ([]shared.InsertionModel, 
 		model := shared.InsertionModel{
 			TableName: "vat_flux",
 			OrderedColumns: []string{
-				"header_id", "ilk_id", "src", "dst", "wad", "tx_idx", "log_idx", "raw_log",
+				"header_id", string(constants.IlkFK), "src", "dst", "wad", "tx_idx", "log_idx", "raw_log",
 			},
-			ColumnToValue: map[string]interface{}{
+			ColumnValues: shared.ColumnValues{
 				"src":     src,
 				"dst":     dst,
 				"wad":     wad.String(),
@@ -63,8 +64,8 @@ func (VatFluxConverter) ToModels(ethLogs []types.Log) ([]shared.InsertionModel, 
 				"log_idx": ethLog.Index,
 				"raw_log": rawLogJson,
 			},
-			ForeignKeyToValue: map[string]string{
-				"ilk_id": ilk,
+			ForeignKeyValues: shared.ForeignKeyValues{
+				constants.IlkFK: ilk,
 			},
 		}
 		models = append(models, model)

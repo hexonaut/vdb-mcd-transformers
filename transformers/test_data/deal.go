@@ -50,12 +50,12 @@ var DealModel = shared.InsertionModel{
 	OrderedColumns: []string{
 		"header_id", "bid_id", "contract_address", "log_idx", "tx_idx", "raw_log",
 	},
-	ColumnToValue: map[string]interface{}{
+	ColumnValues: shared.ColumnValues{
 		"bid_id":           "10000000000000000",
 		"contract_address": common.HexToAddress(constants.EthFlipContractAddressA()).Hex(),
 		"log_idx":          DealLogNote.Index,
 		"tx_idx":           DealLogNote.TxIndex,
 		"raw_log":          dealRawJson,
 	},
-	ForeignKeyToValue: map[string]string{},
+	ForeignKeyValues: shared.ForeignKeyValues{},
 }

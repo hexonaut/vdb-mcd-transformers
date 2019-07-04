@@ -60,7 +60,7 @@ var _ = Describe("Sin queue event computed columns", func() {
 		It("returns transaction for a sin_queue_event", func() {
 			expectedTx := Tx{
 				TransactionHash:  test_helpers.GetValidNullString("txHash"),
-				TransactionIndex: sql.NullInt64{Int64: int64(vowFessEvent.ColumnToValue["tx_idx"].(uint)), Valid: true},
+				TransactionIndex: sql.NullInt64{Int64: int64(vowFessEvent.ColumnValues["tx_idx"].(uint)), Valid: true},
 				BlockHeight:      sql.NullInt64{Int64: int64(fakeBlock), Valid: true},
 				BlockHash:        test_helpers.GetValidNullString(fakeHeader.Hash),
 				TxFrom:           test_helpers.GetValidNullString("fromAddress"),
@@ -86,7 +86,7 @@ var _ = Describe("Sin queue event computed columns", func() {
 			wrongTx := Tx{
 				TransactionHash: test_helpers.GetValidNullString("wrongTxHash"),
 				TransactionIndex: sql.NullInt64{
-					Int64: int64(vowFessEvent.ColumnToValue["tx_idx"].(uint)) + 1,
+					Int64: int64(vowFessEvent.ColumnValues["tx_idx"].(uint)) + 1,
 					Valid: true,
 				},
 				BlockHeight: sql.NullInt64{Int64: int64(fakeBlock), Valid: true},

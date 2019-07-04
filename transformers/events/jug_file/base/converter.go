@@ -45,14 +45,14 @@ func (JugFileBaseConverter) ToModels(ethLogs []types.Log) ([]shared.InsertionMod
 			OrderedColumns: []string{
 				"header_id", "what", "data", "log_idx", "tx_idx", "raw_log",
 			},
-			ColumnToValue: map[string]interface{}{
+			ColumnValues: shared.ColumnValues{
 				"what":    what,
 				"data":    data.String(),
 				"log_idx": ethLog.Index,
 				"tx_idx":  ethLog.TxIndex,
 				"raw_log": raw,
 			},
-			ForeignKeyToValue: map[string]string{},
+			ForeignKeyValues: shared.ForeignKeyValues{},
 		}
 		models = append(models, model)
 	}

@@ -19,6 +19,7 @@ package mat
 import (
 	"encoding/json"
 	"errors"
+	constants2 "github.com/vulcanize/mcd_transformers/transformers/shared/constants"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -51,17 +52,17 @@ func (SpotFileMatConverter) ToModels(ethLogs []types.Log) ([]shared.InsertionMod
 		model := shared.InsertionModel{
 			TableName: "spot_file_mat",
 			OrderedColumns: []string{
-				"header_id", "ilk_id", "what", "data", "log_idx", "tx_idx", "raw_log",
+				"header_id", string(constants2.IlkFK), "what", "data", "log_idx", "tx_idx", "raw_log",
 			},
-			ColumnToValue: map[string]interface{}{
+			ColumnValues: shared.ColumnValues{
 				"what":    what,
 				"data":    data.String(),
 				"log_idx": ethLog.Index,
 				"tx_idx":  ethLog.TxIndex,
 				"raw_log": raw,
 			},
-			ForeignKeyToValue: map[string]string{
-				"ilk_id": ilk,
+			ForeignKeyValues: shared.ForeignKeyValues{
+				constants2.IlkFK: ilk,
 			},
 		}
 		models = append(models, model)

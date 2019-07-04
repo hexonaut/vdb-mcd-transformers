@@ -44,14 +44,14 @@ func (DealConverter) ToModels(ethLogs []types.Log) (result []shared.InsertionMod
 			OrderedColumns: []string{
 				"header_id", "bid_id", "contract_address", "log_idx", "tx_idx", "raw_log",
 			},
-			ColumnToValue: map[string]interface{}{
+			ColumnValues: shared.ColumnValues{
 				"bid_id":           bidId.String(),
 				"contract_address": log.Address.String(),
 				"log_idx":          log.Index,
 				"tx_idx":           log.TxIndex,
 				"raw_log":          raw,
 			},
-			ForeignKeyToValue: map[string]string{},
+			ForeignKeyValues: shared.ForeignKeyValues{},
 		}
 		result = append(result, model)
 	}

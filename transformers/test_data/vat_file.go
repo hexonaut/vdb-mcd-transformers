@@ -51,14 +51,14 @@ var VatFileDebtCeilingModel = shared.InsertionModel{
 	OrderedColumns: []string{
 		"header_id", "what", "data", "log_idx", "tx_idx", "raw_log",
 	},
-	ColumnToValue: map[string]interface{}{
+	ColumnValues: shared.ColumnValues{
 		"what":    "Line",
 		"data":    "1000000000000000000000000000000000000000000000000000",
 		"log_idx": EthVatFileDebtCeilingLog.Index,
 		"tx_idx":  EthVatFileDebtCeilingLog.TxIndex,
 		"raw_log": rawVatFileDebtCeilingLog,
 	},
-	ForeignKeyToValue: map[string]string{},
+	ForeignKeyValues: shared.ForeignKeyValues{},
 }
 
 var EthVatFileIlkDustLog = types.Log{
@@ -83,17 +83,17 @@ var rawVatFileIlkDustLog, _ = json.Marshal(EthVatFileIlkDustLog)
 var VatFileIlkDustModel = shared.InsertionModel{
 	TableName: "vat_file_ilk",
 	OrderedColumns: []string{
-		"header_id", "ilk_id", "what", "data", "log_idx", "tx_idx", "raw_log",
+		"header_id", string(constants.IlkFK), "what", "data", "log_idx", "tx_idx", "raw_log",
 	},
-	ColumnToValue: map[string]interface{}{
+	ColumnValues: shared.ColumnValues{
 		"what":    "dust",
 		"data":    "10390649719961925488562719249749",
 		"log_idx": EthVatFileIlkDustLog.Index,
 		"tx_idx":  EthVatFileIlkDustLog.TxIndex,
 		"raw_log": rawVatFileIlkDustLog,
 	},
-	ForeignKeyToValue: map[string]string{
-		"ilk_id": "0x5245500000000000000000000000000000000000000000000000000000000000",
+	ForeignKeyValues: shared.ForeignKeyValues{
+		constants.IlkFK: "0x5245500000000000000000000000000000000000000000000000000000000000",
 	},
 }
 
@@ -119,17 +119,17 @@ var rawVatFileIlkLineLog, _ = json.Marshal(EthVatFileIlkLineLog)
 var VatFileIlkLineModel = shared.InsertionModel{
 	TableName: "vat_file_ilk",
 	OrderedColumns: []string{
-		"header_id", "ilk_id", "what", "data", "log_idx", "tx_idx", "raw_log",
+		"header_id", string(constants.IlkFK), "what", "data", "log_idx", "tx_idx", "raw_log",
 	},
-	ColumnToValue: map[string]interface{}{
+	ColumnValues: shared.ColumnValues{
 		"what":    "line",
 		"data":    "220086151196920075605",
 		"log_idx": EthVatFileIlkLineLog.Index,
 		"tx_idx":  EthVatFileIlkLineLog.TxIndex,
 		"raw_log": rawVatFileIlkLineLog,
 	},
-	ForeignKeyToValue: map[string]string{
-		"ilk_id": "0x5245500000000000000000000000000000000000000000000000000000000000",
+	ForeignKeyValues: shared.ForeignKeyValues{
+		constants.IlkFK: "0x5245500000000000000000000000000000000000000000000000000000000000",
 	},
 }
 
@@ -154,16 +154,16 @@ var rawVatFileIlkSpotLog, _ = json.Marshal(EthVatFileIlkSpotLog)
 var VatFileIlkSpotModel = shared.InsertionModel{
 	TableName: "vat_file_ilk",
 	OrderedColumns: []string{
-		"header_id", "ilk_id", "what", "data", "log_idx", "tx_idx", "raw_log",
+		"header_id", string(constants.IlkFK), "what", "data", "log_idx", "tx_idx", "raw_log",
 	},
-	ColumnToValue: map[string]interface{}{
+	ColumnValues: shared.ColumnValues{
 		"what":    "spot",
 		"data":    "91323333333333333333333333333",
 		"log_idx": EthVatFileIlkSpotLog.Index,
 		"tx_idx":  EthVatFileIlkSpotLog.TxIndex,
 		"raw_log": rawVatFileIlkSpotLog,
 	},
-	ForeignKeyToValue: map[string]string{
-		"ilk_id": "0x4554480000000000000000000000000000000000000000000000000000000000",
+	ForeignKeyValues: shared.ForeignKeyValues{
+		constants.IlkFK: "0x4554480000000000000000000000000000000000000000000000000000000000",
 	},
 }

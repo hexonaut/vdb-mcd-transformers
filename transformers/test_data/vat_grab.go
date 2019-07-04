@@ -32,9 +32,9 @@ var rawVatGrabLogWithPositiveDink, _ = json.Marshal(EthVatGrabLogWithPositiveDin
 var VatGrabModelWithPositiveDink = shared.InsertionModel{
 	TableName: "vat_grab",
 	OrderedColumns: []string{
-		"header_id", "urn_id", "v", "w", "dink", "dart", "log_idx", "tx_idx", "raw_log",
+		"header_id", string(constants.UrnFK), "v", "w", "dink", "dart", "log_idx", "tx_idx", "raw_log",
 	},
-	ColumnToValue: map[string]interface{}{
+	ColumnValues: shared.ColumnValues{
 		"v":       "0x7340e006f4135BA6970D43bf43d88DCAD4e7a8CA",
 		"w":       "0x7526EB4f95e2a1394797Cb38a921Fb1EbA09291B",
 		"dink":    "1000000000000000000000",
@@ -43,9 +43,9 @@ var VatGrabModelWithPositiveDink = shared.InsertionModel{
 		"tx_idx":  EthVatGrabLogWithPositiveDink.TxIndex,
 		"raw_log": rawVatGrabLogWithPositiveDink,
 	},
-	ForeignKeyToValue: map[string]string{
-		"ilk_id": "0x66616b6520696c6b000000000000000000000000000000000000000000000000",
-		"urn_id": "0x07Fa9eF6609cA7921112231F8f195138ebbA2977",
+	ForeignKeyValues: shared.ForeignKeyValues{
+		constants.IlkFK: "0x66616b6520696c6b000000000000000000000000000000000000000000000000",
+		constants.UrnFK: "0x07Fa9eF6609cA7921112231F8f195138ebbA2977",
 	},
 }
 
@@ -70,9 +70,9 @@ var rawVatGrabLogWithNegativeDink, _ = json.Marshal(EthVatGrabLogWithNegativeDin
 var VatGrabModelWithNegativeDink = shared.InsertionModel{
 	TableName: "vat_grab",
 	OrderedColumns: []string{
-		"header_id", "urn_id", "v", "w", "dink", "dart", "log_idx", "tx_idx", "raw_log",
+		"header_id", string(constants.UrnFK), "v", "w", "dink", "dart", "log_idx", "tx_idx", "raw_log",
 	},
-	ColumnToValue: map[string]interface{}{
+	ColumnValues: shared.ColumnValues{
 		"v":       "0x7340e006f4135BA6970D43bf43d88DCAD4e7a8CA",
 		"w":       "0x7526EB4f95e2a1394797Cb38a921Fb1EbA09291B",
 		"dink":    "-1000000000000000000000",
@@ -81,8 +81,8 @@ var VatGrabModelWithNegativeDink = shared.InsertionModel{
 		"tx_idx":  EthVatGrabLogWithNegativeDink.TxIndex,
 		"raw_log": rawVatGrabLogWithNegativeDink,
 	},
-	ForeignKeyToValue: map[string]string{
-		"ilk_id": "0x66616b6520696c6b000000000000000000000000000000000000000000000000",
-		"urn_id": "0x07Fa9eF6609cA7921112231F8f195138ebbA2977",
+	ForeignKeyValues: shared.ForeignKeyValues{
+		constants.IlkFK: "0x66616b6520696c6b000000000000000000000000000000000000000000000000",
+		constants.UrnFK: "0x07Fa9eF6609cA7921112231F8f195138ebbA2977",
 	},
 }

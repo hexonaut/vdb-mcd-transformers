@@ -42,9 +42,9 @@ var _ = Describe("Jug init converter", func() {
 
 		Expect(actual.TableName).To(Equal(expected.TableName))
 		Expect(actual.OrderedColumns).To(Equal(expected.OrderedColumns))
-		Expect(actual.ForeignKeyToValue).To(Equal(expected.ForeignKeyToValue))
-		Expect(actual.ColumnToValue["log_idx"]).To(Equal(expected.ColumnToValue["log_idx"]))
-		Expect(actual.ColumnToValue["tx_idx"]).To(Equal(expected.ColumnToValue["tx_idx"]))
-		Expect(actual.ColumnToValue["raw_log"]).To(Equal(expected.ColumnToValue["raw_log"]))
+		Expect(actual.ForeignKeyValues).To(Equal(expected.ForeignKeyValues))
+		Expect(actual.ColumnValues["log_idx"]).To(Equal(expected.ColumnValues["log_idx"]))
+		Expect(actual.ColumnValues["tx_idx"]).To(Equal(expected.ColumnValues["tx_idx"]))
+		Expect(actual.ColumnValues["raw_log"]).To(Equal(expected.ColumnValues["raw_log"]))
 	})
 })

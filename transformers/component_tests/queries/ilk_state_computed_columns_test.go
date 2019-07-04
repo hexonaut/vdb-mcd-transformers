@@ -2,6 +2,7 @@ package queries
 
 import (
 	"github.com/vulcanize/mcd_transformers/transformers/shared"
+	"github.com/vulcanize/mcd_transformers/transformers/shared/constants"
 	"math/rand"
 
 	. "github.com/onsi/ginkgo"
@@ -55,8 +56,8 @@ var _ = Describe("Ilk state computed columns", func() {
 			frobRepo := vat_frob.VatFrobRepository{}
 			frobRepo.SetDB(db)
 			frobEvent := test_data.CopyModel(test_data.VatFrobModelWithPositiveDart)
-			frobEvent.ForeignKeyToValue["urn_id"] = fakeGuy
-			frobEvent.ForeignKeyToValue["ilk_id"] = test_helpers.FakeIlk.Hex
+			frobEvent.ForeignKeyValues[constants.UrnFK] = fakeGuy
+			frobEvent.ForeignKeyValues[constants.IlkFK] = test_helpers.FakeIlk.Hex
 			insertFrobErr := frobRepo.Create(headerId, []shared.InsertionModel{frobEvent})
 			Expect(insertFrobErr).NotTo(HaveOccurred())
 
@@ -71,8 +72,8 @@ var _ = Describe("Ilk state computed columns", func() {
 			expectedFrobs := []test_helpers.FrobEvent{{
 				IlkIdentifier: test_helpers.FakeIlk.Identifier,
 				UrnIdentifier: fakeGuy,
-				Dink:          frobEvent.ColumnToValue["dink"].(string),
-				Dart:          frobEvent.ColumnToValue["dart"].(string),
+				Dink:          frobEvent.ColumnValues["dink"].(string),
+				Dart:          frobEvent.ColumnValues["dart"].(string),
 			}}
 
 			Expect(actualFrobs).To(Equal(expectedFrobs))
@@ -84,7 +85,7 @@ var _ = Describe("Ilk state computed columns", func() {
 			fileRepo := ilk.VatFileIlkRepository{}
 			fileRepo.SetDB(db)
 			fileEvent := test_data.VatFileIlkDustModel
-			fileEvent.ForeignKeyToValue["ilk_id"] = test_helpers.FakeIlk.Hex
+			fileEvent.ForeignKeyValues[constants.IlkFK] = test_helpers.FakeIlk.Hex
 			insertFileErr := fileRepo.Create(headerId, []shared.InsertionModel{fileEvent})
 			Expect(insertFileErr).NotTo(HaveOccurred())
 
@@ -98,8 +99,8 @@ var _ = Describe("Ilk state computed columns", func() {
 
 			expectedFiles := []test_helpers.IlkFileEvent{{
 				IlkIdentifier: test_helpers.GetValidNullString(test_helpers.FakeIlk.Identifier),
-				What:          fileEvent.ColumnToValue["what"].(string),
-				Data:          fileEvent.ColumnToValue["data"].(string),
+				What:          fileEvent.ColumnValues["what"].(string),
+				Data:          fileEvent.ColumnValues["data"].(string),
 			}}
 
 			Expect(actualFiles).To(Equal(expectedFiles))

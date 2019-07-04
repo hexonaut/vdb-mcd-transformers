@@ -22,6 +22,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
+	constants2 "github.com/vulcanize/mcd_transformers/transformers/shared/constants"
 
 	"github.com/vulcanize/mcd_transformers/transformers/shared"
 	"github.com/vulcanize/vulcanizedb/libraries/shared/constants"
@@ -61,9 +62,9 @@ func (VatForkConverter) ToModels(ethLogs []types.Log) ([]shared.InsertionModel, 
 		model := shared.InsertionModel{
 			TableName: "vat_fork",
 			OrderedColumns: []string{
-				"header_id", "ilk_id", "src", "dst", "dink", "dart", "log_idx", "tx_idx", "raw_log",
+				"header_id", string(constants2.IlkFK), "src", "dst", "dink", "dart", "log_idx", "tx_idx", "raw_log",
 			},
-			ColumnToValue: map[string]interface{}{
+			ColumnValues: shared.ColumnValues{
 				"src":     src,
 				"dst":     dst,
 				"dink":    dink.String(),
@@ -72,8 +73,8 @@ func (VatForkConverter) ToModels(ethLogs []types.Log) ([]shared.InsertionModel, 
 				"tx_idx":  ethLog.TxIndex,
 				"raw_log": rawLogJson,
 			},
-			ForeignKeyToValue: map[string]string{
-				"ilk_id": ilk,
+			ForeignKeyValues: shared.ForeignKeyValues{
+				constants2.IlkFK: ilk,
 			},
 		}
 		models = append(models, model)

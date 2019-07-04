@@ -48,9 +48,9 @@ var rawFluxLog, _ = json.Marshal(EthVatFluxLog)
 var VatFluxModel = shared.InsertionModel{
 	TableName: "vat_flux",
 	OrderedColumns: []string{
-		"header_id", "ilk_id", "src", "dst", "wad", "tx_idx", "log_idx", "raw_log",
+		"header_id", string(constants.IlkFK), "src", "dst", "wad", "tx_idx", "log_idx", "raw_log",
 	},
-	ColumnToValue: map[string]interface{}{
+	ColumnValues: shared.ColumnValues{
 		"src":     "0x07Fa9eF6609cA7921112231F8f195138ebbA2977",
 		"dst":     "0x7340e006f4135BA6970D43bf43d88DCAD4e7a8CA",
 		"wad":     "1000000000000",
@@ -58,7 +58,7 @@ var VatFluxModel = shared.InsertionModel{
 		"log_idx": EthVatFluxLog.Index,
 		"raw_log": rawFluxLog,
 	},
-	ForeignKeyToValue: map[string]string{
-		"ilk_id": "0x66616b6520696c6b000000000000000000000000000000000000000000000000",
+	ForeignKeyValues: shared.ForeignKeyValues{
+		constants.IlkFK: "0x66616b6520696c6b000000000000000000000000000000000000000000000000",
 	},
 }

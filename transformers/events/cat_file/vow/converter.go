@@ -50,14 +50,14 @@ func (CatFileVowConverter) ToModels(ethLogs []types.Log) ([]shared.InsertionMode
 			OrderedColumns: []string{
 				"header_id", "what", "data", "tx_idx", "log_idx", "raw_log",
 			},
-			ColumnToValue: map[string]interface{}{
+			ColumnValues: shared.ColumnValues{
 				"what":    what,
 				"data":    data,
 				"tx_idx":  ethLog.TxIndex,
 				"log_idx": ethLog.Index,
 				"raw_log": raw,
 			},
-			ForeignKeyToValue: map[string]string{},
+			ForeignKeyValues: shared.ForeignKeyValues{},
 		}
 		results = append(results, result)
 	}

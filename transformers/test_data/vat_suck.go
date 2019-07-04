@@ -50,7 +50,7 @@ var VatSuckModel = shared.InsertionModel{
 	OrderedColumns: []string{
 		"header_id", "u", "v", "rad", "log_idx", "tx_idx", "raw_log",
 	},
-	ColumnToValue: map[string]interface{}{
+	ColumnValues: shared.ColumnValues{
 		"u":       "0x07Fa9eF6609cA7921112231F8f195138ebbA2977",
 		"v":       "0x7340e006f4135BA6970D43bf43d88DCAD4e7a8CA",
 		"rad":     "1000000000000000000000",
@@ -58,5 +58,5 @@ var VatSuckModel = shared.InsertionModel{
 		"tx_idx":  EthVatSuckLog.TxIndex,
 		"raw_log": rawVatSuckLog,
 	},
-	ForeignKeyToValue: map[string]string{},
+	ForeignKeyValues: shared.ForeignKeyValues{},
 }

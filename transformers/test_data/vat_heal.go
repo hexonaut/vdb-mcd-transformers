@@ -50,11 +50,11 @@ var VatHealModelWithPositiveRad = shared.InsertionModel{
 	OrderedColumns: []string{
 		"header_id", "rad", "log_idx", "tx_idx", "raw_log",
 	},
-	ColumnToValue: map[string]interface{}{
+	ColumnValues: shared.ColumnValues{
 		"rad":     "10001",
 		"log_idx": EthVatHealLogWithPositiveRad.Index,
 		"tx_idx":  EthVatHealLogWithPositiveRad.TxIndex,
 		"raw_log": rawVatHealLogWithPositiveRad,
 	},
-	ForeignKeyToValue: map[string]string{},
+	ForeignKeyValues: shared.ForeignKeyValues{},
 }

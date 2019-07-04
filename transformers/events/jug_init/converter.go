@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/vulcanize/mcd_transformers/transformers/shared"
+	"github.com/vulcanize/mcd_transformers/transformers/shared/constants"
 
 	"github.com/ethereum/go-ethereum/core/types"
 )
@@ -41,14 +42,14 @@ func (JugInitConverter) ToModels(ethLogs []types.Log) ([]shared.InsertionModel, 
 
 		model := shared.InsertionModel{
 			TableName:      "jug_init",
-			OrderedColumns: []string{"header_id", "ilk_id", "log_idx", "tx_idx", "raw_log"},
-			ColumnToValue: map[string]interface{}{
+			OrderedColumns: []string{"header_id", string(constants.IlkFK), "log_idx", "tx_idx", "raw_log"},
+			ColumnValues: shared.ColumnValues{
 				"log_idx": ethLog.Index,
 				"tx_idx":  ethLog.TxIndex,
 				"raw_log": raw,
 			},
-			ForeignKeyToValue: map[string]string{
-				"ilk_id": ilk,
+			ForeignKeyValues: shared.ForeignKeyValues{
+				constants.IlkFK: ilk,
 			},
 		}
 		models = append(models, model)

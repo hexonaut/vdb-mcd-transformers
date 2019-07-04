@@ -60,7 +60,7 @@ var TendModel = shared.InsertionModel{
 	OrderedColumns: []string{
 		"header_id", "bid_id", "lot", "bid", "contract_address", "log_idx", "tx_idx", "raw_log",
 	},
-	ColumnToValue: map[string]interface{}{
+	ColumnValues: shared.ColumnValues{
 		"bid_id":           strconv.FormatInt(tendBidId, 10),
 		"lot":              tendLot,
 		"bid":              tendBid,
@@ -69,5 +69,5 @@ var TendModel = shared.InsertionModel{
 		"tx_idx":           TendLogNote.TxIndex,
 		"raw_log":          rawTendLog,
 	},
-	ForeignKeyToValue: map[string]string{},
+	ForeignKeyValues: shared.ForeignKeyValues{},
 }

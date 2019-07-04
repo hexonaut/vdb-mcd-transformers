@@ -24,3 +24,10 @@ const (
 	Flip      utils.Key = "flip"
 	Timestamp utils.Key = "timestamp"
 )
+
+type ForeignKeyField string
+
+const (
+	IlkFK ForeignKeyField = "ilk_id"
+	UrnFK ForeignKeyField = "urn_id"
+)

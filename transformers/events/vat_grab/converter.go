@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
+	constants2 "github.com/vulcanize/mcd_transformers/transformers/shared/constants"
 
 	"github.com/vulcanize/vulcanizedb/libraries/shared/constants"
 
@@ -47,9 +48,9 @@ func (VatGrabConverter) ToModels(ethLogs []types.Log) ([]shared.InsertionModel, 
 		model := shared.InsertionModel{
 			TableName: "vat_grab",
 			OrderedColumns: []string{
-				"header_id", "urn_id", "v", "w", "dink", "dart", "log_idx", "tx_idx", "raw_log",
+				"header_id", string(constants2.UrnFK), "v", "w", "dink", "dart", "log_idx", "tx_idx", "raw_log",
 			},
-			ColumnToValue: map[string]interface{}{
+			ColumnValues: shared.ColumnValues{
 				"v":       v,
 				"w":       w,
 				"dink":    dink.String(),
@@ -58,9 +59,9 @@ func (VatGrabConverter) ToModels(ethLogs []types.Log) ([]shared.InsertionModel, 
 				"tx_idx":  ethLog.TxIndex,
 				"raw_log": raw,
 			},
-			ForeignKeyToValue: map[string]string{
-				"ilk_id": ilk,
-				"urn_id": urn,
+			ForeignKeyValues: shared.ForeignKeyValues{
+				constants2.IlkFK: ilk,
+				constants2.UrnFK: urn,
 			},
 		}
 		models = append(models, model)

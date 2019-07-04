@@ -51,7 +51,7 @@ var VatMoveModel = shared.InsertionModel{
 	OrderedColumns: []string{
 		"header_id", "src", "dst", "rad", "log_idx", "tx_idx", "raw_log",
 	},
-	ColumnToValue: map[string]interface{}{
+	ColumnValues: shared.ColumnValues{
 		"src":     "0xA730d1FF8B6Bc74a26d54c20a9dda539909BaB0e",
 		"dst":     "0xB730D1fF8b6BC74a26D54c20a9ddA539909BAb0e",
 		"rad":     "42",
@@ -59,5 +59,5 @@ var VatMoveModel = shared.InsertionModel{
 		"tx_idx":  EthVatMoveLog.TxIndex,
 		"raw_log": rawVatMoveLog,
 	},
-	ForeignKeyToValue: map[string]string{},
+	ForeignKeyValues: shared.ForeignKeyValues{},
 }

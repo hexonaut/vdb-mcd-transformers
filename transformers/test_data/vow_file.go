@@ -48,12 +48,12 @@ var VowFileModel = shared.InsertionModel{
 	OrderedColumns: []string{
 		"header_id", "what", "data", "log_idx", "tx_idx", "raw_log",
 	},
-	ColumnToValue: map[string]interface{}{
+	ColumnValues: shared.ColumnValues{
 		"what":    "wait",
 		"data":    "100000000000000000000000",
 		"log_idx": EthVowFileLog.Index,
 		"tx_idx":  EthVowFileLog.TxIndex,
 		"raw_log": rawVowFileLog,
 	},
-	ForeignKeyToValue: map[string]string{},
+	ForeignKeyValues: shared.ForeignKeyValues{},
 }

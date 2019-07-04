@@ -19,6 +19,7 @@ package vat_fold
 import (
 	"encoding/json"
 	"errors"
+	"github.com/vulcanize/mcd_transformers/transformers/shared/constants"
 
 	"github.com/ethereum/go-ethereum/core/types"
 
@@ -47,17 +48,17 @@ func (VatFoldConverter) ToModels(ethLogs []types.Log) ([]shared.InsertionModel, 
 		model := shared.InsertionModel{
 			TableName: "vat_fold",
 			OrderedColumns: []string{
-				"header_id", "urn_id", "rate", "log_idx", "tx_idx", "raw_log",
+				"header_id", string(constants.UrnFK), "rate", "log_idx", "tx_idx", "raw_log",
 			},
-			ColumnToValue: map[string]interface{}{
+			ColumnValues: shared.ColumnValues{
 				"rate":    rate.String(),
 				"log_idx": ethLog.Index,
 				"tx_idx":  ethLog.TxIndex,
 				"raw_log": raw,
 			},
-			ForeignKeyToValue: map[string]string{
-				"ilk_id": ilk,
-				"urn_id": urn,
+			ForeignKeyValues: shared.ForeignKeyValues{
+				constants.IlkFK: ilk,
+				constants.UrnFK: urn,
 			},
 		}
 		models = append(models, model)

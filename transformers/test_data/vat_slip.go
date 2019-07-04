@@ -49,17 +49,17 @@ var rawVatSlipLogWithPositiveWad, _ = json.Marshal(EthVatSlipLogWithPositiveWad)
 var VatSlipModelWithPositiveWad = shared.InsertionModel{
 	TableName: "vat_slip",
 	OrderedColumns: []string{
-		"header_id", "ilk_id", "usr", "wad", "tx_idx", "log_idx", "raw_log",
+		"header_id", string(constants.IlkFK), "usr", "wad", "tx_idx", "log_idx", "raw_log",
 	},
-	ColumnToValue: map[string]interface{}{
+	ColumnValues: shared.ColumnValues{
 		"usr":     "0x5c8c8e5895B9cCf34ACF391C99E13C79EE2eFb46",
 		"wad":     "10000000000000000",
 		"tx_idx":  EthVatSlipLogWithPositiveWad.TxIndex,
 		"log_idx": EthVatSlipLogWithPositiveWad.Index,
 		"raw_log": rawVatSlipLogWithPositiveWad,
 	},
-	ForeignKeyToValue: map[string]string{
-		"ilk_id": "0x4554482d41000000000000000000000000000000000000000000000000000000",
+	ForeignKeyValues: shared.ForeignKeyValues{
+		constants.IlkFK: "0x4554482d41000000000000000000000000000000000000000000000000000000",
 	},
 }
 
@@ -84,16 +84,16 @@ var rawVatSlipLogWithNegativeWad, _ = json.Marshal(EthVatSlipLogWithNegativeWad)
 var VatSlipModelWithNegativeWad = shared.InsertionModel{
 	TableName: "vat_slip",
 	OrderedColumns: []string{
-		"header_id", "ilk_id", "usr", "wad", "tx_idx", "log_idx", "raw_log",
+		"header_id", string(constants.IlkFK), "usr", "wad", "tx_idx", "log_idx", "raw_log",
 	},
-	ColumnToValue: map[string]interface{}{
+	ColumnValues: shared.ColumnValues{
 		"usr":     "0xFc7440E2Ed4A3AEb14d40c00f02a14221Be0474d",
 		"wad":     "-5000000000000000",
 		"tx_idx":  EthVatSlipLogWithNegativeWad.TxIndex,
 		"log_idx": EthVatSlipLogWithNegativeWad.Index,
 		"raw_log": rawVatSlipLogWithNegativeWad,
 	},
-	ForeignKeyToValue: map[string]string{
-		"ilk_id": "0x4554482d41000000000000000000000000000000000000000000000000000000",
+	ForeignKeyValues: shared.ForeignKeyValues{
+		constants.IlkFK: "0x4554482d41000000000000000000000000000000000000000000000000000000",
 	},
 }

@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/vulcanize/mcd_transformers/transformers/shared"
+	"github.com/vulcanize/mcd_transformers/transformers/shared/constants"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -43,16 +44,16 @@ func (SpotFilePipConverter) ToModels(ethLogs []types.Log) ([]shared.InsertionMod
 		model := shared.InsertionModel{
 			TableName: "spot_file_pip",
 			OrderedColumns: []string{
-				"header_id", "ilk_id", "pip", "log_idx", "tx_idx", "raw_log",
+				"header_id", string(constants.IlkFK), "pip", "log_idx", "tx_idx", "raw_log",
 			},
-			ColumnToValue: map[string]interface{}{
+			ColumnValues: shared.ColumnValues{
 				"pip":     pip,
 				"log_idx": ethLog.Index,
 				"tx_idx":  ethLog.TxIndex,
 				"raw_log": raw,
 			},
-			ForeignKeyToValue: map[string]string{
-				"ilk_id": ilk,
+			ForeignKeyValues: shared.ForeignKeyValues{
+				constants.IlkFK: ilk,
 			},
 		}
 		models = append(models, model)

@@ -32,9 +32,9 @@ var rawVatForkLogWithNegativeDinkDart, _ = json.Marshal(EthVatForkLogWithNegativ
 var VatForkModelWithNegativeDinkDart = shared.InsertionModel{
 	TableName: "vat_fork",
 	OrderedColumns: []string{
-		"header_id", "ilk_id", "src", "dst", "dink", "dart", "log_idx", "tx_idx", "raw_log",
+		"header_id", string(constants.IlkFK), "src", "dst", "dink", "dart", "log_idx", "tx_idx", "raw_log",
 	},
-	ColumnToValue: map[string]interface{}{
+	ColumnValues: shared.ColumnValues{
 		"src":     "0x07Fa9eF6609cA7921112231F8f195138ebbA2977",
 		"dst":     "0x7526EB4f95e2a1394797Cb38a921Fb1EbA09291B",
 		"dink":    "-1000000000000000000000",
@@ -43,8 +43,8 @@ var VatForkModelWithNegativeDinkDart = shared.InsertionModel{
 		"tx_idx":  EthVatForkLogWithNegativeDinkDart.TxIndex,
 		"raw_log": rawVatForkLogWithNegativeDinkDart,
 	},
-	ForeignKeyToValue: map[string]string{
-		"ilk_id": "0x66616b6520696c6b000000000000000000000000000000000000000000000000",
+	ForeignKeyValues: shared.ForeignKeyValues{
+		constants.IlkFK: "0x66616b6520696c6b000000000000000000000000000000000000000000000000",
 	},
 }
 
@@ -69,9 +69,9 @@ var rawVatForkLogWithPositiveDinkDart, _ = json.Marshal(EthVatForkLogWithPositiv
 var VatForkModelWithPositiveDinkDart = shared.InsertionModel{
 	TableName: "vat_fork",
 	OrderedColumns: []string{
-		"header_id", "ilk_id", "src", "dst", "dink", "dart", "log_idx", "tx_idx", "raw_log",
+		"header_id", string(constants.IlkFK), "src", "dst", "dink", "dart", "log_idx", "tx_idx", "raw_log",
 	},
-	ColumnToValue: map[string]interface{}{
+	ColumnValues: shared.ColumnValues{
 		"src":     "0x07Fa9eF6609cA7921112231F8f195138ebbA2977",
 		"dst":     "0x7526EB4f95e2a1394797Cb38a921Fb1EbA09291B",
 		"dink":    "100000000000000",
@@ -80,7 +80,7 @@ var VatForkModelWithPositiveDinkDart = shared.InsertionModel{
 		"tx_idx":  EthVatForkLogWithPositiveDinkDart.TxIndex,
 		"raw_log": rawVatForkLogWithPositiveDinkDart,
 	},
-	ForeignKeyToValue: map[string]string{
-		"ilk_id": "0x66616b6520696c6b000000000000000000000000000000000000000000000000",
+	ForeignKeyValues: shared.ForeignKeyValues{
+		constants.IlkFK: "0x66616b6520696c6b000000000000000000000000000000000000000000000000",
 	},
 }

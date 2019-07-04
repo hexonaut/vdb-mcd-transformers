@@ -46,13 +46,13 @@ func (VatHealConverter) ToModels(ethLogs []types.Log) ([]shared.InsertionModel, 
 			OrderedColumns: []string{
 				"header_id", "rad", "log_idx", "tx_idx", "raw_log",
 			},
-			ColumnToValue: map[string]interface{}{
+			ColumnValues: shared.ColumnValues{
 				"rad":     radInt.String(),
 				"log_idx": ethLog.Index,
 				"tx_idx":  ethLog.TxIndex,
 				"raw_log": rawLogJson,
 			},
-			ForeignKeyToValue: map[string]string{},
+			ForeignKeyValues: shared.ForeignKeyValues{},
 		}
 		models = append(models, model)
 	}

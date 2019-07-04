@@ -47,13 +47,13 @@ func (VowFessConverter) ToModels(ethLogs []types.Log) ([]shared.InsertionModel, 
 			OrderedColumns: []string{
 				"header_id", "tab", "log_idx", "tx_idx", "raw_log",
 			},
-			ColumnToValue: map[string]interface{}{
+			ColumnValues: shared.ColumnValues{
 				"tab":     tab.String(),
 				"log_idx": ethLog.Index,
 				"tx_idx":  ethLog.TxIndex,
 				"raw_log": raw,
 			},
-			ForeignKeyToValue: map[string]string{},
+			ForeignKeyValues: shared.ForeignKeyValues{},
 		}
 		models = append(models, model)
 	}

@@ -21,6 +21,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/vulcanize/mcd_transformers/test_config"
+	"github.com/vulcanize/mcd_transformers/transformers/shared/constants"
 	"github.com/vulcanize/vulcanizedb/pkg/datastore/postgres"
 	"github.com/vulcanize/vulcanizedb/pkg/datastore/postgres/repositories"
 	"github.com/vulcanize/vulcanizedb/pkg/fakes"
@@ -58,17 +59,19 @@ var _ = Describe("Create function", func() {
 		headerRepository = repositories.NewHeaderRepository(db)
 
 		testModel = InsertionModel{
-			TableName:      "testEvent",
-			OrderedColumns: []string{"header_id", "log_idx", "tx_idx", "raw_log", "ilk_id", "urn_id", "variable1"},
-			ColumnToValue: map[string]interface{}{
+			TableName: "testEvent",
+			OrderedColumns: []string{
+				"header_id", "log_idx", "tx_idx", "raw_log", string(constants.IlkFK), string(constants.UrnFK), "variable1",
+			},
+			ColumnValues: ColumnValues{
 				"log_idx":   "1",
 				"tx_idx":    "2",
 				"raw_log":   fakeLog,
 				"variable1": "value1",
 			},
-			ForeignKeyToValue: map[string]string{
-				"ilk_id": hexIlk,
-				"urn_id": "0x12345",
+			ForeignKeyValues: ForeignKeyValues{
+				constants.IlkFK: hexIlk,
+				constants.UrnFK: "0x12345",
 			},
 		}
 	})
@@ -100,9 +103,9 @@ var _ = Describe("Create function", func() {
             FROM maker.testEvent;`)
 		Expect(dbErr).NotTo(HaveOccurred())
 
-		Expect(res.LogIdx).To(Equal(testModel.ColumnToValue["log_idx"]))
-		Expect(res.TxIdx).To(Equal(testModel.ColumnToValue["tx_idx"]))
-		Expect(res.Variable1).To(Equal(testModel.ColumnToValue["variable1"]))
+		Expect(res.LogIdx).To(Equal(testModel.ColumnValues["log_idx"]))
+		Expect(res.TxIdx).To(Equal(testModel.ColumnValues["tx_idx"]))
+		Expect(res.Variable1).To(Equal(testModel.ColumnValues["variable1"]))
 	})
 
 	Describe("returns errors", func() {
@@ -115,8 +118,8 @@ var _ = Describe("Create function", func() {
 			brokenModel := InsertionModel{
 				TableName:      "testEvent",
 				OrderedColumns: nil,
-				ColumnToValue:  nil,
-				ForeignKeyToValue: map[string]string{
+				ColumnValues:   nil,
+				ForeignKeyValues: ForeignKeyValues{
 					"unknownFK": "value",
 				},
 			}
@@ -130,16 +133,18 @@ var _ = Describe("Create function", func() {
 			brokenModel := InsertionModel{
 				TableName: "testEvent",
 				// Wrong name of last column compared to DB, will generate incorrect query
-				OrderedColumns: []string{"header_id", "log_idx", "tx_idx", "raw_log", "ilk_id", "urn_id", "variable2"},
-				ColumnToValue: map[string]interface{}{
+				OrderedColumns: []string{
+					"header_id", "log_idx", "tx_idx", "raw_log", string(constants.IlkFK), string(constants.UrnFK), "variable2",
+				},
+				ColumnValues: ColumnValues{
 					"log_idx":   "1",
 					"tx_idx":    "2",
 					"raw_log":   fakeLog,
 					"variable1": "value1",
 				},
-				ForeignKeyToValue: map[string]string{
-					"ilk_id": hexIlk,
-					"urn_id": "0x12345",
+				ForeignKeyValues: ForeignKeyValues{
+					constants.IlkFK: hexIlk,
+					constants.UrnFK: "0x12345",
 				},
 			}
 
@@ -162,17 +167,19 @@ var _ = Describe("Create function", func() {
 		Expect(headerErr).NotTo(HaveOccurred())
 
 		conflictingModel := InsertionModel{
-			TableName:      "testEvent",
-			OrderedColumns: []string{"header_id", "log_idx", "tx_idx", "raw_log", "ilk_id", "urn_id", "variable1"},
-			ColumnToValue: map[string]interface{}{
+			TableName: "testEvent",
+			OrderedColumns: []string{
+				"header_id", "log_idx", "tx_idx", "raw_log", string(constants.IlkFK), string(constants.UrnFK), "variable1",
+			},
+			ColumnValues: ColumnValues{
 				"log_idx":   "1",
 				"tx_idx":    "2",
 				"raw_log":   fakeLog,
 				"variable1": "conflictingValue",
 			},
-			ForeignKeyToValue: map[string]string{
-				"ilk_id": hexIlk,
-				"urn_id": "0x12345",
+			ForeignKeyValues: ForeignKeyValues{
+				constants.IlkFK: hexIlk,
+				constants.UrnFK: "0x12345",
 			},
 		}
 
@@ -183,7 +190,7 @@ var _ = Describe("Create function", func() {
 		dbErr := db.Get(&res, `SELECT log_idx, tx_idx, raw_log, variable1
             FROM maker.testEvent;`)
 		Expect(dbErr).NotTo(HaveOccurred())
-		Expect(res.Variable1).To(Equal(conflictingModel.ColumnToValue["variable1"]))
+		Expect(res.Variable1).To(Equal(conflictingModel.ColumnValues["variable1"]))
 	})
 
 	It("marks headers checked", func() {
@@ -209,12 +216,12 @@ var _ = Describe("Create function", func() {
 
 	It("looks up FK id and persists in columnToValue", func() {
 		guy := "0x12345"
-		fkToValue := map[string]string{"ilk_id": hexIlk, "urn_id": guy}
-		columnToValue := map[string]interface{}{}
+		foreignKeyValues := ForeignKeyValues{constants.IlkFK: hexIlk, constants.UrnFK: guy}
+		columnToValue := ColumnValues{}
 
 		tx, txErr := db.Beginx()
 		Expect(txErr).NotTo(HaveOccurred())
-		fkErr := populateForeignKeyIDs(fkToValue, columnToValue, tx)
+		fkErr := populateForeignKeyIDs(foreignKeyValues, columnToValue, tx)
 		Expect(fkErr).NotTo(HaveOccurred())
 		commitErr := tx.Commit()
 		Expect(commitErr).NotTo(HaveOccurred())
@@ -222,7 +229,7 @@ var _ = Describe("Create function", func() {
 		var expectedUrnID int
 		urnErr := db.Get(&expectedUrnID, `SELECT id FROM maker.urns WHERE identifier = $1`, guy)
 		Expect(urnErr).NotTo(HaveOccurred())
-		actualUrnID := columnToValue["urn_id"].(int)
+		actualUrnID := columnToValue[string(constants.UrnFK)].(int)
 		Expect(actualUrnID).To(Equal(expectedUrnID))
 	})
 })

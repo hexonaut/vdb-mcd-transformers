@@ -49,11 +49,11 @@ var VowFessModel = shared.InsertionModel{
 	OrderedColumns: []string{
 		"header_id", "tab", "log_idx", "tx_idx", "raw_log",
 	},
-	ColumnToValue: map[string]interface{}{
+	ColumnValues: shared.ColumnValues{
 		"tab":     "1337",
 		"log_idx": EthVowFessLog.Index,
 		"tx_idx":  EthVowFessLog.TxIndex,
 		"raw_log": rawVowFessLog,
 	},
-	ForeignKeyToValue: map[string]string{},
+	ForeignKeyValues: shared.ForeignKeyValues{},
 }

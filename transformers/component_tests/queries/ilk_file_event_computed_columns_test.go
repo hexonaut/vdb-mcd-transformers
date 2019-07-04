@@ -3,6 +3,7 @@ package queries
 import (
 	"database/sql"
 	"github.com/vulcanize/mcd_transformers/transformers/shared"
+	"github.com/vulcanize/mcd_transformers/transformers/shared/constants"
 	"math/rand"
 
 	. "github.com/onsi/ginkgo"
@@ -43,7 +44,7 @@ var _ = Describe("Ilk file event computed columns", func() {
 		fileRepo = ilk.VatFileIlkRepository{}
 		fileRepo.SetDB(db)
 		fileEvent = test_data.VatFileIlkDustModel
-		fileEvent.ForeignKeyToValue["ilk_id"] = test_helpers.FakeIlk.Hex
+		fileEvent.ForeignKeyValues[constants.IlkFK] = test_helpers.FakeIlk.Hex
 		insertFileErr := fileRepo.Create(headerId, []shared.InsertionModel{fileEvent})
 		Expect(insertFileErr).NotTo(HaveOccurred())
 	})
@@ -77,7 +78,7 @@ var _ = Describe("Ilk file event computed columns", func() {
 			expectedTx := Tx{
 				TransactionHash: test_helpers.GetValidNullString("txHash"),
 				TransactionIndex: sql.NullInt64{
-					Int64: int64(fileEvent.ColumnToValue["tx_idx"].(uint)),
+					Int64: int64(fileEvent.ColumnValues["tx_idx"].(uint)),
 					Valid: true,
 				},
 				BlockHeight: sql.NullInt64{Int64: int64(fakeBlock), Valid: true},
@@ -104,7 +105,7 @@ var _ = Describe("Ilk file event computed columns", func() {
 			wrongTx := Tx{
 				TransactionHash: test_helpers.GetValidNullString("wrongTxHash"),
 				TransactionIndex: sql.NullInt64{
-					Int64: int64(fileEvent.ColumnToValue["tx_idx"].(uint)) + 1,
+					Int64: int64(fileEvent.ColumnValues["tx_idx"].(uint)) + 1,
 					Valid: true,
 				},
 				BlockHeight: sql.NullInt64{Int64: int64(fakeBlock), Valid: true},

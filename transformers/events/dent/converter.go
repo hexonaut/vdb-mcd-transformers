@@ -56,7 +56,7 @@ func (c DentConverter) ToModels(ethLogs []types.Log) (result []shared.InsertionM
 			OrderedColumns: []string{
 				"header_id", "bid_id", "lot", "bid", "contract_address", "tic", "log_idx", "tx_idx", "raw_log",
 			},
-			ColumnToValue: map[string]interface{}{
+			ColumnValues: shared.ColumnValues{
 				"bid_id":           bidId.String(),
 				"lot":              lot.String(),
 				"bid":              bid.String(),
@@ -65,7 +65,7 @@ func (c DentConverter) ToModels(ethLogs []types.Log) (result []shared.InsertionM
 				"tx_idx":           transactionIndex,
 				"raw_log":          raw,
 			},
-			ForeignKeyToValue: map[string]string{},
+			ForeignKeyValues: shared.ForeignKeyValues{},
 		}
 		result = append(result, model)
 	}

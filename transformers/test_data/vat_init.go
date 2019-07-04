@@ -49,14 +49,14 @@ var rawVatInitLog, _ = json.Marshal(EthVatInitLog)
 var VatInitModel = shared.InsertionModel{
 	TableName: "vat_init",
 	OrderedColumns: []string{
-		"header_id", "ilk_id", "log_idx", "tx_idx", "raw_log",
+		"header_id", string(constants.IlkFK), "log_idx", "tx_idx", "raw_log",
 	},
-	ColumnToValue: map[string]interface{}{
+	ColumnValues: shared.ColumnValues{
 		"log_idx": EthVatInitLog.Index,
 		"tx_idx":  EthVatInitLog.TxIndex,
 		"raw_log": rawVatInitLog,
 	},
-	ForeignKeyToValue: map[string]string{
-		"ilk_id": "0x66616b6520696c6b000000000000000000000000000000000000000000000000",
+	ForeignKeyValues: shared.ForeignKeyValues{
+		constants.IlkFK: "0x66616b6520696c6b000000000000000000000000000000000000000000000000",
 	},
 }

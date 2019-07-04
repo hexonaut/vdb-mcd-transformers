@@ -56,7 +56,7 @@ func (TendConverter) ToModels(ethLogs []types.Log) (results []shared.InsertionMo
 			OrderedColumns: []string{
 				"header_id", "bid_id", "lot", "bid", "contract_address", "log_idx", "tx_idx", "raw_log",
 			},
-			ColumnToValue: map[string]interface{}{
+			ColumnValues: shared.ColumnValues{
 				"bid_id":           bidId.String(),
 				"lot":              lot,
 				"bid":              bidValue,
@@ -65,7 +65,7 @@ func (TendConverter) ToModels(ethLogs []types.Log) (results []shared.InsertionMo
 				"tx_idx":           transactionIndex,
 				"raw_log":          rawLog,
 			},
-			ForeignKeyToValue: map[string]string{},
+			ForeignKeyValues: shared.ForeignKeyValues{},
 		}
 		results = append(results, model)
 	}

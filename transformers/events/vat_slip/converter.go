@@ -19,6 +19,7 @@ package vat_slip
 import (
 	"encoding/json"
 	"errors"
+	"github.com/vulcanize/mcd_transformers/transformers/shared/constants"
 
 	"github.com/ethereum/go-ethereum/core/types"
 
@@ -46,17 +47,17 @@ func (VatSlipConverter) ToModels(ethLogs []types.Log) ([]shared.InsertionModel, 
 		model := shared.InsertionModel{
 			TableName: "vat_slip",
 			OrderedColumns: []string{
-				"header_id", "ilk_id", "usr", "wad", "tx_idx", "log_idx", "raw_log",
+				"header_id", string(constants.IlkFK), "usr", "wad", "tx_idx", "log_idx", "raw_log",
 			},
-			ColumnToValue: map[string]interface{}{
+			ColumnValues: shared.ColumnValues{
 				"usr":     usr,
 				"wad":     wad.String(),
 				"tx_idx":  ethLog.TxIndex,
 				"log_idx": ethLog.Index,
 				"raw_log": raw,
 			},
-			ForeignKeyToValue: map[string]string{
-				"ilk_id": ilk,
+			ForeignKeyValues: shared.ForeignKeyValues{
+				constants.IlkFK: ilk,
 			},
 		}
 		models = append(models, model)

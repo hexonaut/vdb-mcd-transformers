@@ -50,7 +50,7 @@ func (VatSuckConverter) ToModels(ethLogs []types.Log) ([]shared.InsertionModel, 
 			OrderedColumns: []string{
 				"header_id", "u", "v", "rad", "log_idx", "tx_idx", "raw_log",
 			},
-			ColumnToValue: map[string]interface{}{
+			ColumnValues: shared.ColumnValues{
 				"u":       u,
 				"v":       v,
 				"rad":     radInt.String(),
@@ -58,7 +58,7 @@ func (VatSuckConverter) ToModels(ethLogs []types.Log) ([]shared.InsertionModel, 
 				"tx_idx":  ethLog.TxIndex,
 				"raw_log": rawLogJson,
 			},
-			ForeignKeyToValue: map[string]string{},
+			ForeignKeyValues: shared.ForeignKeyValues{},
 		}
 		models = append(models, model)
 	}

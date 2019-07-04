@@ -21,6 +21,7 @@ import (
 	"errors"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
+	constants2 "github.com/vulcanize/mcd_transformers/transformers/shared/constants"
 
 	"github.com/vulcanize/vulcanizedb/libraries/shared/constants"
 
@@ -56,17 +57,17 @@ func (CatFileChopLumpConverter) ToModels(ethLogs []types.Log) ([]shared.Insertio
 		result := shared.InsertionModel{
 			TableName: "cat_file_chop_lump",
 			OrderedColumns: []string{
-				"header_id", "ilk_id", "what", "data", "tx_idx", "log_idx", "raw_log",
+				"header_id", string(constants2.IlkFK), "what", "data", "tx_idx", "log_idx", "raw_log",
 			},
-			ColumnToValue: map[string]interface{}{
+			ColumnValues: shared.ColumnValues{
 				"what":    what,
 				"data":    data.String(),
 				"tx_idx":  ethLog.TxIndex,
 				"log_idx": ethLog.Index,
 				"raw_log": raw,
 			},
-			ForeignKeyToValue: map[string]string{
-				"ilk_id": ilk,
+			ForeignKeyValues: shared.ForeignKeyValues{
+				constants2.IlkFK: ilk,
 			},
 		}
 		results = append(results, result)

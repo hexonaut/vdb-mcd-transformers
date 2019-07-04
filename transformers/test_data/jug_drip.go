@@ -49,14 +49,14 @@ var rawJugDripLog, _ = json.Marshal(EthJugDripLog)
 var JugDripModel = shared.InsertionModel{
 	TableName: "jug_drip",
 	OrderedColumns: []string{
-		"header_id", "ilk_id", "log_idx", "tx_idx", "raw_log",
+		"header_id", string(constants.IlkFK), "log_idx", "tx_idx", "raw_log",
 	},
-	ColumnToValue: map[string]interface{}{
+	ColumnValues: shared.ColumnValues{
 		"log_idx": EthJugDripLog.Index,
 		"tx_idx":  EthJugDripLog.TxIndex,
 		"raw_log": rawJugDripLog,
 	},
-	ForeignKeyToValue: map[string]string{
-		"ilk_id": "0x66616b6520696c6b000000000000000000000000000000000000000000000000",
+	ForeignKeyValues: shared.ForeignKeyValues{
+		constants.IlkFK: "0x66616b6520696c6b000000000000000000000000000000000000000000000000",
 	},
 }

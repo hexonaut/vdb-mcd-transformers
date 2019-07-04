@@ -61,7 +61,7 @@ var _ = Describe("Queued sin computed columns", func() {
 			vowFlogRepo := vow_flog.VowFlogRepository{}
 			vowFlogRepo.SetDB(db)
 			vowFlogEvent := test_data.VowFlogModel
-			vowFlogEvent.ColumnToValue["era"] = fakeEra
+			vowFlogEvent.ColumnValues["era"] = fakeEra
 			insertVowFlogErr := vowFlogRepo.Create(headerID, []shared.InsertionModel{vowFlogEvent})
 			Expect(insertVowFlogErr).NotTo(HaveOccurred())
 		})
