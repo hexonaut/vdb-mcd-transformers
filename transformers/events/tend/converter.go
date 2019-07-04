@@ -42,7 +42,7 @@ func (TendConverter) ToModels(ethLogs []types.Log) (results []shared.InsertionMo
 			return nil, bidErr
 		}
 		bidValue := shared.ConvertUint256HexToBigInt(hexutil.Encode(rawBid)).String()
-		lad := ethLog.Address
+		contractAddress := ethLog.Address
 		logIndex := ethLog.Index
 		transactionIndex := ethLog.TxIndex
 
@@ -54,16 +54,16 @@ func (TendConverter) ToModels(ethLogs []types.Log) (results []shared.InsertionMo
 		model := shared.InsertionModel{
 			TableName: "tend",
 			OrderedColumns: []string{
-				"header_id", "bid_id", "lot", "bid", "lad", "log_idx", "tx_idx", "raw_log",
+				"header_id", "bid_id", "lot", "bid", "contract_address", "log_idx", "tx_idx", "raw_log",
 			},
 			ColumnToValue: map[string]interface{}{
-				"bid_id":  bidId.String(),
-				"lot":     lot,
-				"bid":     bidValue,
-				"lad":     lad.Hex(),
-				"log_idx": logIndex,
-				"tx_idx":  transactionIndex,
-				"raw_log": rawLog,
+				"bid_id":           bidId.String(),
+				"lot":              lot,
+				"bid":              bidValue,
+				"contract_address": contractAddress.Hex(),
+				"log_idx":          logIndex,
+				"tx_idx":           transactionIndex,
+				"raw_log":          rawLog,
 			},
 			ForeignKeyToValue: map[string]string{},
 		}

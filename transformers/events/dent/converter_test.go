@@ -1,5 +1,5 @@
 // VulcanizeDB
-// Copyright © 2018 Vulcanize
+// Copyright © 2019 Vulcanize
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published by
@@ -18,11 +18,10 @@ package dent_test
 
 import (
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/vulcanize/mcd_transformers/transformers/shared"
-
-	"github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/vulcanize/mcd_transformers/transformers/events/dent"
 	"github.com/vulcanize/mcd_transformers/transformers/test_data"
@@ -31,19 +30,15 @@ import (
 var _ = Describe("Dent Converter", func() {
 	var converter dent.DentConverter
 
-	BeforeEach(func() {
-		converter = dent.NewDentConverter()
-	})
-
 	It("converts an eth log to a db model", func() {
-		models, err := converter.ToModels([]types.Log{test_data.DentLog})
+		models, err := converter.ToModels([]types.Log{test_data.EthDentLog})
 
 		Expect(err).NotTo(HaveOccurred())
 		Expect(models).To(Equal([]shared.InsertionModel{test_data.DentModel}))
 	})
 
 	It("returns an error if the expected amount of topics aren't in the log", func() {
-		invalidLog := test_data.DentLog
+		invalidLog := test_data.EthDentLog
 		invalidLog.Topics = []common.Hash{}
 		_, err := converter.ToModels([]types.Log{invalidLog})
 		Expect(err).To(HaveOccurred())
@@ -51,7 +46,7 @@ var _ = Describe("Dent Converter", func() {
 	})
 
 	It("returns an error if the log data is empty", func() {
-		emptyDataLog := test_data.DentLog
+		emptyDataLog := test_data.EthDentLog
 		emptyDataLog.Data = []byte{}
 		_, err := converter.ToModels([]types.Log{emptyDataLog})
 		Expect(err).To(HaveOccurred())

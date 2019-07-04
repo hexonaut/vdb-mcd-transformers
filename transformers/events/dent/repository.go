@@ -1,5 +1,5 @@
 // VulcanizeDB
-// Copyright © 2018 Vulcanize
+// Copyright © 2019 Vulcanize
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published by
@@ -17,11 +17,10 @@
 package dent
 
 import (
-	"github.com/vulcanize/mcd_transformers/transformers/shared"
-
-	repo "github.com/vulcanize/vulcanizedb/libraries/shared/repository"
+	"github.com/vulcanize/vulcanizedb/libraries/shared/repository"
 	"github.com/vulcanize/vulcanizedb/pkg/datastore/postgres"
 
+	"github.com/vulcanize/mcd_transformers/transformers/shared"
 	"github.com/vulcanize/mcd_transformers/transformers/shared/constants"
 )
 
@@ -33,10 +32,10 @@ func (repository DentRepository) Create(headerID int64, models []shared.Insertio
 	return shared.Create(headerID, models, repository.db)
 }
 
-func (repository DentRepository) MarkHeaderChecked(headerId int64) error {
-	return repo.MarkHeaderChecked(headerId, repository.db, constants.DentChecked)
+func (repo DentRepository) MarkHeaderChecked(headerId int64) error {
+	return repository.MarkHeaderChecked(headerId, repo.db, constants.DentChecked)
 }
 
-func (repository *DentRepository) SetDB(db *postgres.DB) {
-	repository.db = db
+func (repo *DentRepository) SetDB(db *postgres.DB) {
+	repo.db = db
 }

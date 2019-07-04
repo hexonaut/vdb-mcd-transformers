@@ -58,16 +58,16 @@ var rawTendLog, _ = json.Marshal(TendLogNote)
 var TendModel = shared.InsertionModel{
 	TableName: "tend",
 	OrderedColumns: []string{
-		"header_id", "bid_id", "lot", "bid", "lad", "log_idx", "tx_idx", "raw_log",
+		"header_id", "bid_id", "lot", "bid", "contract_address", "log_idx", "tx_idx", "raw_log",
 	},
 	ColumnToValue: map[string]interface{}{
-		"bid_id":  strconv.FormatInt(tendBidId, 10),
-		"lot":     tendLot,
-		"bid":     tendBid,
-		"lad":     constants.FlapperContractAddress(),
-		"log_idx": TendLogNote.Index,
-		"tx_idx":  TendLogNote.TxIndex,
-		"raw_log": rawTendLog,
+		"bid_id":           strconv.FormatInt(tendBidId, 10),
+		"lot":              tendLot,
+		"bid":              tendBid,
+		"contract_address": constants.FlapperContractAddress(),
+		"log_idx":          TendLogNote.Index,
+		"tx_idx":           TendLogNote.TxIndex,
+		"raw_log":          rawTendLog,
 	},
 	ForeignKeyToValue: map[string]string{},
 }
