@@ -23,10 +23,6 @@ import (
 	"github.com/vulcanize/vulcanizedb/pkg/datastore/postgres"
 )
 
-const InsertSpotFileMatQuery = `INSERT INTO maker.spot_file_mat (header_id, ilk_id, what, data, log_idx, tx_idx, raw_log)
-	VALUES($1, $2, $3, $4, $5, $6, $7) ON CONFLICT (header_id, tx_idx, log_idx)
-	DO UPDATE SET ilk_id = $2, what = $3, data = $4, raw_log = $7;`
-
 type SpotFileMatRepository struct {
 	db *postgres.DB
 }
