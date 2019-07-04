@@ -38,7 +38,7 @@ var _ = Describe("VatFileIlk LogNoteTransformer", func() {
 	var (
 		db          *postgres.DB
 		blockChain  core.BlockChain
-		initializer shared.LogNoteSharedRepoTransformer
+		initializer shared.LogNoteTransformer
 		addresses   []common.Address
 		topics      []common.Hash
 	)
@@ -60,7 +60,7 @@ var _ = Describe("VatFileIlk LogNoteTransformer", func() {
 		addresses = transformer.HexStringsToAddresses(vatFileIlkConfig.ContractAddresses)
 		topics = []common.Hash{common.HexToHash(vatFileIlkConfig.Topic)}
 
-		initializer = shared.LogNoteSharedRepoTransformer{
+		initializer = shared.LogNoteTransformer{
 			Config:     vatFileIlkConfig,
 			Converter:  &ilk.VatFileIlkConverter{},
 			Repository: &ilk.VatFileIlkRepository{},

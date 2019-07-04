@@ -68,7 +68,7 @@ var _ = Describe("VatFileDebtCeiling LogNoteTransformer", func() {
 			header)
 		Expect(err).NotTo(HaveOccurred())
 
-		initializer := shared.LogNoteSharedRepoTransformer{
+		initializer := shared.LogNoteTransformer{
 			Config:     vatFileDebtCeilingConfig,
 			Converter:  &debt_ceiling.VatFileDebtCeilingConverter{},
 			Repository: &debt_ceiling.VatFileDebtCeilingRepository{},

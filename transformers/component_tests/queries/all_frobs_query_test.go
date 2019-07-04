@@ -43,13 +43,13 @@ var _ = Describe("Frobs query", func() {
 			headerOneId, err := headerRepo.CreateOrUpdateHeader(headerOne)
 			Expect(err).NotTo(HaveOccurred())
 
-			frobBlockOne := test_helpers.CopyModel(test_data.VatFrobModelWithPositiveDart)
+			frobBlockOne := test_data.CopyModel(test_data.VatFrobModelWithPositiveDart)
 			frobBlockOne.ForeignKeyToValue["ilk_id"] = test_helpers.FakeIlk.Hex
 			frobBlockOne.ForeignKeyToValue["urn_id"] = fakeUrn
 			frobBlockOne.ColumnToValue["dink"] = strconv.Itoa(rand.Int())
 			frobBlockOne.ColumnToValue["dart"] = strconv.Itoa(rand.Int())
 
-			irrelevantFrob := test_helpers.CopyModel(test_data.VatFrobModelWithPositiveDart)
+			irrelevantFrob := test_data.CopyModel(test_data.VatFrobModelWithPositiveDart)
 			irrelevantFrob.ForeignKeyToValue["ilk_id"] = test_helpers.AnotherFakeIlk.Hex
 			irrelevantFrob.ForeignKeyToValue["urn_id"] = fakeUrn
 			irrelevantFrob.ColumnToValue["dink"] = strconv.Itoa(rand.Int())
@@ -65,7 +65,7 @@ var _ = Describe("Frobs query", func() {
 			headerTwoId, err := headerRepo.CreateOrUpdateHeader(headerTwo)
 			Expect(err).NotTo(HaveOccurred())
 
-			frobBlockTwo := test_helpers.CopyModel(test_data.VatFrobModelWithPositiveDart)
+			frobBlockTwo := test_data.CopyModel(test_data.VatFrobModelWithPositiveDart)
 			frobBlockTwo.ForeignKeyToValue["ilk_id"] = test_helpers.FakeIlk.Hex
 			frobBlockTwo.ForeignKeyToValue["urn_id"] = fakeUrn
 			frobBlockTwo.ColumnToValue["dink"] = strconv.Itoa(rand.Int())
@@ -106,14 +106,14 @@ var _ = Describe("Frobs query", func() {
 			headerOneId, err := headerRepo.CreateOrUpdateHeader(headerOne)
 			Expect(err).NotTo(HaveOccurred())
 
-			frobOne := test_helpers.CopyModel(test_data.VatFrobModelWithPositiveDart)
+			frobOne := test_data.CopyModel(test_data.VatFrobModelWithPositiveDart)
 			frobOne.ForeignKeyToValue["ilk_id"] = test_helpers.FakeIlk.Hex
 			frobOne.ForeignKeyToValue["urn_id"] = fakeUrn
 			frobOne.ColumnToValue["dink"] = strconv.Itoa(rand.Int())
 			frobOne.ColumnToValue["dart"] = strconv.Itoa(rand.Int())
 
 			anotherUrn := "anotherUrn"
-			frobTwo := test_helpers.CopyModel(test_data.VatFrobModelWithPositiveDart)
+			frobTwo := test_data.CopyModel(test_data.VatFrobModelWithPositiveDart)
 			frobTwo.ForeignKeyToValue["ilk_id"] = test_helpers.FakeIlk.Hex
 			frobTwo.ForeignKeyToValue["urn_id"] = anotherUrn
 			frobTwo.ColumnToValue["dink"] = strconv.Itoa(rand.Int())

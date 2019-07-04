@@ -35,7 +35,7 @@ var _ = Describe("VowFile LogNoteTransforer", func() {
 	var (
 		db          *postgres.DB
 		blockChain  core.BlockChain
-		initializer shared.LogNoteSharedRepoTransformer
+		initializer shared.LogNoteTransformer
 		addresses   []common.Address
 		topics      []common.Hash
 	)
@@ -57,7 +57,7 @@ var _ = Describe("VowFile LogNoteTransforer", func() {
 		addresses = transformer.HexStringsToAddresses(vowFileConfig.ContractAddresses)
 		topics = []common.Hash{common.HexToHash(vowFileConfig.Topic)}
 
-		initializer = shared.LogNoteSharedRepoTransformer{
+		initializer = shared.LogNoteTransformer{
 			Config:     vowFileConfig,
 			Converter:  vow_file.VowFileConverter{},
 			Repository: &vow_file.VowFileRepository{},

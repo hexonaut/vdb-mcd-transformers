@@ -47,7 +47,7 @@ var _ = Describe("Jug File Ilk LogNoteTransformer", func() {
 		header, err := persistHeader(db, blockNumber, blockChain)
 		Expect(err).NotTo(HaveOccurred())
 
-		initializer := shared.LogNoteSharedRepoTransformer{
+		initializer := shared.LogNoteTransformer{
 			Config:     jugFileIlkConfig,
 			Converter:  &ilk.JugFileIlkConverter{},
 			Repository: &ilk.JugFileIlkRepository{},
@@ -84,7 +84,7 @@ var _ = Describe("Jug File Ilk LogNoteTransformer", func() {
 		header, err := persistHeader(db, blockNumber, blockChain)
 		Expect(err).NotTo(HaveOccurred())
 
-		initializer := shared.LogNoteSharedRepoTransformer{
+		initializer := shared.LogNoteTransformer{
 			Config:     jugFileIlkConfig,
 			Converter:  &ilk.JugFileIlkConverter{},
 			Repository: &ilk.JugFileIlkRepository{},

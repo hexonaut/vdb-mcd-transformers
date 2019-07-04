@@ -97,7 +97,7 @@ var _ = Describe("Urn state computed columns", func() {
 
 			frobRepo := vat_frob.VatFrobRepository{}
 			frobRepo.SetDB(db)
-			frobEvent := test_helpers.CopyModel(test_data.VatFrobModelWithPositiveDart)
+			frobEvent := test_data.CopyModel(test_data.VatFrobModelWithPositiveDart)
 			frobEvent.ForeignKeyToValue["urn_id"] = fakeGuy
 			frobEvent.ForeignKeyToValue["ilk_id"] = test_helpers.FakeIlk.Hex
 			insertFrobErr := frobRepo.Create(headerId, []shared.InsertionModel{frobEvent})

@@ -24,7 +24,7 @@ var _ = XDescribe("Dent transformer", func() {
 		dentConfig  transformer.EventTransformerConfig
 		addresses   []common.Address
 		topics      []common.Hash
-		initializer shared.LogNoteSharedRepoTransformer
+		initializer shared.LogNoteTransformer
 	)
 
 	BeforeEach(func() {
@@ -46,7 +46,7 @@ var _ = XDescribe("Dent transformer", func() {
 		topics = []common.Hash{common.HexToHash(dentConfig.Topic)}
 		logFetcher = fetcher.NewLogFetcher(blockChain)
 
-		initializer = shared.LogNoteSharedRepoTransformer{
+		initializer = shared.LogNoteTransformer{
 			Config:     dentConfig,
 			Converter:  &dent.DentConverter{},
 			Repository: &dent.DentRepository{},

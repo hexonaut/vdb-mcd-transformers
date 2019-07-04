@@ -63,7 +63,7 @@ var _ = XDescribe("JugDrip Transformer", func() {
 		header, err := persistHeader(db, blockNumber, blockChain)
 		Expect(err).NotTo(HaveOccurred())
 
-		initializer := shared.LogNoteSharedRepoTransformer{
+		initializer := shared.LogNoteTransformer{
 			Config:     jugDripConfig,
 			Converter:  &jug_drip.JugDripConverter{},
 			Repository: &jug_drip.JugDripRepository{},
@@ -99,7 +99,7 @@ var _ = XDescribe("JugDrip Transformer", func() {
 		header, err := persistHeader(db, blockNumber, blockChain)
 		Expect(err).NotTo(HaveOccurred())
 
-		initializer := shared.LogNoteSharedRepoTransformer{
+		initializer := shared.LogNoteTransformer{
 			Config:     jugDripConfig,
 			Converter:  &jug_drip.JugDripConverter{},
 			Repository: &jug_drip.JugDripRepository{},

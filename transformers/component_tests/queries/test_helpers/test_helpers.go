@@ -1,9 +1,7 @@
 package test_helpers
 
 import (
-	"bytes"
 	"database/sql"
-	"encoding/gob"
 	. "github.com/onsi/gomega"
 	"github.com/vulcanize/mcd_transformers/transformers/shared"
 	"github.com/vulcanize/mcd_transformers/transformers/shared/constants"
@@ -394,18 +392,4 @@ func GetEmptyNullString() sql.NullString {
 
 func GetRandomInt(min, max int) int {
 	return min + rand.Intn(max-min)
-}
-
-// Returns a deep copy of the given model, so tests aren't getting the same map/slice references
-func CopyModel(model shared.InsertionModel) shared.InsertionModel {
-	buf := new(bytes.Buffer)
-	encoder := gob.NewEncoder(buf)
-	encErr := encoder.Encode(model)
-	Expect(encErr).NotTo(HaveOccurred())
-
-	var newModel shared.InsertionModel
-	decoder := gob.NewDecoder(buf)
-	decErr := decoder.Decode(&newModel)
-	Expect(decErr).NotTo(HaveOccurred())
-	return newModel
 }

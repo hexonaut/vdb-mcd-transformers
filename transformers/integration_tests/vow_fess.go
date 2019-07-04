@@ -70,7 +70,7 @@ var _ = XDescribe("VowFess LogNoteTransformer", func() {
 		Expect(len(logs)).To(Equal(1))
 		Expect(err).NotTo(HaveOccurred())
 
-		tr := shared.LogNoteSharedRepoTransformer{
+		tr := shared.LogNoteTransformer{
 			Config:     vowFessConfig,
 			Converter:  &vow_fess.VowFessConverter{},
 			Repository: &vow_fess.VowFessRepository{},

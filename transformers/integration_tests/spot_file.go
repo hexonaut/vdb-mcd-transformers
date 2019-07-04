@@ -55,7 +55,7 @@ var _ = Describe("SpotFile LogNoteTransformers", func() {
 			addresses   []common.Address
 			blockNumber int64
 			header      core.Header
-			initializer shared.LogNoteSharedRepoTransformer
+			initializer shared.LogNoteTransformer
 			logs        []types.Log
 			topics      []common.Hash
 			tr          transformer.EventTransformer
@@ -79,7 +79,7 @@ var _ = Describe("SpotFile LogNoteTransformers", func() {
 			addresses = transformer.HexStringsToAddresses(spotFileMatConfig.ContractAddresses)
 			topics = []common.Hash{common.HexToHash(spotFileMatConfig.Topic)}
 
-			initializer = shared.LogNoteSharedRepoTransformer{
+			initializer = shared.LogNoteTransformer{
 				Config:     spotFileMatConfig,
 				Converter:  mat.SpotFileMatConverter{},
 				Repository: &mat.SpotFileMatRepository{},
@@ -113,7 +113,7 @@ var _ = Describe("SpotFile LogNoteTransformers", func() {
 			addresses   []common.Address
 			blockNumber int64
 			header      core.Header
-			initializer shared.LogNoteSharedRepoTransformer
+			initializer shared.LogNoteTransformer
 			logs        []types.Log
 			topics      []common.Hash
 			tr          transformer.EventTransformer
@@ -137,7 +137,7 @@ var _ = Describe("SpotFile LogNoteTransformers", func() {
 			addresses = transformer.HexStringsToAddresses(spotFilePipConfig.ContractAddresses)
 			topics = []common.Hash{common.HexToHash(spotFilePipConfig.Topic)}
 
-			initializer = shared.LogNoteSharedRepoTransformer{
+			initializer = shared.LogNoteTransformer{
 				Config:     spotFilePipConfig,
 				Converter:  pip.SpotFilePipConverter{},
 				Repository: &pip.SpotFilePipRepository{},

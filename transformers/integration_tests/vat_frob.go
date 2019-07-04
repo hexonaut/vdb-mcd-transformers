@@ -39,7 +39,7 @@ var _ = Describe("Vat frob Transformer", func() {
 		blockChain    core.BlockChain
 		logFetcher    fetcher.ILogFetcher
 		vatFrobConfig transformer.EventTransformerConfig
-		initializer   shared.LogNoteSharedRepoTransformer
+		initializer   shared.LogNoteTransformer
 	)
 
 	BeforeEach(func() {
@@ -58,7 +58,7 @@ var _ = Describe("Vat frob Transformer", func() {
 			Topic:             mcdConstants.VatFrobSignature(),
 		}
 
-		initializer = shared.LogNoteSharedRepoTransformer{
+		initializer = shared.LogNoteTransformer{
 			Config:     vatFrobConfig,
 			Converter:  &vat_frob.VatFrobConverter{},
 			Repository: &vat_frob.VatFrobRepository{},

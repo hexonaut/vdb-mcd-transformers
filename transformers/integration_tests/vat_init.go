@@ -62,7 +62,7 @@ var _ = Describe("VatInit LogNoteTransformer", func() {
 			header)
 		Expect(err).NotTo(HaveOccurred())
 
-		transformer := shared.LogNoteSharedRepoTransformer{
+		transformer := shared.LogNoteTransformer{
 			Config:     vatInitConfig,
 			Converter:  &vat_init.VatInitConverter{},
 			Repository: &vat_init.VatInitRepository{},

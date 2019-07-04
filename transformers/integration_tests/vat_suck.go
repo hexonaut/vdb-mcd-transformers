@@ -62,7 +62,7 @@ var _ = XDescribe("VatSuck Transformer", func() {
 			header)
 		Expect(err).NotTo(HaveOccurred())
 
-		tr := shared.LogNoteSharedRepoTransformer{
+		tr := shared.LogNoteTransformer{
 			Config:     vatSuckConfig,
 			Converter:  &vat_suck.VatSuckConverter{},
 			Repository: &vat_suck.VatSuckRepository{},

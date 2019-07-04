@@ -36,7 +36,7 @@ var _ = XDescribe("Tend LogNoteTransformer", func() {
 		db          *postgres.DB
 		blockChain  core.BlockChain
 		tendConfig  transformer.EventTransformerConfig
-		initializer shared.LogNoteSharedRepoTransformer
+		initializer shared.LogNoteTransformer
 		logFetcher  fetcher.ILogFetcher
 		addresses   []common.Address
 		topics      []common.Hash
@@ -61,7 +61,7 @@ var _ = XDescribe("Tend LogNoteTransformer", func() {
 		addresses = transformer.HexStringsToAddresses(tendConfig.ContractAddresses)
 		topics = []common.Hash{common.HexToHash(tendConfig.Topic)}
 
-		initializer = shared.LogNoteSharedRepoTransformer{
+		initializer = shared.LogNoteTransformer{
 			Config:     tendConfig,
 			Converter:  &tend.TendConverter{},
 			Repository: &tend.TendRepository{},

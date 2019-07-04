@@ -63,7 +63,7 @@ var _ = XDescribe("VatFlux LogNoteTransformer", func() {
 			header)
 		Expect(err).NotTo(HaveOccurred())
 
-		initializer := shared.LogNoteSharedRepoTransformer{
+		initializer := shared.LogNoteTransformer{
 			Config:     vatFluxConfig,
 			Converter:  &vat_flux.VatFluxConverter{},
 			Repository: &vat_flux.VatFluxRepository{},

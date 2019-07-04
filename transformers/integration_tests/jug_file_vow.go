@@ -61,7 +61,7 @@ var _ = Describe("Jug File Vow LogNoteTransformer", func() {
 		header, err := persistHeader(db, blockNumber, blockChain)
 		Expect(err).NotTo(HaveOccurred())
 
-		initializer := shared.LogNoteSharedRepoTransformer{
+		initializer := shared.LogNoteTransformer{
 			Config:     jugFileVowConfig,
 			Converter:  &vow.JugFileVowConverter{},
 			Repository: &vow.JugFileVowRepository{},
@@ -95,7 +95,7 @@ var _ = Describe("Jug File Vow LogNoteTransformer", func() {
 		header, err := persistHeader(db, blockNumber, blockChain)
 		Expect(err).NotTo(HaveOccurred())
 
-		initializer := shared.LogNoteSharedRepoTransformer{
+		initializer := shared.LogNoteTransformer{
 			Config:     jugFileVowConfig,
 			Converter:  &vow.JugFileVowConverter{},
 			Repository: &vow.JugFileVowRepository{},

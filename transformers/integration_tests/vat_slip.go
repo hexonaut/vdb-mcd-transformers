@@ -70,7 +70,7 @@ var _ = Describe("Vat slip transformer", func() {
 			header)
 		Expect(err).NotTo(HaveOccurred())
 
-		tr := shared.LogNoteSharedRepoTransformer{
+		tr := shared.LogNoteTransformer{
 			Config:     vatSlipConfig,
 			Converter:  &vat_slip.VatSlipConverter{},
 			Repository: &vat_slip.VatSlipRepository{},

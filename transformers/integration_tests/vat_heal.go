@@ -61,7 +61,7 @@ var _ = XDescribe("VatHeal Transformer", func() {
 			header)
 		Expect(err).NotTo(HaveOccurred())
 
-		tr := shared.LogNoteSharedRepoTransformer{
+		tr := shared.LogNoteTransformer{
 			Config:     vatHealConfig,
 			Converter:  &vat_heal.VatHealConverter{},
 			Repository: &vat_heal.VatHealRepository{},

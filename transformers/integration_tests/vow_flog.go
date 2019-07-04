@@ -69,7 +69,7 @@ var _ = XDescribe("VowFlog LogNoteTransformer", func() {
 			header)
 		Expect(err).NotTo(HaveOccurred())
 
-		tr := shared.LogNoteSharedRepoTransformer{
+		tr := shared.LogNoteTransformer{
 			Config:     vowFlogConfig,
 			Converter:  &vow_flog.VowFlogConverter{},
 			Repository: &vow_flog.VowFlogRepository{},

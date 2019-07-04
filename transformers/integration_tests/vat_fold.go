@@ -70,7 +70,7 @@ var _ = XDescribe("VatFold Transformer", func() {
 			header)
 		Expect(err).NotTo(HaveOccurred())
 
-		transformer := shared.LogNoteSharedRepoTransformer{
+		transformer := shared.LogNoteTransformer{
 			Config:     vatFoldConfig,
 			Converter:  &vat_fold.VatFoldConverter{},
 			Repository: &vat_fold.VatFoldRepository{},

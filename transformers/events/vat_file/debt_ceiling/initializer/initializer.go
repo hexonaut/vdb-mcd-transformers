@@ -23,7 +23,7 @@ import (
 	"github.com/vulcanize/mcd_transformers/transformers/shared"
 )
 
-var EventTransformerInitializer transformer.EventTransformerInitializer = shared.LogNoteSharedRepoTransformer{
+var EventTransformerInitializer transformer.EventTransformerInitializer = shared.LogNoteTransformer{
 	Config:     debt_ceiling.GetDebtCeilingFileConfig(),
 	Converter:  &debt_ceiling.VatFileDebtCeilingConverter{},
 	Repository: &debt_ceiling.VatFileDebtCeilingRepository{},

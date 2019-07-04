@@ -28,13 +28,8 @@ const (
 	nodeSql = `INSERT INTO public.eth_nodes (genesis_block, network_id, eth_node_id) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`
 	txSql   = `INSERT INTO header_sync_transactions (header_id, hash, tx_from, tx_index, tx_to)
 		VALUES ($1, $2, $3, $4, $5)`
-
-	// Event data
-	// TODO add event data
-	// TODO add tx for events
 )
 
-// TODO repair me after Edvard broke everything refactoring :(
 var (
 	node = core.Node{
 		GenesisBlock: "GENESIS",
