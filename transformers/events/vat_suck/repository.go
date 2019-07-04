@@ -17,10 +17,10 @@
 package vat_suck
 
 import (
-	"github.com/vulcanize/mcd_transformers/transformers/shared"
 	repo "github.com/vulcanize/vulcanizedb/libraries/shared/repository"
 	"github.com/vulcanize/vulcanizedb/pkg/datastore/postgres"
 
+	"github.com/vulcanize/mcd_transformers/transformers/shared"
 	"github.com/vulcanize/mcd_transformers/transformers/shared/constants"
 )
 

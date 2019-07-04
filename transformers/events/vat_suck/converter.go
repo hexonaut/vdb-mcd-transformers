@@ -20,10 +20,10 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/vulcanize/mcd_transformers/transformers/shared"
-
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+
+	"github.com/vulcanize/mcd_transformers/transformers/shared"
 )
 
 type VatSuckConverter struct{}

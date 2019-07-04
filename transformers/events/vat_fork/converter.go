@@ -19,13 +19,14 @@ package vat_fork
 import (
 	"encoding/json"
 	"errors"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
-	constants2 "github.com/vulcanize/mcd_transformers/transformers/shared/constants"
+	"github.com/vulcanize/vulcanizedb/libraries/shared/constants"
 
 	"github.com/vulcanize/mcd_transformers/transformers/shared"
-	"github.com/vulcanize/vulcanizedb/libraries/shared/constants"
+	constants2 "github.com/vulcanize/mcd_transformers/transformers/shared/constants"
 )
 
 type VatForkConverter struct{}

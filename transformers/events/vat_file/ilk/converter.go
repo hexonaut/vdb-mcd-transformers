@@ -1,5 +1,5 @@
 // VulcanizeDB
-// Copyright © 2018 Vulcanize
+// Copyright © 2019 Vulcanize
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published by
@@ -19,12 +19,12 @@ package ilk
 import (
 	"encoding/json"
 	"errors"
-	"github.com/ethereum/go-ethereum/core/types"
-	constants2 "github.com/vulcanize/mcd_transformers/transformers/shared/constants"
 
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/vulcanize/vulcanizedb/libraries/shared/constants"
 
 	"github.com/vulcanize/mcd_transformers/transformers/shared"
+	constants2 "github.com/vulcanize/mcd_transformers/transformers/shared/constants"
 )
 
 type VatFileIlkConverter struct{}

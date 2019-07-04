@@ -19,13 +19,13 @@ package mat
 import (
 	"encoding/json"
 	"errors"
-	constants2 "github.com/vulcanize/mcd_transformers/transformers/shared/constants"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/vulcanize/vulcanizedb/libraries/shared/constants"
 
 	"github.com/vulcanize/mcd_transformers/transformers/shared"
+	constants2 "github.com/vulcanize/mcd_transformers/transformers/shared/constants"
 )
 
 type SpotFileMatConverter struct{}
