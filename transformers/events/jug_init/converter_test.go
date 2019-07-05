@@ -21,6 +21,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/vulcanize/mcd_transformers/transformers/events/jug_init"
+	"github.com/vulcanize/mcd_transformers/transformers/shared"
 	"github.com/vulcanize/mcd_transformers/transformers/test_data"
 )
 
@@ -36,15 +37,6 @@ var _ = Describe("Jug init converter", func() {
 	It("convert a log to an insertion model", func() {
 		models, err := converter.ToModels([]types.Log{test_data.EthJugInitLog})
 		Expect(err).NotTo(HaveOccurred())
-		//Expect(models).To(Equal([]shared.InsertionModel{test_data.JugInitModel}))
-		actual := models[0]
-		expected := test_data.JugInitModel
-
-		Expect(actual.TableName).To(Equal(expected.TableName))
-		Expect(actual.OrderedColumns).To(Equal(expected.OrderedColumns))
-		Expect(actual.ForeignKeyValues).To(Equal(expected.ForeignKeyValues))
-		Expect(actual.ColumnValues["log_idx"]).To(Equal(expected.ColumnValues["log_idx"]))
-		Expect(actual.ColumnValues["tx_idx"]).To(Equal(expected.ColumnValues["tx_idx"]))
-		Expect(actual.ColumnValues["raw_log"]).To(Equal(expected.ColumnValues["raw_log"]))
+		Expect(models).To(Equal([]shared.InsertionModel{test_data.JugInitModel}))
 	})
 })
