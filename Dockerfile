@@ -42,6 +42,10 @@ ARG vdb_pg_connect="postgres://$USER@$vdb_pg_host:$vdb_pg_port/$vdb_dbname?sslmo
 ENV VDB_PG_CONNECT="$vdb_pg_connect"
 ENV GOPATH $HOME/go
 
+# Direct logfile to stdout for docker log collector before changing user
+RUN touch /app/vulcanizedb.log \
+    && ln -sf /dev/stdout /app/vulcanizedb.log
+
 RUN adduser -Su 5000 $USER
 USER $USER
 
