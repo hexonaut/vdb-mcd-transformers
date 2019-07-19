@@ -18,6 +18,7 @@ package constants
 
 import (
 	"fmt"
+	"math"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -44,64 +45,93 @@ func getEnvironmentString(key string) string {
 	initConfig()
 	value := viper.GetString(key)
 	if value == "" {
-		panic(fmt.Sprintf("No environment configuration variable set for key: \"%v\"", key))
+		log.Fatalf("No environment configuration variable set for key: \"%v\"", key)
 	}
 	return value
 }
 
-func getEnvironmentInt64(key string) int64 {
+/* Returns all contract config names from transformer configuration:
+	[exporter.vow_file]
+		path = "transformers/events/vow_file/initializer"
+		type = "eth_event"
+		repository = "github.com/vulcanize/mcd_transformers"
+		migrations = "db/migrations"
+		contracts = ["MCD_VOW"]   <----
+		rank = "0"
+*/
+func GetTransformerContractNames(transformerLabel string) []string {
 	initConfig()
-	value := viper.GetInt64(key)
+	configKey := "exporter." + transformerLabel + ".contracts"
+	contracts := viper.GetStringSlice(configKey)
+	if len(contracts) == 0 {
+		log.Fatalf("No contracts configured for transformer: \"%v\"", transformerLabel)
+	}
+	return contracts
+}
+
+// Get the ABI for multiple contracts from config
+// Makes sure the ABI matches for all, since a single transformer may run against many contracts.
+func GetContractsABI(contractNames []string) string {
+	initConfig()
+	if len(contractNames) < 1 {
+		log.Fatalf("No contracts to get ABI for")
+	}
+	abi := getContractABI(contractNames[0])
+	for _, contractName := range contractNames[:1] {
+		if abi != getContractABI(contractName) {
+			log.WithField("contracts", contractNames).Fatalf("ABIs not consistent between contracts")
+		}
+	}
+	return abi
+}
+
+func getContractABI(contractName string) string {
+	configKey := "contract." + contractName + ".abi"
+	abi := viper.GetString(configKey)
+	if abi == "" {
+		log.Fatalf("No ABI configured for contract: \"%v\"", contractName)
+	}
+	return abi
+}
+
+// Get the minimum deployment block for multiple contracts from config
+func GetMinDeploymentBlock(contractNames []string) int64 {
+	if len(contractNames) < 1 {
+		log.Fatalf("No contracts supplied")
+	}
+	initConfig()
+	minBlock := int64(math.MaxInt64)
+	for _, c := range contractNames {
+		deployed := getDeploymentBlock(c)
+		if deployed < minBlock {
+			minBlock = deployed
+		}
+	}
+	return minBlock
+}
+
+func getDeploymentBlock(contractName string) int64 {
+	configKey := "contract." + contractName + ".deployed"
+	value := viper.GetInt64(configKey)
 	if value == -1 {
-		panic(fmt.Sprintf("No environment configuration variable set for key: \"%v\"", key))
+		log.Info("No deployment block configured for contract \"%v\", defaulting to 0.")
+		return 0
 	}
 	return value
 }
 
-// Getters for contract addresses from environment files
-func CatContractAddress() string        { return getEnvironmentString("contract.address.MCD_CAT") }
-func FlapperContractAddress() string    { return getEnvironmentString("contract.address.MCD_FLAP") }
-func OldFlipperContractAddress() string { return getEnvironmentString("contract.address.ETH_FLIP_OLD") }
-func FlopperContractAddress() string    { return getEnvironmentString("contract.address.MCD_FLOP") }
-func JugContractAddress() string        { return getEnvironmentString("contract.address.MCD_JUG") }
-func SpotContractAddress() string       { return getEnvironmentString("contract.address.MCD_SPOT") }
-func VatContractAddress() string        { return getEnvironmentString("contract.address.MCD_VAT") }
-func VowContractAddress() string        { return getEnvironmentString("contract.address.MCD_VOW") }
-func EthFlipContractAddressA() string   { return getEnvironmentString("contract.address.ETH_FLIP_A") }
-func EthFlipContractAddressB() string   { return getEnvironmentString("contract.address.ETH_FLIP_B") }
-func EthFlipContractAddressC() string   { return getEnvironmentString("contract.address.ETH_FLIP_C") }
-func Col1FlipContractAddress() string   { return getEnvironmentString("contract.address.COL1_FLIP") }
-func Col2FlipContractAddress() string   { return getEnvironmentString("contract.address.COL2_FLIP") }
-func Col3FlipContractAddress() string   { return getEnvironmentString("contract.address.COL3_FLIP") }
-func Col4FlipContractAddress() string   { return getEnvironmentString("contract.address.COL4_FLIP") }
-func Col5FlipContractAddress() string   { return getEnvironmentString("contract.address.COL5_FLIP") }
-func FlipperContractAddresses() []string {
-	return []string{EthFlipContractAddressA(), EthFlipContractAddressB(), EthFlipContractAddressC(), Col1FlipContractAddress(), Col2FlipContractAddress(), Col3FlipContractAddress(), Col4FlipContractAddress(), Col5FlipContractAddress()}
+// Get the addresses for multiple contracts from config
+func GetContractAddresses(contractNames []string) (addresses []string) {
+	if len(contractNames) < 1 {
+		log.Fatalf("No contracts supplied")
+	}
+	initConfig()
+	for _, contractName := range contractNames {
+		addresses = append(addresses, getContractAddress(contractName))
+	}
+	return
 }
 
-func CatABI() string        { return getEnvironmentString("contract.abi.MCD_CAT") }
-func FlapperABI() string    { return getEnvironmentString("contract.abi.MCD_FLAP") }
-func OldFlipperABI() string { return getEnvironmentString("contract.abi.ETH_FLIP_OLD") }
-func FlipperABI() string    { return getEnvironmentString("contract.abi.MCD_FLIP") }
-func FlopperABI() string    { return getEnvironmentString("contract.abi.MCD_FLOP") }
-func JugABI() string        { return getEnvironmentString("contract.abi.MCD_JUG") }
-func SpotABI() string       { return getEnvironmentString("contract.abi.MCD_SPOT") }
-func VatABI() string        { return getEnvironmentString("contract.abi.MCD_VAT") }
-func VowABI() string        { return getEnvironmentString("contract.abi.MCD_VOW") }
-
-func CatDeploymentBlock() int64 { return getEnvironmentInt64("contract.deployment-block.MCD_CAT") }
-func OldFlapperDeploymentBlock() int64 {
-	return getEnvironmentInt64("contract.deployment-block.MCD_FLAP_OLD")
+func getContractAddress(contract string) string {
+	return getEnvironmentString("contract." + contract + ".address")
 }
-func FlapperDeploymentBlock() int64 { return getEnvironmentInt64("contract.deployment-block.MCD_FLAP") }
-func OldFlipperDeploymentBlock() int64 {
-	return getEnvironmentInt64("contract.deployment-block.ETH_FLIP_OLD")
-}
-func FlipperDeploymentBlock() int64 { return getEnvironmentInt64("contract.deployment-block.MCD_FLIP") }
-func FlopperDeploymentBlock() int64 {
-	return getEnvironmentInt64("contract.deployment-block.MCD_FLOP_OLD")
-}
-func JugDeploymentBlock() int64  { return getEnvironmentInt64("contract.deployment-block.MCD_JUG") }
-func SpotDeploymentBlock() int64 { return getEnvironmentInt64("contract.deployment-block.MCD_SPOT") }
-func VatDeploymentBlock() int64  { return getEnvironmentInt64("contract.deployment-block.MCD_VAT") }
-func VowDeploymentBlock() int64  { return getEnvironmentInt64("contract.deployment-block.MCD_VOW") }

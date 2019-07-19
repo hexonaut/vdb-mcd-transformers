@@ -144,6 +144,7 @@
         type = "eth_event"
         repository = "github.com/vulcanize/mcd_transformers"
         migrations = "db/migrations"
+        contracts = [ "MCD_FLOP"]
         rank = "0"
     [exporter.jug_drip]
         path = "transformers/events/jug_drip/initializer"
