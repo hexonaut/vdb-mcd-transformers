@@ -51,13 +51,13 @@ func getEnvironmentString(key string) string {
 }
 
 /* Returns all contract config names from transformer configuration:
-	[exporter.vow_file]
-		path = "transformers/events/vow_file/initializer"
-		type = "eth_event"
-		repository = "github.com/vulcanize/mcd_transformers"
-		migrations = "db/migrations"
-		contracts = ["MCD_VOW"]   <----
-		rank = "0"
+[exporter.vow_file]
+	path = "transformers/events/vow_file/initializer"
+	type = "eth_event"
+	repository = "github.com/vulcanize/mcd_transformers"
+	migrations = "db/migrations"
+	contracts = ["MCD_VOW"]   <----
+	rank = "0"
 */
 func GetTransformerContractNames(transformerLabel string) []string {
 	initConfig()
