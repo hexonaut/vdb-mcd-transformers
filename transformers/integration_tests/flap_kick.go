@@ -20,6 +20,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/vulcanize/mcd_transformers/transformers/test_data"
 	"github.com/vulcanize/vulcanizedb/libraries/shared/factories/event"
 	"github.com/vulcanize/vulcanizedb/libraries/shared/fetcher"
 	"github.com/vulcanize/vulcanizedb/libraries/shared/transformer"
@@ -48,7 +49,7 @@ var _ = XDescribe("FlapKick Transformer", func() {
 
 	flapKickConfig := transformer.EventTransformerConfig{
 		TransformerName:   mcdConstants.FlapKickLabel,
-		ContractAddresses: []string{mcdConstants.GetContractAddress("MCD_FLAP")},
+		ContractAddresses: []string{test_data.FlapperAddress()},
 		ContractAbi:       mcdConstants.FlapABI(),
 		Topic:             mcdConstants.FlapKickSignature(),
 	}

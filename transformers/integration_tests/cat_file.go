@@ -17,6 +17,7 @@
 package integration_tests
 
 import (
+	"github.com/vulcanize/mcd_transformers/transformers/test_data"
 	"sort"
 	"strconv"
 
@@ -49,7 +50,7 @@ var _ = Describe("Cat File transformer", func() {
 	)
 
 	var catFileConfig = transformer.EventTransformerConfig{
-		ContractAddresses: []string{mcdConstants.GetContractAddress("MCD_CAT")},
+		ContractAddresses: []string{test_data.CatAddress()},
 		ContractAbi:       mcdConstants.CatABI(),
 	}
 
