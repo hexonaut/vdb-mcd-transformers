@@ -18,13 +18,11 @@ package spot
 
 import (
 	"github.com/ethereum/go-ethereum/common"
-
+	"github.com/vulcanize/mcd_transformers/transformers/shared/constants"
+	mcdStorage "github.com/vulcanize/mcd_transformers/transformers/storage"
 	"github.com/vulcanize/vulcanizedb/libraries/shared/storage"
 	"github.com/vulcanize/vulcanizedb/libraries/shared/storage/utils"
 	"github.com/vulcanize/vulcanizedb/pkg/datastore/postgres"
-
-	"github.com/vulcanize/mcd_transformers/transformers/shared/constants"
-	storage2 "github.com/vulcanize/mcd_transformers/transformers/storage"
 )
 
 const (
@@ -44,23 +42,23 @@ var (
 	ParMetadata = utils.GetStorageValueMetadata(SpotPar, nil, utils.Uint256)
 )
 
-type SpotMappings struct {
-	StorageRepository storage2.IMakerStorageRepository
+type StorageKeysLookup struct {
+	StorageRepository mcdStorage.IMakerStorageRepository
 	mappings          map[common.Hash]utils.StorageValueMetadata
 }
 
-func (mappings *SpotMappings) SetDB(db *postgres.DB) {
-	mappings.StorageRepository.SetDB(db)
+func (lookup *StorageKeysLookup) SetDB(db *postgres.DB) {
+	lookup.StorageRepository.SetDB(db)
 }
 
-func (mappings *SpotMappings) Lookup(key common.Hash) (utils.StorageValueMetadata, error) {
-	metadata, ok := mappings.mappings[key]
+func (lookup *StorageKeysLookup) Lookup(key common.Hash) (utils.StorageValueMetadata, error) {
+	metadata, ok := lookup.mappings[key]
 	if !ok {
-		err := mappings.loadMappings()
+		err := lookup.loadMappings()
 		if err != nil {
 			return metadata, err
 		}
-		metadata, ok = mappings.mappings[key]
+		metadata, ok = lookup.mappings[key]
 		if !ok {
 			return metadata, utils.ErrStorageKeyNotFound{Key: key.Hex()}
 		}
@@ -68,16 +66,17 @@ func (mappings *SpotMappings) Lookup(key common.Hash) (utils.StorageValueMetadat
 	return metadata, nil
 }
 
-func (mappings *SpotMappings) loadMappings() error {
-	mappings.mappings = getStaticMappings()
-	ilks, err := mappings.StorageRepository.GetIlks()
+func (lookup *StorageKeysLookup) loadMappings() error {
+	lookup.mappings = getStaticMappings()
+	ilks, err := lookup.StorageRepository.GetIlks()
 	if err != nil {
 		return err
 	}
 	for _, ilk := range ilks {
-		mappings.mappings[getPipKey(ilk)] = getPipMetadata(ilk)
-		mappings.mappings[getMatKey(ilk)] = getMatMetadata(ilk)
+		lookup.mappings[getPipKey(ilk)] = getPipMetadata(ilk)
+		lookup.mappings[getMatKey(ilk)] = getMatMetadata(ilk)
 	}
+	lookup.mappings = storage.AddHashedKeys(lookup.mappings)
 	return nil
 }
 

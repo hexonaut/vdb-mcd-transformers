@@ -40,7 +40,7 @@ const (
 	Art  event.ColumnName = "art"
 	Tab  event.ColumnName = "tab"
 	Flip event.ColumnName = "flip"
-	Id   event.ColumnName = "bite_identifier"
+	Id   event.ColumnName = "bid_id"
 )
 
 func (Converter) toEntities(contractAbi string, logs []core.HeaderSyncLog) ([]BiteEntity, error) {

@@ -1,13 +1,28 @@
+// VulcanizeDB
+// Copyright © 2018 Vulcanize
+
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 package cat
 
 import (
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/vulcanize/mcd_transformers/transformers/shared/constants"
+	mcdStorage "github.com/vulcanize/mcd_transformers/transformers/storage"
 	"github.com/vulcanize/vulcanizedb/libraries/shared/storage"
 	"github.com/vulcanize/vulcanizedb/libraries/shared/storage/utils"
 	"github.com/vulcanize/vulcanizedb/pkg/datastore/postgres"
-
-	"github.com/vulcanize/mcd_transformers/transformers/shared/constants"
-	s2 "github.com/vulcanize/mcd_transformers/transformers/storage"
 )
 
 const (
@@ -34,19 +49,19 @@ var (
 	VowMetadata = utils.GetStorageValueMetadata(Vow, nil, utils.Address)
 )
 
-type CatMappings struct {
-	StorageRepository s2.IMakerStorageRepository
+type StorageKeysLookup struct {
+	StorageRepository mcdStorage.IMakerStorageRepository
 	mappings          map[common.Hash]utils.StorageValueMetadata
 }
 
-func (mappings CatMappings) Lookup(key common.Hash) (utils.StorageValueMetadata, error) {
-	metadata, ok := mappings.mappings[key]
+func (lookup StorageKeysLookup) Lookup(key common.Hash) (utils.StorageValueMetadata, error) {
+	metadata, ok := lookup.mappings[key]
 	if !ok {
-		err := mappings.loadMappings()
+		err := lookup.loadMappings()
 		if err != nil {
 			return metadata, err
 		}
-		metadata, ok = mappings.mappings[key]
+		metadata, ok = lookup.mappings[key]
 		if !ok {
 			return metadata, utils.ErrStorageKeyNotFound{Key: key.Hex()}
 		}
@@ -54,17 +69,17 @@ func (mappings CatMappings) Lookup(key common.Hash) (utils.StorageValueMetadata,
 	return metadata, nil
 }
 
-func (mappings *CatMappings) SetDB(db *postgres.DB) {
-	mappings.StorageRepository.SetDB(db)
+func (lookup *StorageKeysLookup) SetDB(db *postgres.DB) {
+	lookup.StorageRepository.SetDB(db)
 }
 
-func (mappings *CatMappings) loadMappings() error {
-	mappings.mappings = loadStaticMappings()
-	ilkErr := mappings.loadIlkKeys()
+func (lookup *StorageKeysLookup) loadMappings() error {
+	lookup.mappings = loadStaticMappings()
+	ilkErr := lookup.loadIlkKeys()
 	if ilkErr != nil {
 		return ilkErr
 	}
-
+	lookup.mappings = storage.AddHashedKeys(lookup.mappings)
 	return nil
 }
 
@@ -77,15 +92,15 @@ func loadStaticMappings() map[common.Hash]utils.StorageValueMetadata {
 }
 
 // Ilks
-func (mappings *CatMappings) loadIlkKeys() error {
-	ilks, err := mappings.StorageRepository.GetIlks()
+func (lookup *StorageKeysLookup) loadIlkKeys() error {
+	ilks, err := lookup.StorageRepository.GetIlks()
 	if err != nil {
 		return err
 	}
 	for _, ilk := range ilks {
-		mappings.mappings[getIlkFlipKey(ilk)] = getIlkFlipMetadata(ilk)
-		mappings.mappings[getIlkChopKey(ilk)] = getIlkChopMetadata(ilk)
-		mappings.mappings[getIlkLumpKey(ilk)] = getIlkLumpMetadata(ilk)
+		lookup.mappings[getIlkFlipKey(ilk)] = getIlkFlipMetadata(ilk)
+		lookup.mappings[getIlkChopKey(ilk)] = getIlkChopMetadata(ilk)
+		lookup.mappings[getIlkLumpKey(ilk)] = getIlkLumpMetadata(ilk)
 	}
 	return nil
 }

@@ -17,43 +17,41 @@
 package cdp_manager_test
 
 import (
-	"math/rand"
-	"strconv"
-
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/vulcanize/vulcanizedb/libraries/shared/storage"
-	"github.com/vulcanize/vulcanizedb/libraries/shared/storage/utils"
-	"github.com/vulcanize/vulcanizedb/pkg/fakes"
-
 	"github.com/vulcanize/mcd_transformers/transformers/shared"
 	"github.com/vulcanize/mcd_transformers/transformers/shared/constants"
 	"github.com/vulcanize/mcd_transformers/transformers/storage/cdp_manager"
 	"github.com/vulcanize/mcd_transformers/transformers/storage/test_helpers"
 	"github.com/vulcanize/mcd_transformers/transformers/storage/utilities"
+	"github.com/vulcanize/vulcanizedb/libraries/shared/storage"
+	"github.com/vulcanize/vulcanizedb/libraries/shared/storage/utils"
+	"github.com/vulcanize/vulcanizedb/pkg/fakes"
+	"math/rand"
+	"strconv"
 )
 
 var _ = Describe("CDP Manager storage mappings", func() {
 	var (
 		storageRepository *test_helpers.MockMakerStorageRepository
-		mappings          cdp_manager.CdpManagerMappings
+		storageKeysLookup cdp_manager.StorageKeysLookup
 	)
 
 	BeforeEach(func() {
 		storageRepository = &test_helpers.MockMakerStorageRepository{}
-		mappings = cdp_manager.CdpManagerMappings{StorageRepository: storageRepository}
+		storageKeysLookup = cdp_manager.StorageKeysLookup{StorageRepository: storageRepository}
 	})
 
 	Describe("looking up static keys", func() {
 		It("returns value metadata if key exists", func() {
-			Expect(mappings.Lookup(cdp_manager.VatKey)).To(Equal(cdp_manager.VatMetadata))
-			Expect(mappings.Lookup(cdp_manager.CdpiKey)).To(Equal(cdp_manager.CdpiMetadata))
+			Expect(storageKeysLookup.Lookup(cdp_manager.VatKey)).To(Equal(cdp_manager.VatMetadata))
+			Expect(storageKeysLookup.Lookup(cdp_manager.CdpiKey)).To(Equal(cdp_manager.CdpiMetadata))
 		})
 
 		It("returns error if key does not exist", func() {
-			_, err := mappings.Lookup(common.HexToHash(fakes.FakeHash.Hex()))
+			_, err := storageKeysLookup.Lookup(common.HexToHash(fakes.FakeHash.Hex()))
 
 			Expect(err).To(HaveOccurred())
 			Expect(err).To(MatchError(utils.ErrStorageKeyNotFound{Key: fakes.FakeHash.Hex()}))
@@ -73,7 +71,7 @@ var _ = Describe("CDP Manager storage mappings", func() {
 
 			It("gets Urns metadata", func() {
 				urnsKey := common.BytesToHash(crypto.Keccak256(common.FromHex(cdpiHex + cdp_manager.UrnsMappingIndex)))
-				metadata, err := mappings.Lookup(urnsKey)
+				metadata, err := storageKeysLookup.Lookup(urnsKey)
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(metadata).To(Equal(utils.StorageValueMetadata{
@@ -88,7 +86,7 @@ var _ = Describe("CDP Manager storage mappings", func() {
 					crypto.Keccak256(common.FromHex(cdpiHex + cdp_manager.ListMappingIndex)))
 
 				It("gets prev metadata", func() {
-					metadata, err := mappings.Lookup(listPrevKey)
+					metadata, err := storageKeysLookup.Lookup(listPrevKey)
 					Expect(err).NotTo(HaveOccurred())
 
 					Expect(metadata).To(Equal(utils.StorageValueMetadata{
@@ -100,7 +98,7 @@ var _ = Describe("CDP Manager storage mappings", func() {
 
 				It("gets next metadata", func() {
 					listNextKey := storage.GetIncrementedKey(listPrevKey, 1)
-					metadata, err := mappings.Lookup(listNextKey)
+					metadata, err := storageKeysLookup.Lookup(listNextKey)
 					Expect(err).NotTo(HaveOccurred())
 
 					Expect(metadata).To(Equal(utils.StorageValueMetadata{
@@ -113,7 +111,7 @@ var _ = Describe("CDP Manager storage mappings", func() {
 
 			It("gets Owner metadata", func() {
 				ownsKey := common.BytesToHash(crypto.Keccak256(common.FromHex(cdpiHex + cdp_manager.OwnsMappingIndex)))
-				metadata, err := mappings.Lookup(ownsKey)
+				metadata, err := storageKeysLookup.Lookup(ownsKey)
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(metadata).To(Equal(utils.StorageValueMetadata{
@@ -125,7 +123,7 @@ var _ = Describe("CDP Manager storage mappings", func() {
 
 			It("gets Ilks metadata", func() {
 				ilksKey := common.BytesToHash(crypto.Keccak256(common.FromHex(cdpiHex + cdp_manager.IlksMappingIndex)))
-				metadata, err := mappings.Lookup(ilksKey)
+				metadata, err := storageKeysLookup.Lookup(ilksKey)
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(metadata).To(Equal(utils.StorageValueMetadata{
@@ -148,7 +146,7 @@ var _ = Describe("CDP Manager storage mappings", func() {
 
 			It("gets First metadata", func() {
 				firstKey := common.BytesToHash(crypto.Keccak256(common.FromHex(paddedOwns + cdp_manager.FirstMappingIndex)))
-				metadata, err := mappings.Lookup(firstKey)
+				metadata, err := storageKeysLookup.Lookup(firstKey)
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(metadata).To(Equal(utils.StorageValueMetadata{
@@ -160,7 +158,7 @@ var _ = Describe("CDP Manager storage mappings", func() {
 
 			It("gets Last metadata", func() {
 				lastKey := common.BytesToHash(crypto.Keccak256(common.FromHex(paddedOwns + cdp_manager.LastMappingIndex)))
-				metadata, err := mappings.Lookup(lastKey)
+				metadata, err := storageKeysLookup.Lookup(lastKey)
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(metadata).To(Equal(utils.StorageValueMetadata{
@@ -172,7 +170,7 @@ var _ = Describe("CDP Manager storage mappings", func() {
 
 			It("gets Count metadata", func() {
 				countKey := common.BytesToHash(crypto.Keccak256(common.FromHex(paddedOwns + cdp_manager.CountMappingIndex)))
-				metadata, err := mappings.Lookup(countKey)
+				metadata, err := storageKeysLookup.Lookup(countKey)
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(metadata).To(Equal(utils.StorageValueMetadata{

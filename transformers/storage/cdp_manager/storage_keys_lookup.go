@@ -18,14 +18,13 @@ package cdp_manager
 
 import (
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/vulcanize/mcd_transformers/transformers/shared"
+	"github.com/vulcanize/mcd_transformers/transformers/shared/constants"
+	mcdStorage "github.com/vulcanize/mcd_transformers/transformers/storage"
+	"github.com/vulcanize/mcd_transformers/transformers/storage/utilities"
 	"github.com/vulcanize/vulcanizedb/libraries/shared/storage"
 	"github.com/vulcanize/vulcanizedb/libraries/shared/storage/utils"
 	"github.com/vulcanize/vulcanizedb/pkg/datastore/postgres"
-
-	"github.com/vulcanize/mcd_transformers/transformers/shared"
-	"github.com/vulcanize/mcd_transformers/transformers/shared/constants"
-	s2 "github.com/vulcanize/mcd_transformers/transformers/storage"
-	"github.com/vulcanize/mcd_transformers/transformers/storage/utilities"
 )
 
 const (
@@ -65,23 +64,23 @@ var (
 	CountMappingIndex = storage.IndexEight
 )
 
-type CdpManagerMappings struct {
-	StorageRepository s2.IMakerStorageRepository
+type StorageKeysLookup struct {
+	StorageRepository mcdStorage.IMakerStorageRepository
 	mappings          map[common.Hash]utils.StorageValueMetadata
 }
 
-func (mappings *CdpManagerMappings) SetDB(db *postgres.DB) {
-	mappings.StorageRepository.SetDB(db)
+func (lookup *StorageKeysLookup) SetDB(db *postgres.DB) {
+	lookup.StorageRepository.SetDB(db)
 }
 
-func (mappings *CdpManagerMappings) Lookup(key common.Hash) (utils.StorageValueMetadata, error) {
-	metadata, ok := mappings.mappings[key]
+func (lookup *StorageKeysLookup) Lookup(key common.Hash) (utils.StorageValueMetadata, error) {
+	metadata, ok := lookup.mappings[key]
 	if !ok {
-		err := mappings.loadMappings()
+		err := lookup.loadMappings()
 		if err != nil {
 			return metadata, err
 		}
-		metadata, ok = mappings.mappings[key]
+		metadata, ok = lookup.mappings[key]
 		if !ok {
 			return metadata, utils.ErrStorageKeyNotFound{Key: key.Hex()}
 		}
@@ -89,13 +88,13 @@ func (mappings *CdpManagerMappings) Lookup(key common.Hash) (utils.StorageValueM
 	return metadata, nil
 }
 
-func (mappings *CdpManagerMappings) loadMappings() error {
-	mappings.mappings = loadStaticMappings()
-	cdpiErr := mappings.loadCdpiKeyMappings()
+func (lookup *StorageKeysLookup) loadMappings() error {
+	lookup.mappings = loadStaticMappings()
+	cdpiErr := lookup.loadCdpiKeyMappings()
 	if cdpiErr != nil {
 		return cdpiErr
 	}
-	ownsErr := mappings.loadOwnsKeyMappings()
+	ownsErr := lookup.loadOwnsKeyMappings()
 	if ownsErr != nil {
 		return ownsErr
 	}
@@ -109,8 +108,8 @@ func loadStaticMappings() map[common.Hash]utils.StorageValueMetadata {
 	return mappings
 }
 
-func (mappings *CdpManagerMappings) loadCdpiKeyMappings() error {
-	cdpis, cdpiErr := mappings.StorageRepository.GetCdpis()
+func (lookup *StorageKeysLookup) loadCdpiKeyMappings() error {
+	cdpis, cdpiErr := lookup.StorageRepository.GetCdpis()
 	if cdpiErr != nil {
 		return cdpiErr
 	}
@@ -119,17 +118,17 @@ func (mappings *CdpManagerMappings) loadCdpiKeyMappings() error {
 		if hexErr != nil {
 			return hexErr
 		}
-		mappings.mappings[getUrnsKey(hexCdpi)] = getUrnsMetadata(cdpi)
-		mappings.mappings[getListPrevKey(hexCdpi)] = getListPrevMetadata(cdpi)
-		mappings.mappings[getListNextKey(hexCdpi)] = getListNextMetadata(cdpi)
-		mappings.mappings[getOwnsKey(hexCdpi)] = getOwnsMetadata(cdpi)
-		mappings.mappings[getIlksKey(hexCdpi)] = getIlksMetadata(cdpi)
+		lookup.mappings[getUrnsKey(hexCdpi)] = getUrnsMetadata(cdpi)
+		lookup.mappings[getListPrevKey(hexCdpi)] = getListPrevMetadata(cdpi)
+		lookup.mappings[getListNextKey(hexCdpi)] = getListNextMetadata(cdpi)
+		lookup.mappings[getOwnsKey(hexCdpi)] = getOwnsMetadata(cdpi)
+		lookup.mappings[getIlksKey(hexCdpi)] = getIlksMetadata(cdpi)
 	}
 	return nil
 }
 
-func (mappings *CdpManagerMappings) loadOwnsKeyMappings() error {
-	owners, ownersErr := mappings.StorageRepository.GetOwners()
+func (lookup *StorageKeysLookup) loadOwnsKeyMappings() error {
+	owners, ownersErr := lookup.StorageRepository.GetOwners()
 	if ownersErr != nil {
 		return ownersErr
 	}
@@ -138,9 +137,9 @@ func (mappings *CdpManagerMappings) loadOwnsKeyMappings() error {
 		if padErr != nil {
 			return padErr
 		}
-		mappings.mappings[getFirstKey(paddedOwner)] = getFirstMetadata(owner)
-		mappings.mappings[getLastKey(paddedOwner)] = getLastMetadata(owner)
-		mappings.mappings[getCountKey(paddedOwner)] = getCountMetadata(owner)
+		lookup.mappings[getFirstKey(paddedOwner)] = getFirstMetadata(owner)
+		lookup.mappings[getLastKey(paddedOwner)] = getLastMetadata(owner)
+		lookup.mappings[getCountKey(paddedOwner)] = getCountMetadata(owner)
 	}
 	return nil
 }

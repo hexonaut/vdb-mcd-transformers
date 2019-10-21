@@ -17,17 +17,16 @@
 package initializer
 
 import (
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/vulcanize/vulcanizedb/libraries/shared/factories/storage"
-	"github.com/vulcanize/vulcanizedb/libraries/shared/transformer"
-
 	"github.com/vulcanize/mcd_transformers/transformers/shared/constants"
-	storage2 "github.com/vulcanize/mcd_transformers/transformers/storage"
+	mcdStorage "github.com/vulcanize/mcd_transformers/transformers/storage"
 	"github.com/vulcanize/mcd_transformers/transformers/storage/spot"
+	"github.com/vulcanize/vulcanizedb/libraries/shared/factories/storage"
+	"github.com/vulcanize/vulcanizedb/libraries/shared/storage/utils"
+	"github.com/vulcanize/vulcanizedb/libraries/shared/transformer"
 )
 
 var StorageTransformerInitializer transformer.StorageTransformerInitializer = storage.Transformer{
-	Address:    common.HexToAddress(constants.GetContractAddress("MCD_SPOT")),
-	Mappings:   &spot.SpotMappings{StorageRepository: &storage2.MakerStorageRepository{}},
-	Repository: &spot.SpotStorageRepository{},
+	HashedAddress: utils.HexToKeccak256Hash(constants.GetContractAddress("MCD_SPOT")),
+	Mappings:      &spot.StorageKeysLookup{StorageRepository: &mcdStorage.MakerStorageRepository{}},
+	Repository:    &spot.SpotStorageRepository{},
 }.NewTransformer

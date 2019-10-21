@@ -20,11 +20,10 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/vulcanize/mcd_transformers/transformers/shared"
 	"github.com/vulcanize/mcd_transformers/transformers/shared/constants"
+	mcdStorage "github.com/vulcanize/mcd_transformers/transformers/storage"
 	"github.com/vulcanize/vulcanizedb/libraries/shared/storage"
 	"github.com/vulcanize/vulcanizedb/libraries/shared/storage/utils"
 	"github.com/vulcanize/vulcanizedb/pkg/datastore/postgres"
-
-	s2 "github.com/vulcanize/mcd_transformers/transformers/storage"
 )
 
 const (
@@ -35,6 +34,7 @@ const (
 	SinInteger = "Sin"
 	VowAsh     = "Ash"
 	VowWait    = "wait"
+	VowDump    = "dump"
 	VowSump    = "sump"
 	VowBump    = "bump"
 	VowHump    = "hump"
@@ -85,21 +85,28 @@ var (
 		Type: utils.Uint256,
 	}
 
-	SumpKey      = common.HexToHash(storage.IndexEight)
+	DumpKey      = common.HexToHash(storage.IndexEight)
+	DumpMetadata = utils.StorageValueMetadata{
+		Name: VowDump,
+		Keys: nil,
+		Type: utils.Uint256,
+	}
+
+	SumpKey      = common.HexToHash(storage.IndexNine)
 	SumpMetadata = utils.StorageValueMetadata{
 		Name: VowSump,
 		Keys: nil,
 		Type: utils.Uint256,
 	}
 
-	BumpKey      = common.HexToHash(storage.IndexNine)
+	BumpKey      = common.HexToHash(storage.IndexTen)
 	BumpMetadata = utils.StorageValueMetadata{
 		Name: VowBump,
 		Keys: nil,
 		Type: utils.Uint256,
 	}
 
-	HumpKey      = common.HexToHash(storage.IndexTen)
+	HumpKey      = common.HexToHash(storage.IndexEleven)
 	HumpMetadata = utils.StorageValueMetadata{
 		Name: VowHump,
 		Keys: nil,
@@ -107,19 +114,19 @@ var (
 	}
 )
 
-type VowMappings struct {
-	StorageRepository s2.IMakerStorageRepository
+type StorageKeysLookup struct {
+	StorageRepository mcdStorage.IMakerStorageRepository
 	mappings          map[common.Hash]utils.StorageValueMetadata
 }
 
-func (mappings *VowMappings) Lookup(key common.Hash) (utils.StorageValueMetadata, error) {
-	metadata, ok := mappings.mappings[key]
+func (lookup *StorageKeysLookup) Lookup(key common.Hash) (utils.StorageValueMetadata, error) {
+	metadata, ok := lookup.mappings[key]
 	if !ok {
-		err := mappings.loadMappings()
+		err := lookup.loadMappings()
 		if err != nil {
 			return metadata, err
 		}
-		metadata, ok = mappings.mappings[key]
+		metadata, ok = lookup.mappings[key]
 		if !ok {
 			return metadata, utils.ErrStorageKeyNotFound{Key: key.Hex()}
 		}
@@ -127,17 +134,18 @@ func (mappings *VowMappings) Lookup(key common.Hash) (utils.StorageValueMetadata
 	return metadata, nil
 }
 
-func (mappings *VowMappings) loadMappings() error {
-	mappings.mappings = loadStaticMappings()
-	sinErr := mappings.loadSinKeys()
+func (lookup *StorageKeysLookup) loadMappings() error {
+	lookup.mappings = loadStaticMappings()
+	sinErr := lookup.loadSinKeys()
 	if sinErr != nil {
 		return sinErr
 	}
+	lookup.mappings = storage.AddHashedKeys(lookup.mappings)
 	return nil
 }
 
-func (mappings *VowMappings) SetDB(db *postgres.DB) {
-	mappings.StorageRepository.SetDB(db)
+func (lookup *StorageKeysLookup) SetDB(db *postgres.DB) {
+	lookup.StorageRepository.SetDB(db)
 }
 
 func loadStaticMappings() map[common.Hash]utils.StorageValueMetadata {
@@ -148,14 +156,15 @@ func loadStaticMappings() map[common.Hash]utils.StorageValueMetadata {
 	mappings[SinIntegerKey] = SinIntegerMetadata
 	mappings[AshKey] = AshMetadata
 	mappings[WaitKey] = WaitMetadata
+	mappings[DumpKey] = DumpMetadata
 	mappings[SumpKey] = SumpMetadata
 	mappings[BumpKey] = BumpMetadata
 	mappings[HumpKey] = HumpMetadata
 	return mappings
 }
 
-func (mappings *VowMappings) loadSinKeys() error {
-	sinKeys, err := mappings.StorageRepository.GetVowSinKeys()
+func (lookup *StorageKeysLookup) loadSinKeys() error {
+	sinKeys, err := lookup.StorageRepository.GetVowSinKeys()
 	if err != nil {
 		return err
 	}
@@ -164,7 +173,7 @@ func (mappings *VowMappings) loadSinKeys() error {
 		if err != nil {
 			return err
 		}
-		mappings.mappings[getSinKey(hexTimestamp)] = getSinMetadata(timestamp)
+		lookup.mappings[getSinKey(hexTimestamp)] = getSinMetadata(timestamp)
 	}
 	return nil
 }

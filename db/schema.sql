@@ -504,7 +504,7 @@ CREATE FUNCTION api.all_bites(ilk_identifier text, max_results integer DEFAULT N
     AS $$
 WITH ilk AS (SELECT id FROM maker.ilks WHERE ilks.identifier = ilk_identifier)
 
-SELECT ilk_identifier, identifier AS urn_identifier, bite_identifier AS bid_id, ink, art, tab, block_number, log_id
+SELECT ilk_identifier, identifier AS urn_identifier, bid_id, ink, art, tab, block_number, log_id
 FROM maker.bite
          LEFT JOIN maker.urns ON bite.urn_id = urns.id
          LEFT JOIN headers ON bite.header_id = headers.id
@@ -957,7 +957,7 @@ FROM maker.spot_file_mat
          LEFT JOIN headers ON spot_file_mat.header_id = headers.id
 WHERE spot_file_mat.ilk_id = (SELECT id FROM ilk)
 UNION
-SELECT ilk_identifier, 'pip' AS what, pip AS data, block_number, log_id
+SELECT ilk_identifier, what, pip AS data, block_number, log_id
 FROM maker.spot_file_pip
          LEFT JOIN headers ON spot_file_pip.header_id = headers.id
 WHERE spot_file_pip.ilk_id = (SELECT id FROM ilk)
@@ -1293,16 +1293,16 @@ SELECT urns.identifier,
        ilks.identifier,
        all_urns.block_height,
        inks.ink,
-       arts.art,
+       COALESCE(arts.art, 0),
        ratios.ratio,
-       COALESCE(safe.safe, arts.art = 0),
+       COALESCE(safe.safe, COALESCE(arts.art, 0) = 0),
        created.datetime,
        updated.datetime
 FROM inks
          LEFT JOIN arts ON arts.urn_id = inks.urn_id
-         LEFT JOIN urns ON arts.urn_id = urns.urn_id
+         LEFT JOIN urns ON inks.urn_id = urns.urn_id
          LEFT JOIN ratios ON ratios.urn_identifier = urns.identifier
-         LEFT JOIN safe ON safe.urn_identifier = ratios.urn_identifier
+         LEFT JOIN safe ON safe.urn_identifier = urns.identifier
          LEFT JOIN created ON created.urn_id = urns.urn_id
          LEFT JOIN updated ON updated.urn_id = urns.urn_id
          LEFT JOIN maker.ilks ON ilks.id = urns.ilk_id
@@ -2069,9 +2069,9 @@ SELECT get_urn.urn_identifier,
        ilk_identifier,
        $3,
        ink.ink,
-       art.art,
+       COALESCE(art.art, 0),
        ratio.ratio,
-       COALESCE(safe.safe, art.art = 0),
+       COALESCE(safe.safe, COALESCE(art.art, 0) = 0),
        created.datetime,
        updated.datetime
 FROM ink
@@ -2265,6 +2265,24 @@ $$;
 
 
 --
+-- Name: total_ink(text, bigint); Type: FUNCTION; Schema: api; Owner: -
+--
+
+CREATE FUNCTION api.total_ink(ilk_identifier text, block_height bigint DEFAULT api.max_block()) RETURNS numeric
+    LANGUAGE sql STABLE STRICT
+    AS $$
+SELECT SUM(latest_ink_by_urn.ink)
+FROM (SELECT DISTINCT ON (vat_urn_ink.urn_id) vat_urn_ink.ink
+      FROM maker.ilks
+               LEFT JOIN maker.urns ON urns.ilk_id = ilks.id
+               LEFT JOIN maker.vat_urn_ink ON vat_urn_ink.urn_id = urns.id
+      WHERE ilks.identifier = total_ink.ilk_identifier
+        AND vat_urn_ink.block_number <= total_ink.block_height
+      ORDER BY vat_urn_ink.urn_id, vat_urn_ink.block_number DESC) latest_ink_by_urn
+$$;
+
+
+--
 -- Name: tx_era(api.tx); Type: FUNCTION; Schema: api; Owner: -
 --
 
@@ -2290,7 +2308,7 @@ WITH ilk AS (SELECT id FROM maker.ilks WHERE ilks.identifier = ilk_identifier),
              WHERE ilk_id = (SELECT id FROM ilk)
                AND identifier = urn_bites.urn_identifier)
 
-SELECT ilk_identifier, urn_bites.urn_identifier, bite_identifier AS bid_id, ink, art, tab, block_number, log_id
+SELECT ilk_identifier, urn_bites.urn_identifier, bid_id, ink, art, tab, block_number, log_id
 FROM maker.bite
          LEFT JOIN headers ON bite.header_id = headers.id
 WHERE bite.urn_id = (SELECT id FROM urn)
@@ -3440,7 +3458,7 @@ CREATE TABLE maker.bite (
     art numeric,
     tab numeric,
     flip text,
-    bite_identifier numeric
+    bid_id numeric
 );
 
 
@@ -3456,13 +3474,6 @@ COMMENT ON TABLE maker.bite IS '@name raw_bites';
 --
 
 COMMENT ON COLUMN maker.bite.id IS '@omit';
-
-
---
--- Name: COLUMN bite.bite_identifier; Type: COMMENT; Schema: maker; Owner: -
---
-
-COMMENT ON COLUMN maker.bite.bite_identifier IS '@name id';
 
 
 --
@@ -5624,6 +5635,39 @@ ALTER SEQUENCE maker.flop_live_id_seq OWNED BY maker.flop_live.id;
 
 
 --
+-- Name: flop_pad; Type: TABLE; Schema: maker; Owner: -
+--
+
+CREATE TABLE maker.flop_pad (
+    id integer NOT NULL,
+    block_number bigint,
+    block_hash text,
+    address_id integer NOT NULL,
+    pad numeric NOT NULL
+);
+
+
+--
+-- Name: flop_pad_id_seq; Type: SEQUENCE; Schema: maker; Owner: -
+--
+
+CREATE SEQUENCE maker.flop_pad_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: flop_pad_id_seq; Type: SEQUENCE OWNED BY; Schema: maker; Owner: -
+--
+
+ALTER SEQUENCE maker.flop_pad_id_seq OWNED BY maker.flop_pad.id;
+
+
+--
 -- Name: flop_tau; Type: TABLE; Schema: maker; Owner: -
 --
 
@@ -6170,6 +6214,7 @@ CREATE TABLE maker.spot_file_pip (
     header_id integer NOT NULL,
     log_id bigint NOT NULL,
     ilk_id integer NOT NULL,
+    what text,
     pip text
 );
 
@@ -7394,6 +7439,38 @@ CREATE SEQUENCE maker.vow_bump_id_seq
 --
 
 ALTER SEQUENCE maker.vow_bump_id_seq OWNED BY maker.vow_bump.id;
+
+
+--
+-- Name: vow_dump; Type: TABLE; Schema: maker; Owner: -
+--
+
+CREATE TABLE maker.vow_dump (
+    id integer NOT NULL,
+    block_number bigint,
+    block_hash text,
+    dump numeric
+);
+
+
+--
+-- Name: vow_dump_id_seq; Type: SEQUENCE; Schema: maker; Owner: -
+--
+
+CREATE SEQUENCE maker.vow_dump_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: vow_dump_id_seq; Type: SEQUENCE OWNED BY; Schema: maker; Owner: -
+--
+
+ALTER SEQUENCE maker.vow_dump_id_seq OWNED BY maker.vow_dump.id;
 
 
 --
@@ -8880,6 +8957,13 @@ ALTER TABLE ONLY maker.flop_live ALTER COLUMN id SET DEFAULT nextval('maker.flop
 
 
 --
+-- Name: flop_pad id; Type: DEFAULT; Schema: maker; Owner: -
+--
+
+ALTER TABLE ONLY maker.flop_pad ALTER COLUMN id SET DEFAULT nextval('maker.flop_pad_id_seq'::regclass);
+
+
+--
 -- Name: flop_tau id; Type: DEFAULT; Schema: maker; Owner: -
 --
 
@@ -9248,6 +9332,13 @@ ALTER TABLE ONLY maker.vow_ash ALTER COLUMN id SET DEFAULT nextval('maker.vow_as
 --
 
 ALTER TABLE ONLY maker.vow_bump ALTER COLUMN id SET DEFAULT nextval('maker.vow_bump_id_seq'::regclass);
+
+
+--
+-- Name: vow_dump id; Type: DEFAULT; Schema: maker; Owner: -
+--
+
+ALTER TABLE ONLY maker.vow_dump ALTER COLUMN id SET DEFAULT nextval('maker.vow_dump_id_seq'::regclass);
 
 
 --
@@ -10470,6 +10561,22 @@ ALTER TABLE ONLY maker.flop_live
 
 
 --
+-- Name: flop_pad flop_pad_block_number_block_hash_address_id_pad_key; Type: CONSTRAINT; Schema: maker; Owner: -
+--
+
+ALTER TABLE ONLY maker.flop_pad
+    ADD CONSTRAINT flop_pad_block_number_block_hash_address_id_pad_key UNIQUE (block_number, block_hash, address_id, pad);
+
+
+--
+-- Name: flop_pad flop_pad_pkey; Type: CONSTRAINT; Schema: maker; Owner: -
+--
+
+ALTER TABLE ONLY maker.flop_pad
+    ADD CONSTRAINT flop_pad_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: flop flop_pkey; Type: CONSTRAINT; Schema: maker; Owner: -
 --
 
@@ -11331,6 +11438,22 @@ ALTER TABLE ONLY maker.vow_bump
 
 ALTER TABLE ONLY maker.vow_bump
     ADD CONSTRAINT vow_bump_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: vow_dump vow_dump_block_number_block_hash_dump_key; Type: CONSTRAINT; Schema: maker; Owner: -
+--
+
+ALTER TABLE ONLY maker.vow_dump
+    ADD CONSTRAINT vow_dump_block_number_block_hash_dump_key UNIQUE (block_number, block_hash, dump);
+
+
+--
+-- Name: vow_dump vow_dump_pkey; Type: CONSTRAINT; Schema: maker; Owner: -
+--
+
+ALTER TABLE ONLY maker.vow_dump
+    ADD CONSTRAINT vow_dump_pkey PRIMARY KEY (id);
 
 
 --
@@ -13656,6 +13779,14 @@ ALTER TABLE ONLY maker.flop_kicks
 
 ALTER TABLE ONLY maker.flop_live
     ADD CONSTRAINT flop_live_address_id_fkey FOREIGN KEY (address_id) REFERENCES public.addresses(id) ON DELETE CASCADE;
+
+
+--
+-- Name: flop_pad flop_pad_address_id_fkey; Type: FK CONSTRAINT; Schema: maker; Owner: -
+--
+
+ALTER TABLE ONLY maker.flop_pad
+    ADD CONSTRAINT flop_pad_address_id_fkey FOREIGN KEY (address_id) REFERENCES public.addresses(id) ON DELETE CASCADE;
 
 
 --
