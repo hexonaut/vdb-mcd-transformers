@@ -25,6 +25,8 @@ var _ = Describe("Single urn view", func() {
 		err        error
 	)
 
+	const getUrnQuery = `SELECT urn_identifier, ilk_identifier, ink, art, created, updated FROM api.get_urn($1, $2, $3)`
+
 	BeforeEach(func() {
 		db = test_config.NewTestDB(test_config.NewTestNode())
 		test_config.CleanTestDB(db)
@@ -67,8 +69,7 @@ var _ = Describe("Single urn view", func() {
 		helper.CreateUrn(urnTwoSetupData, urnTwoMetadata, vatRepo, headerRepo)
 
 		var actualUrn helper.UrnState
-		err = db.Get(&actualUrn, `SELECT urn_identifier, ilk_identifier, ink, art, created, updated
-			FROM api.get_urn($1, $2, $3)`, helper.FakeIlk.Identifier, urnOne, blockTwo)
+		err = db.Get(&actualUrn, getUrnQuery, helper.FakeIlk.Identifier, urnOne, blockTwo)
 		Expect(err).NotTo(HaveOccurred())
 
 		helper.AssertUrn(actualUrn, expectedUrn)
@@ -85,8 +86,7 @@ var _ = Describe("Single urn view", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		var result helper.UrnState
-		err = db.Get(&result, `SELECT urn_identifier, ilk_identifier, ink, art, created, updated
-			FROM api.get_urn($1, $2, $3)`, helper.FakeIlk.Identifier, urnOne, block)
+		err = db.Get(&result, getUrnQuery, helper.FakeIlk.Identifier, urnOne, block)
 
 		Expect(err).NotTo(HaveOccurred())
 		Expect(result.Created.String).To(BeEmpty())
@@ -145,8 +145,7 @@ var _ = Describe("Single urn view", func() {
 				Updated:       helper.GetValidNullString(expectedTimestampOne),
 			}
 
-			err = db.Get(&actualUrn, `SELECT urn_identifier, ilk_identifier, ink, art, created, updated
-				FROM api.get_urn($1, $2, $3)`, helper.FakeIlk.Identifier, urnOne, blockOne)
+			err = db.Get(&actualUrn, getUrnQuery, helper.FakeIlk.Identifier, urnOne, blockOne)
 			Expect(err).NotTo(HaveOccurred())
 
 			helper.AssertUrn(actualUrn, expectedUrn)
@@ -179,8 +178,7 @@ var _ = Describe("Single urn view", func() {
 			_, err = headerRepo.CreateOrUpdateHeader(fakeHeaderTwo)
 			Expect(err).NotTo(HaveOccurred())
 
-			err = db.Get(&actualUrn, `SELECT urn_identifier, ilk_identifier, ink, art, created, updated
-				FROM api.get_urn($1, $2, $3)`, helper.FakeIlk.Identifier, urnOne, blockTwo)
+			err = db.Get(&actualUrn, getUrnQuery, helper.FakeIlk.Identifier, urnOne, blockTwo)
 			Expect(err).NotTo(HaveOccurred())
 
 			helper.AssertUrn(actualUrn, expectedUrn)
