@@ -27,6 +27,6 @@ import (
 
 var StorageTransformerInitializer transformer.StorageTransformerInitializer = storage.Transformer{
 	HashedAddress: utils.HexToKeccak256Hash(constants.GetContractAddress("MCD_VOW")),
-	Mappings:      &vow.StorageKeysLookup{StorageRepository: &mcdStorage.MakerStorageRepository{}},
+	Mappings:      mcdStorage.NewKeysLookup(vow.NewKeysLoader(&mcdStorage.MakerStorageRepository{})),
 	Repository:    &vow.VowStorageRepository{},
 }.NewTransformer
